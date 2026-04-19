@@ -29,9 +29,9 @@ export async function sendEmailCode(email: string, code: string, firstName: stri
   try {
     const resend = getResend();
     await resend.emails.send({
-      from: 'Fêtes <onboarding@resend.dev>',
+      from: 'FESTV <onboarding@resend.dev>',
       to: email,
-      subject: 'Verify your email - Fêtes',
+      subject: 'Verify your email - FESTV',
       html: `
         <!DOCTYPE html>
         <html>
@@ -39,34 +39,29 @@ export async function sendEmailCode(email: string, code: string, firstName: stri
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
           </head>
-          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #F5F3EF;">
             <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-              <div style="text-align: center; margin-bottom: 40px;">
-                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
-                  <span style="font-size: 24px;">🍽️</span>
-                </div>
-                <h1 style="font-size: 24px; font-weight: bold; color: #1C1917; margin: 16px 0 0 0;">Fêtes</h1>
+              <div style="text-align: center; margin-bottom: 32px;">
+                <h1 style="font-family: Georgia, serif; font-size: 2rem; font-weight: 600; letter-spacing: 0.35em; color: #1A1714; margin: 0;">FEST<span style="color: #C4A06A;">V</span></h1>
               </div>
-              
-              <div style="background: #FFFFFF; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px;">
-                <h2 style="font-size: 20px; font-weight: 600; color: #1C1917; margin: 0 0 16px 0;">Hi ${firstName},</h2>
-                <p style="font-size: 16px; color: #57534E; line-height: 24px; margin: 0 0 24px 0;">
-                  Your verification code is:
+
+              <div style="background: #FFFFFF; border: 1px solid rgba(0,0,0,0.09); border-radius: 16px; padding: 40px;">
+                <h2 style="font-size: 20px; font-weight: 600; color: #1A1714; margin: 0 0 12px 0;">Hi ${firstName},</h2>
+                <p style="font-size: 15px; color: #7A7068; line-height: 24px; margin: 0 0 28px 0;">
+                  Thanks for joining FESTV! Enter the code below to verify your email address.
                 </p>
-                <div style="background: #FFF7ED; border: 2px solid #FDBA74; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 24px 0;">
-                  <div style="font-size: 36px; font-weight: bold; color: #EA580C; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                <div style="background: #F5F3EF; border: 2px solid #C4A06A; border-radius: 12px; padding: 28px; text-align: center; margin: 0 0 28px 0;">
+                  <div style="font-size: 38px; font-weight: 700; color: #9C7A45; letter-spacing: 10px; font-family: 'Courier New', monospace;">
                     ${code}
                   </div>
                 </div>
-                <p style="font-size: 14px; color: #78716C; line-height: 20px; margin: 0;">
-                  This code expires in <strong>15 minutes</strong>. If you didn't request this code, please ignore this email.
+                <p style="font-size: 13px; color: #7A7068; line-height: 20px; margin: 0;">
+                  This code expires in <strong>15 minutes</strong>. If you didn't create a FESTV account, you can safely ignore this email.
                 </p>
               </div>
-              
-              <div style="text-align: center; margin-top: 32px; padding-top: 32px; border-top: 1px solid #E7E5E4;">
-                <p style="font-size: 12px; color: #A8A29E; margin: 0;">
-                  © ${new Date().getFullYear()} Fêtes. All rights reserved.
-                </p>
+
+              <div style="text-align: center; margin-top: 28px;">
+                <p style="font-size: 12px; color: #A8A29E; margin: 0;">© ${new Date().getFullYear()} FESTV. All rights reserved.</p>
               </div>
             </div>
           </body>

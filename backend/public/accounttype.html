@@ -716,6 +716,24 @@
     <p class="success-sub" id="successSub"></p>
   </div>
 
+  <!-- Email Verification overlay -->
+  <div class="success-overlay" id="verifyOverlay" style="display:none; flex-direction:column; gap:1.2rem;">
+    <div class="success-icon" style="background:rgba(196,160,106,0.12);">
+      <svg width="30" height="30" fill="none" viewBox="0 0 30 30">
+        <path d="M4 8l11 8 11-8M4 8h22v16H4z" stroke="#C4A06A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="success-title" style="font-size:2rem;">Check your inbox</div>
+    <p class="success-sub">We sent a 6-digit code to <strong id="verifyEmailDisplay"></strong>. Enter it below to verify your account.</p>
+    <div style="display:flex; gap:0.5rem; justify-content:center; margin:0.5rem 0;">
+      <input id="verifyCodeInput" type="text" maxlength="6" placeholder="000000"
+        style="width:160px; text-align:center; font-size:1.5rem; letter-spacing:0.3em; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:10px; font-family:'Montserrat',sans-serif; background:var(--white); color:var(--dark); outline:none;">
+    </div>
+    <p id="verifyError" style="color:var(--red); font-size:0.78rem; display:none;"></p>
+    <button id="btnVerifyCode" style="padding:0.85rem 2.5rem; background:var(--dark); color:var(--gold-light); border:none; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;">Verify Email</button>
+    <button id="btnResendCode" style="background:none; border:none; color:var(--muted); font-size:0.75rem; cursor:pointer; font-family:'Montserrat',sans-serif; text-decoration:underline;">Resend code</button>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var selectedType   = null;
@@ -728,6 +746,72 @@
       var vendorFormSection  = document.getElementById('vendorFormSection');
       var vendorFormLabel    = document.getElementById('vendorFormLabel');
       var overlay            = document.getElementById('successOverlay');
+      var verifyOverlay      = document.getElementById('verifyOverlay');
+      var verifyEmailDisplay = document.getElementById('verifyEmailDisplay');
+      var verifyCodeInput    = document.getElementById('verifyCodeInput');
+      var verifyError        = document.getElementById('verifyError');
+      var _verifyToken       = null;
+      var _verifyRedirect    = null;
+
+      function showVerifyOverlay(email, token, redirectUrl) {
+        _verifyToken = token;
+        _verifyRedirect = redirectUrl;
+        verifyEmailDisplay.textContent = email;
+        verifyOverlay.style.display = 'flex';
+        verifyCodeInput.focus();
+        // Auto-send verification code
+        fetch('/api/v1/verification/send-email-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+        }).catch(function() {});
+      }
+
+      document.getElementById('btnVerifyCode').addEventListener('click', function() {
+        var code = verifyCodeInput.value.trim();
+        verifyError.style.display = 'none';
+        if (code.length !== 6) {
+          verifyError.textContent = 'Please enter the 6-digit code from your email.';
+          verifyError.style.display = 'block';
+          return;
+        }
+        var btn = document.getElementById('btnVerifyCode');
+        btn.disabled = true; btn.textContent = 'Verifying...';
+        fetch('/api/v1/verification/verify-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _verifyToken },
+          body: JSON.stringify({ code: code })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          btn.disabled = false; btn.textContent = 'Verify Email';
+          if (data.success) {
+            verifyOverlay.style.display = 'none';
+            overlay.classList.add('show');
+            setTimeout(function() { window.location.href = _verifyRedirect; }, 2000);
+          } else {
+            verifyError.textContent = data.message || 'Invalid code. Please try again.';
+            verifyError.style.display = 'block';
+          }
+        })
+        .catch(function() {
+          btn.disabled = false; btn.textContent = 'Verify Email';
+          verifyError.textContent = 'Something went wrong. Please try again.';
+          verifyError.style.display = 'block';
+        });
+      });
+
+      document.getElementById('btnResendCode').addEventListener('click', function() {
+        if (!_verifyToken) return;
+        var btn = document.getElementById('btnResendCode');
+        btn.textContent = 'Sending...';
+        fetch('/api/v1/verification/send-email-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _verifyToken }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function() { btn.textContent = 'Code sent!'; setTimeout(function() { btn.textContent = 'Resend code'; }, 3000); })
+        .catch(function() { btn.textContent = 'Resend code'; });
+      });
       var successTitle       = document.getElementById('successTitle');
       var successSub         = document.getElementById('successSub');
 
@@ -850,8 +934,7 @@
             }
             successTitle.textContent = 'Welcome to FESTV';
             successSub.textContent   = 'Your planner account has been created. Start building your perfect event.';
-            overlay.classList.add('show');
-            setTimeout(function () { window.location.href = 'plannerdashboard.html'; }, 2000);
+            showVerifyOverlay(email, payload.accessToken, 'plannerdashboard.html');
           } else {
             errEl.textContent = data.message || data.error || 'Registration failed. Please try again.';
             errEl.style.display = 'block';
@@ -929,7 +1012,7 @@
             }
             successTitle.textContent = 'Application Submitted';
             successSub.textContent   = 'Thanks for signing up as a ' + label + '. Our team will review your details and reach out within 1–2 business days.';
-            overlay.classList.add('show');
+            showVerifyOverlay(email, payload.accessToken, 'vendordashboard.html');
           } else {
             errEl.textContent = data.message || data.error || 'Registration failed. Please try again.';
             errEl.style.display = 'block';
