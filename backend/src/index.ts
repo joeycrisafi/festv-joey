@@ -40,7 +40,10 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Serve FESTV frontend
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
+app.get('/', (req: Request, res: Response) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'festv-index.html'));
+});
 
 // API routes
 app.use('/api/v1', routes);
