@@ -813,6 +813,16 @@
           errEl.style.display = 'block';
           return;
         }
+        if (!/[A-Z]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one uppercase letter (e.g. Festv2026).';
+          errEl.style.display = 'block';
+          return;
+        }
+        if (!/[0-9]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one number (e.g. Festv2026).';
+          errEl.style.display = 'block';
+          return;
+        }
 
         var parts = fullName.split(' ');
         var firstName = parts[0];
@@ -879,6 +889,16 @@
         }
         if (pw.length < 8) {
           errEl.textContent = 'Password must be at least 8 characters.';
+          errEl.style.display = 'block';
+          return;
+        }
+        if (!/[A-Z]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one uppercase letter (e.g. Festv2026).';
+          errEl.style.display = 'block';
+          return;
+        }
+        if (!/[0-9]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one number (e.g. Festv2026).';
           errEl.style.display = 'block';
           return;
         }
