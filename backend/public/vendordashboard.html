@@ -894,7 +894,7 @@
         </div>
         <div class="manage-list">
 
-          <div class="manage-row">
+          <div class="manage-row" onclick="window.location.href='vendorsetup.html'" style="cursor:pointer;">
             <div class="manage-icon">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
@@ -1023,6 +1023,15 @@
           <div class="card-title">About</div>
         </div>
         <p id="aboutDesc" style="font-size:0.82rem;color:var(--muted);line-height:1.7;"></p>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="card" id="contactCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-title">Contact Info</div>
+          <a href="vendorsetup.html" class="card-link" style="font-size:0.68rem;">Edit</a>
+        </div>
+        <div id="contactList" style="display:flex;flex-direction:column;gap:0.75rem;padding:0.25rem 0;"></div>
       </div>
 
     </div>
@@ -1285,6 +1294,26 @@
         if (priceRows) {
           document.getElementById('pricingTable').innerHTML = priceRows;
           document.getElementById('pricingCard').style.display = '';
+        }
+
+        // Contact info card
+        var contactRows = [];
+        var email = p.user && p.user.email;
+        var phone = p.phone || (p.user && p.user.phone);
+        var location = (p.serviceAreas && p.serviceAreas[0]) || p.city || '';
+        var website = p.website || (p.user && p.user.website);
+        if (email)    contactRows.push({ icon: '✉️', label: email });
+        if (phone)    contactRows.push({ icon: '📞', label: phone });
+        if (location) contactRows.push({ icon: '📍', label: location });
+        if (website)  contactRows.push({ icon: '🌐', label: website });
+        if (contactRows.length) {
+          document.getElementById('contactList').innerHTML = contactRows.map(function(r) {
+            return '<div style="display:flex;align-items:center;gap:0.6rem;font-size:0.78rem;color:var(--charcoal);">'
+              + '<span style="font-size:0.9rem;">' + r.icon + '</span>'
+              + '<span>' + esc(r.label) + '</span>'
+              + '</div>';
+          }).join('');
+          document.getElementById('contactCard').style.display = '';
         }
 
         // Reviews card — show if they have any
