@@ -365,12 +365,15 @@ export const getAvailableEventRequests = asyncHandler(async (req: AuthenticatedR
   const where: any = {
     status: { in: ['SUBMITTED', 'MATCHING'] },
     eventDate: { gt: new Date() },
-    // Match provider's guest count range
-    guestCount: {
+  };
+
+  // Only apply guest count filter if profile has meaningful limits set
+  if (profile.minGuestCount > 0 || profile.maxGuestCount < 10000) {
+    where.guestCount = {
       gte: profile.minGuestCount,
       lte: profile.maxGuestCount,
-    },
-  };
+    };
+  }
   
   // Filter by event type
   if (eventType) {

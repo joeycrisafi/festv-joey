@@ -1585,10 +1585,20 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.success || data.data) {
+            var requestId = data.data && data.data.id;
+
+            // Auto-submit so vendors can see it (DRAFT → SUBMITTED)
+            if (requestId) {
+              fetch('/api/v1/event-requests/' + requestId + '/submit', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+              }).catch(function() {}); // fire-and-forget
+            }
+
             // Save request to pending event
             ev.requests = ev.requests || [];
             ev.requests.push({
-              id: (data.data && data.data.id) || null,
+              id: requestId || null,
               vendorType: vendorType,
               vendorName: window._currentVendorName || 'Vendor',
               service: service.value,
