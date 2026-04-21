@@ -717,7 +717,12 @@
     function authFetch(url, opts) {
       opts = opts || {};
       opts.headers = Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, opts.headers || {});
-      return fetch(API + url, opts).then(function (r) { return r.json(); });
+      return fetch(API + url, opts).then(function (r) {
+        return r.text().then(function(text) {
+          try { return JSON.parse(text); }
+          catch(e) { throw new Error('Server error (' + r.status + '): ' + text.substring(0, 200)); }
+        });
+      });
     }
 
     // ── Step navigation ──
@@ -813,12 +818,14 @@
             createdProfileId = data.data && data.data.id;
             goToStep(2);
           } else {
-            showError('err-1', data.message || 'Failed to save profile. Please try again.');
+            var msg = data.error || data.message || 'Failed to save profile.';
+            if (data.details && data.details.length) msg += ' (' + data.details.map(function(d){ return d.field + ': ' + d.message; }).join(', ') + ')';
+            showError('err-1', msg);
           }
         })
-        .catch(function () {
+        .catch(function (err) {
           btn.classList.remove('loading');
-          showError('err-1', 'Connection error. Please try again.');
+          showError('err-1', err && err.message ? err.message : 'Connection error. Please try again.');
         });
     });
 
