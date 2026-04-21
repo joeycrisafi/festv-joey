@@ -1381,6 +1381,15 @@
       document.getElementById('sendRequestSection').style.display = 'block';
       document.getElementById('srEventName').textContent = ev.name;
 
+      // Pre-fill vendor name from URL param so success screen always has it
+      var urlVendorName = params.get('vendorName');
+      if (urlVendorName) {
+        var decoded = decodeURIComponent(urlVendorName);
+        document.getElementById('srVendorName').textContent = decoded;
+        document.getElementById('srSuccessVendor').textContent = decoded;
+        window._currentVendorName = window._currentVendorName || decoded;
+      }
+
       // Default services per type (fallback if no API services)
       var defaultSrServices = {
         DJ:           ['Full Reception Coverage', 'Ceremony + Reception', 'Cocktail Hour Only', 'Custom Package'],

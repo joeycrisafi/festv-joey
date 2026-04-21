@@ -1062,7 +1062,7 @@
       var ev = null;
       try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
       var url = 'vendorprofile.html?id=' + encodeURIComponent(id);
-      if (ev && ev.name) url += '&fromEvent=1';
+      if (ev && ev.name) url += '&fromEvent=1&vendorName=' + encodeURIComponent(name);
       window.location.href = url;
     };
 
