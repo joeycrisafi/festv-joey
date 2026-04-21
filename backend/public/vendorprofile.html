@@ -895,7 +895,7 @@
           <div class="rating-pill" id="vp-location">📍 Austin, TX</div>
         </div>
       </div>
-      <div class="hero-cta">
+      <div class="hero-cta" id="heroCta">
         <button class="btn-request-hero">Request Service</button>
         <button class="btn-message-hero">Send Message</button>
       </div>
@@ -1260,6 +1260,20 @@
   </div>
 
   <script>
+  // Hide Request/Message buttons if viewer is a vendor (PROVIDER role)
+  (function() {
+    try {
+      var token = localStorage.getItem('accessToken');
+      if (token) {
+        var payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.role === 'PROVIDER') {
+          var cta = document.getElementById('heroCta');
+          if (cta) cta.style.display = 'none';
+        }
+      }
+    } catch(e) {}
+  })();
+
   (function () {
     var id = new URLSearchParams(window.location.search).get('id');
     if (!id) return; // no id = show static demo page as-is
