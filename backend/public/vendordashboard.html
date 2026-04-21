@@ -1069,8 +1069,14 @@
       <div class="card" id="servicesCard" style="display:none;">
         <div class="card-header">
           <div class="card-title">Services Offered</div>
+          <button onclick="openManageModal()" style="background:none;border:none;font-size:0.68rem;font-weight:700;color:var(--gold-dark);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">+ Manage</button>
         </div>
         <div class="services-grid" id="servicesGrid"></div>
+        <!-- Menu / Equipment items -->
+        <div id="menuItemsSection" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+          <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem;" id="menuItemsLabel">Menu Items</div>
+          <div id="menuItemsGrid" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        </div>
       </div>
 
       <!-- Pricing -->
@@ -1328,7 +1334,8 @@
         }
 
         // Services
-        if (p.services && p.services.length) {
+        var hasServices = p.services && p.services.length;
+        if (hasServices) {
           var sg = document.getElementById('servicesGrid');
           sg.innerHTML = p.services.map(function(s) {
             var price = s.priceType === 'PER_PERSON' ? '$' + s.basePrice + '/pp'
@@ -1342,6 +1349,29 @@
               + '</div></div>';
           }).join('');
           document.getElementById('servicesCard').style.display = '';
+        }
+
+        // Menu / Equipment items
+        if (p.id) {
+          fetch('/api/v1/providers/' + p.id + '/menu-items')
+            .then(function(r) { return r.json(); })
+            .then(function(md) {
+              var items = md.data || md || [];
+              if (!items.length) return;
+              var isFoodVendor = ['CATERER','BARTENDER','OTHER'].indexOf(rawType) !== -1;
+              document.getElementById('menuItemsLabel').textContent = isFoodVendor ? 'Menu Items' : 'Equipment & Gear';
+              document.getElementById('menuItemsGrid').innerHTML = items.map(function(item) {
+                var price = item.price ? '<span style="color:var(--gold-dark);font-weight:600;">$' + item.price + '</span>' : '';
+                var cat   = item.category ? '<span style="color:var(--muted);font-size:0.68rem;"> · ' + item.category.replace(/_/g,' ') + '</span>' : '';
+                return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0;">'
+                  + '<div style="font-size:0.78rem;color:var(--charcoal);">' + esc(item.name) + cat + '</div>'
+                  + '<div style="font-size:0.78rem;">' + price + '</div>'
+                  + '</div>';
+              }).join('');
+              document.getElementById('menuItemsSection').style.display = '';
+              document.getElementById('servicesCard').style.display = ''; // show card even if no packages
+            })
+            .catch(function() {});
         }
 
         // Pricing — hourly or per-person
@@ -1569,6 +1599,7 @@
             document.getElementById('menuMgr-price').value = '';
             document.getElementById('menuMgr-category').value = '';
             loadManageMenu();
+            loadProfile();
           } else {
             errEl.textContent = data.error || data.message || 'Failed to save.';
             errEl.style.display = '';
@@ -1580,7 +1611,7 @@
     window.deleteMenuItem = function(id) {
       if (!confirm('Delete this item?')) return;
       fetch('/api/v1/providers/menu-items/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } })
-        .then(function() { loadManageMenu(); })
+        .then(function() { loadManageMenu(); loadProfile(); })
         .catch(function() { alert('Could not delete. Please try again.'); });
     };
 
