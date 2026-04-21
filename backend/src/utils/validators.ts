@@ -71,7 +71,7 @@ export const updateProviderProfileSchema = createProviderProfileSchema.partial()
 // Service schemas
 export const createServiceSchema = z.object({
   name: z.string().min(2, 'Service name is required').max(100),
-  description: z.string().min(20, 'Description must be at least 20 characters').max(2000),
+  description: z.string().min(3, 'Description is required').max(2000),
   providerType: z.nativeEnum(ProviderType),
   priceType: z.nativeEnum(PriceType),
   basePrice: z.number().min(0, 'Base price must be positive'),
