@@ -1392,10 +1392,11 @@
 
         // Contact info card
         var contactRows = [];
-        var email = p.user && p.user.email;
-        var phone = p.phone || (p.user && p.user.phone);
-        var location = (p.serviceAreas && p.serviceAreas[0]) || p.city || '';
-        var website = p.website || (p.user && p.user.website);
+        var email    = (p.user && p.user.email) || '';
+        var phone    = (p.user && p.user.phoneNumber) || '';
+        var cityState = [(p.user && p.user.city), (p.user && p.user.state)].filter(Boolean).join(', ');
+        var location = cityState || (p.serviceAreas && p.serviceAreas[0]) || '';
+        var website  = p.websiteUrl || p.website || '';
         if (email)    contactRows.push({ icon: '✉️', label: email });
         if (phone)    contactRows.push({ icon: '📞', label: phone });
         if (location) contactRows.push({ icon: '📍', label: location });
