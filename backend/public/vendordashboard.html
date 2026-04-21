@@ -809,10 +809,10 @@
 
     <div class="hero-overlay">
       <div class="hero-info">
-        <span class="vendor-category">Venue</span>
-        <div class="vendor-name">The Rosewood Estate</div>
+        <span class="vendor-category" id="heroCategory">—</span>
+        <div class="vendor-name" id="heroName">Loading…</div>
         <div class="hero-ratings">
-          <div class="rating-pill">
+          <div class="rating-pill" id="heroRatingPill" style="display:none;">
             <div class="rating-stars-sm">
               <svg viewBox="0 0 24 24" class="star-gold"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               <svg viewBox="0 0 24 24" class="star-gold"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -820,7 +820,7 @@
               <svg viewBox="0 0 24 24" class="star-gold"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               <svg viewBox="0 0 24 24" class="star-gold"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
-            4.9 FESTV &nbsp;<span class="reviews-count">(186 reviews)</span>
+            <span id="heroRatingVal">—</span> FESTV &nbsp;<span class="reviews-count" id="heroReviewCount"></span>
           </div>
           <div class="rating-pill google">
             <span style="font-weight:800;font-size:0.8rem;letter-spacing:-0.02em">
@@ -1345,6 +1345,37 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // ── Load vendor profile ──
+    function loadProfile() {
+      fetch('/api/v1/providers/profile/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var p = data.data || data;
+        if (!p || !p.businessName) return;
+
+        // Hero
+        document.getElementById('heroName').textContent = p.businessName;
+        document.getElementById('heroCategory').textContent = p.primaryType
+          ? p.primaryType.charAt(0) + p.primaryType.slice(1).toLowerCase().replace(/_/g,' ')
+          : (p.providerTypes && p.providerTypes[0]) || '';
+
+        if (p.averageRating && p.totalReviews) {
+          document.getElementById('heroRatingVal').textContent = p.averageRating.toFixed(1);
+          document.getElementById('heroReviewCount').textContent = '(' + p.totalReviews + ' reviews)';
+          document.getElementById('heroRatingPill').style.display = '';
+        }
+
+        // Banner/cover image
+        if (p.user && p.user.bannerUrl) {
+          document.querySelector('.hero-img').src = p.user.bannerUrl;
+        }
+      })
+      .catch(function() {});
+    }
+
+    loadProfile();
     loadRequests();
   })();
   </script>
