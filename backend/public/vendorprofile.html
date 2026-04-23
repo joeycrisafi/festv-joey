@@ -1265,7 +1265,17 @@
 
         // Hero
         document.getElementById('vp-cover').src = img;
-        document.getElementById('vp-badge').textContent = typeLabels[type] || type;
+        // Show all provider types as badges (a restaurant may do venue + catering)
+        var allTypes = p.providerTypes && p.providerTypes.length ? p.providerTypes : [type];
+        var badgeEl = document.getElementById('vp-badge');
+        badgeEl.textContent = typeLabels[allTypes[0]] || allTypes[0];
+        allTypes.slice(1).forEach(function(t) {
+          var extra = document.createElement('span');
+          extra.className = 'vendor-category-badge';
+          extra.textContent = typeLabels[t] || t;
+          extra.style.marginLeft = '0.4rem';
+          badgeEl.parentNode.insertBefore(extra, badgeEl.nextSibling);
+        });
         document.getElementById('vp-name').textContent  = name;
         document.getElementById('vp-location').textContent = '📍 ' + location;
         document.getElementById('vp-stickyName').textContent = name;
