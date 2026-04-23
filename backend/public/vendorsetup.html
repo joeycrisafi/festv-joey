@@ -496,13 +496,11 @@
           <div class="form-group">
             <label class="form-label">Vendor Type <span class="req">*</span></label>
             <div class="type-pills" id="typePills">
-              <div class="type-pill" data-type="DJ">🎧 DJ</div>
-              <div class="type-pill" data-type="PHOTOGRAPHER">📸 Photographer</div>
-              <div class="type-pill" data-type="CATERER">🥂 Caterer</div>
-              <div class="type-pill" data-type="BARTENDER">🍸 Bartender</div>
-              <div class="type-pill" data-type="OTHER">🍽️ Restaurant / Venue</div>
-              <div class="type-pill" data-type="VIDEOGRAPHER">🎬 Videographer</div>
-              <div class="type-pill" data-type="MUSICIAN">🎵 Musician</div>
+              <div class="type-pill" data-type="RESTO_VENUE">🏛 Restaurant / Venue</div>
+              <div class="type-pill" data-type="CATERER">🍽️ Caterer</div>
+              <div class="type-pill" data-type="ENTERTAINMENT">🎧 Entertainment</div>
+              <div class="type-pill" data-type="PHOTO_VIDEO">📸 Photo &amp; Video</div>
+              <div class="type-pill" data-type="FLORIST_DECOR">🌸 Florist &amp; Decor</div>
             </div>
           </div>
 
@@ -790,7 +788,7 @@
         });
 
         // Show/hide pricing sections based on type
-        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'BARTENDER' || t === 'OTHER'; });
+        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
         document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
         document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
 
@@ -812,7 +810,7 @@
           pill.classList.remove('selected');
         }
         // Show/hide pricing sections
-        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'BARTENDER' || t === 'OTHER'; });
+        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
         document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
         document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
 
@@ -850,7 +848,7 @@
         maximumBudget:       parseFloat(document.getElementById('s1-maxBudget').value) || undefined,
       };
 
-      var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'BARTENDER' || t === 'OTHER'; });
+      var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
       if (isFoodVendor) {
         var ppp = parseFloat(document.getElementById('s1-pricePerPerson').value);
         var mg  = parseInt(document.getElementById('s1-minGuests').value);
@@ -938,7 +936,7 @@
         priceType:   pType,
         basePrice:   price || 0,
         features:    pendingFeatures.slice(),
-        providerType: selectedTypes[0] || 'OTHER',
+        providerType: selectedTypes[0] || 'RESTO_VENUE',
       });
 
       // Reset form

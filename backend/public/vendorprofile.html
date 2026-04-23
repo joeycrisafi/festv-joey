@@ -1278,13 +1278,13 @@
     var id = new URLSearchParams(window.location.search).get('id');
     if (!id) return; // no id = show static demo page as-is
 
-    var typeLabels = { DJ:'DJ', PHOTOGRAPHER:'Photographer', CATERER:'Caterer', BARTENDER:'Bartender', OTHER:'Restaurant / Venue', MUSICIAN:'Musician', VIDEOGRAPHER:'Videographer' };
+    var typeLabels = { RESTO_VENUE:'Restaurant / Venue', CATERER:'Caterer', ENTERTAINMENT:'Entertainment', PHOTO_VIDEO:'Photo & Video', FLORIST_DECOR:'Florist & Decor' };
     var fallbackImgs = {
-      DJ:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1400&q=80',
-      PHOTOGRAPHER:'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1400&q=80',
+      RESTO_VENUE:'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1400&q=80',
       CATERER:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1400&q=80',
-      BARTENDER:'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=1400&q=80',
-      OTHER:'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1400&q=80',
+      ENTERTAINMENT:'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1400&q=80',
+      PHOTO_VIDEO:'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1400&q=80',
+      FLORIST_DECOR:'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1400&q=80',
     };
 
     fetch('/api/v1/providers/' + id)
@@ -1406,11 +1406,11 @@
 
       // Default services per type (fallback if no API services)
       var defaultSrServices = {
-        DJ:           ['Full Reception Coverage', 'Ceremony + Reception', 'Cocktail Hour Only', 'Custom Package'],
-        PHOTOGRAPHER: ['Full Day Coverage', 'Half Day (6 hrs)', 'Ceremony Only', 'Engagement Session'],
-        VENUE:        ['Full Venue Rental', 'Ceremony Only', 'Reception Only', 'Outdoor Space'],
-        CATERER:      ['Full Service Catering', 'Buffet Style', 'Cocktail Hour + Appetizers', 'Dessert Service'],
-        BARTENDER:    ['Full Open Bar (5 hrs)', 'Beer & Wine Only', 'Signature Cocktail Bar', 'Non-Alcoholic Service'],
+        RESTO_VENUE:   ['Full Venue Rental', 'Ceremony Only', 'Reception Only', 'Outdoor Space'],
+        CATERER:       ['Full Service Catering', 'Buffet Style', 'Cocktail Hour + Appetizers', 'Dessert Service'],
+        ENTERTAINMENT: ['Full Reception Coverage', 'Ceremony + Reception', 'Cocktail Hour Only', 'Custom Package'],
+        PHOTO_VIDEO:   ['Full Day Coverage', 'Half Day (6 hrs)', 'Ceremony Only', 'Engagement Session'],
+        FLORIST_DECOR: ['Full Floral Design', 'Ceremony Florals Only', 'Reception Décor', 'Custom Package'],
       };
 
 
@@ -1569,10 +1569,10 @@
         btn.disabled = true;
         btn.textContent = 'Sending…';
 
-        // Map to valid ProviderType enum values (no VENUE in schema)
-        var validTypes = ['CATERER','DJ','DECORATOR','MUSICIAN','PHOTOGRAPHER','VIDEOGRAPHER','FLORIST','EVENT_PLANNER','BARTENDER','RENTAL_EQUIPMENT','OTHER'];
-        var rawType = window._currentVendorType || 'OTHER';
-        var vendorType = validTypes.indexOf(rawType) !== -1 ? rawType : 'OTHER';
+        // Map to valid ProviderType enum values
+        var validTypes = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
+        var rawType = window._currentVendorType || 'RESTO_VENUE';
+        var vendorType = validTypes.indexOf(rawType) !== -1 ? rawType : 'RESTO_VENUE';
 
         var payload = {
           title:          ev.name,

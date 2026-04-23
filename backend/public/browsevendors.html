@@ -997,7 +997,7 @@
 
     // Then fetch real vendors from API and merge in
     (function fetchRealVendors() {
-      const typeMap = { DJ:'DJ', PHOTOGRAPHER:'Photographer', CATERER:'Caterer', BARTENDER:'Bar', BARTENDER_COMPANY:'Bar', OTHER:'Venue', RENTAL_EQUIPMENT:'Venue', MUSICIAN:'DJ', VIDEOGRAPHER:'Photographer', FLORIST:'Venue', DECORATOR:'Venue', EVENT_PLANNER:'Venue' };
+      const typeMap = { RESTO_VENUE:'Venue', CATERER:'Caterer', ENTERTAINMENT:'DJ', PHOTO_VIDEO:'Photographer', FLORIST_DECOR:'Venue' };
       const fallbackImgs = {
         DJ: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
         Photographer: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
@@ -1066,8 +1066,8 @@
       var btn = document.getElementById('btnSaveDraft');
       btn.disabled = true; btn.textContent = 'Saving…';
 
-      var validTypes = ['CATERER','DJ','DECORATOR','MUSICIAN','PHOTOGRAPHER','VIDEOGRAPHER','FLORIST','EVENT_PLANNER','BARTENDER','RENTAL_EQUIPMENT','OTHER'];
-      var cats = (ev.selectedCats || []).map(function(c) { return validTypes.indexOf(c) !== -1 ? c : 'OTHER'; });
+      var validTypes = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
+      var cats = (ev.selectedCats || []).map(function(c) { return validTypes.indexOf(c) !== -1 ? c : 'RESTO_VENUE'; });
 
       var payload = {
         title:          ev.name || 'My Event',

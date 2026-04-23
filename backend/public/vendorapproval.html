@@ -258,7 +258,7 @@
 
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    var typeLabels = { CATERER:'Caterer', DJ:'DJ', DECORATOR:'Decorator', MUSICIAN:'Musician', PHOTOGRAPHER:'Photographer', VIDEOGRAPHER:'Videographer', FLORIST:'Florist', EVENT_PLANNER:'Event Planner', BARTENDER:'Bartender', RENTAL_EQUIPMENT:'Rental & Equipment', OTHER:'Restaurant / Venue' };
+    var typeLabels = { RESTO_VENUE:'Restaurant / Venue', CATERER:'Caterer', ENTERTAINMENT:'Entertainment', PHOTO_VIDEO:'Photo & Video', FLORIST_DECOR:'Florist & Decor' };
     var eventTypeLabels = { BIRTHDAY:'Birthday', WEDDING:'Wedding', CORPORATE:'Corporate', ANNIVERSARY:'Anniversary', GRADUATION:'Graduation', BABY_SHOWER:'Baby Shower', BRIDAL_SHOWER:'Bridal Shower', BAR_MITZVAH:'Bar/Bat Mitzvah', QUINCEANERA:'Quinceañera', HOLIDAY:'Holiday Party', OTHER:'Special Event' };
 
     // ── Load request ──
@@ -334,7 +334,7 @@
           .then(function(md) {
             var items = md.data || md || [];
             if (!items.length) return;
-            var isFoodVendor = ['CATERER','BARTENDER','OTHER'].indexOf(p.primaryType) !== -1;
+            var isFoodVendor = ['CATERER','RESTO_VENUE'].indexOf(p.primaryType) !== -1;
             if (!isFoodVendor) return;
             document.getElementById('menuCardLabel').textContent = 'Your Menu Items';
             document.getElementById('menuItemsDisplay').innerHTML = items.map(function(item) {

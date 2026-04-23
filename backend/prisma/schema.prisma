@@ -113,17 +113,11 @@ model VerificationCode {
 // ============================================
 
 enum ProviderType {
+  RESTO_VENUE
   CATERER
-  DJ
-  DECORATOR
-  MUSICIAN
-  PHOTOGRAPHER
-  VIDEOGRAPHER
-  FLORIST
-  EVENT_PLANNER
-  BARTENDER
-  RENTAL_EQUIPMENT
-  OTHER
+  ENTERTAINMENT
+  PHOTO_VIDEO
+  FLORIST_DECOR
 }
 
 enum VerificationStatus {

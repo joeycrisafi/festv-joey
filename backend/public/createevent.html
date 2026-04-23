@@ -952,10 +952,10 @@
         <div class="vendor-checks">
 
           <div class="vendor-check">
-            <input type="checkbox" id="v-venue" value="venue">
-            <label for="v-venue">
+            <input type="checkbox" id="v-resto-venue" value="RESTO_VENUE">
+            <label for="v-resto-venue">
               <span class="check-icon">🏛</span>
-              Venue
+              Restaurant / Venue
             </label>
             <div class="checkmark">
               <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -963,7 +963,7 @@
           </div>
 
           <div class="vendor-check">
-            <input type="checkbox" id="v-caterer" value="caterer">
+            <input type="checkbox" id="v-caterer" value="CATERER">
             <label for="v-caterer">
               <span class="check-icon">🍽</span>
               Caterer
@@ -974,10 +974,10 @@
           </div>
 
           <div class="vendor-check">
-            <input type="checkbox" id="v-dj" value="dj">
-            <label for="v-dj">
+            <input type="checkbox" id="v-entertainment" value="ENTERTAINMENT">
+            <label for="v-entertainment">
               <span class="check-icon">🎧</span>
-              DJ
+              Entertainment
             </label>
             <div class="checkmark">
               <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -985,10 +985,10 @@
           </div>
 
           <div class="vendor-check">
-            <input type="checkbox" id="v-photographer" value="photographer">
-            <label for="v-photographer">
+            <input type="checkbox" id="v-photo-video" value="PHOTO_VIDEO">
+            <label for="v-photo-video">
               <span class="check-icon">📷</span>
-              Photographer
+              Photo &amp; Video
             </label>
             <div class="checkmark">
               <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -996,10 +996,10 @@
           </div>
 
           <div class="vendor-check">
-            <input type="checkbox" id="v-bar" value="bar">
-            <label for="v-bar">
-              <span class="check-icon">🍸</span>
-              Bar
+            <input type="checkbox" id="v-florist-decor" value="FLORIST_DECOR">
+            <label for="v-florist-decor">
+              <span class="check-icon">🌸</span>
+              Florist &amp; Decor
             </label>
             <div class="checkmark">
               <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1266,8 +1266,8 @@
     }
 
     /* ── PROVIDER TYPE MAP ── */
-    const providerTypeToCategory = { DJ: 'dj', CATERER: 'caterer', PHOTOGRAPHER: 'photographer', BARTENDER: 'bar', VENUE: 'venue', RESTAURANT: 'caterer' };
-    const categoryToProviderType = { venue: 'VENUE', caterer: 'CATERER', dj: 'DJ', photographer: 'PHOTOGRAPHER', bar: 'BARTENDER' };
+    const providerTypeToCategory = { RESTO_VENUE: 'venue', CATERER: 'caterer', ENTERTAINMENT: 'dj', PHOTO_VIDEO: 'photographer', FLORIST_DECOR: 'venue' };
+    const categoryToProviderType = { venue: 'RESTO_VENUE', caterer: 'CATERER', dj: 'ENTERTAINMENT', photographer: 'PHOTO_VIDEO', bar: 'FLORIST_DECOR' };
 
     /* ── FETCH REAL VENDORS ── */
     function fetchRealVendors(cats) {
