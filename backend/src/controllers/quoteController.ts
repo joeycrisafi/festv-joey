@@ -162,14 +162,21 @@ export const sendQuote = asyncHandler(async (req: AuthenticatedRequest, res: Res
     data: { status: 'QUOTED' },
   });
   
-  // Create notification for client
+  const vendorDisplayName = quote.provider.businessName
+    || [quote.provider.user?.firstName, quote.provider.user?.lastName].filter(Boolean).join(' ')
+    || 'A vendor';
+  const isCounter = !!(req.body && req.body.isCounter);
   await prisma.notification.create({
     data: {
       userId: quote.eventRequest.clientId,
       type: 'NEW_QUOTE',
-      title: 'New Quote Received',
-      message: `${quote.provider.businessName} has sent you a quote for "${quote.eventRequest.title}"`,
-      data: { quoteId: quote.id, eventRequestId: quote.eventRequestId },
+      title: isCounter
+        ? `${vendorDisplayName} Sent a Counter Proposal`
+        : `Quote Received from ${vendorDisplayName}`,
+      message: isCounter
+        ? `${vendorDisplayName} has proposed revised terms for "${quote.eventRequest.title}". Review and accept or decline.`
+        : `${vendorDisplayName} has sent you a quote for "${quote.eventRequest.title}". Review the details and accept to confirm your booking.`,
+      data: { quoteId: quote.id, eventRequestId: quote.eventRequestId, isCounter },
     },
   });
   

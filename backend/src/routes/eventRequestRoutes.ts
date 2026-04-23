@@ -17,5 +17,6 @@ router.delete('/:id', authenticate, requireClient, asyncHandler(eventRequestCont
 // Provider routes
 router.get('/available/for-providers', authenticate, requireProvider, asyncHandler(eventRequestController.getAvailableEventRequests));
 router.post('/:id/decline', authenticate, requireProvider, asyncHandler(eventRequestController.declineEventRequest));
+router.post('/:id/vendor-confirm', authenticate, requireProvider, asyncHandler(eventRequestController.vendorConfirmRequest));
 
 export default router;

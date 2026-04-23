@@ -525,6 +525,117 @@ export const declineEventRequest = asyncHandler(async (req: AuthenticatedRequest
   res.json({ success: true, message: 'Request declined' });
 });
 
+// Vendor confirms / accepts a request — auto-creates booking, notifies planner
+export const vendorConfirmRequest = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const { items, totalAmount, message } = req.body;
+
+  if (!items || !Array.isArray(items) || !items.length) {
+    throw new AppError('At least one line item is required', 400);
+  }
+  if (!totalAmount || totalAmount <= 0) {
+    throw new AppError('Total amount is required', 400);
+  }
+
+  const profile = await prisma.providerProfile.findFirst({
+    where: { userId },
+    include: { user: { select: { firstName: true, lastName: true } } },
+  });
+  if (!profile) throw new NotFoundError('Provider profile');
+
+  const eventRequest = await prisma.eventRequest.findUnique({ where: { id } });
+  if (!eventRequest) throw new NotFoundError('Event request');
+
+  if (!['SUBMITTED', 'MATCHING', 'QUOTED'].includes(eventRequest.status)) {
+    throw new AppError('This request is no longer accepting responses', 400);
+  }
+
+  const existingBooking = await prisma.booking.findUnique({ where: { eventRequestId: id } });
+  if (existingBooking) throw new AppError('This event already has a confirmed booking', 400);
+
+  const validUntil = new Date();
+  validUntil.setDate(validUntil.getDate() + 365);
+
+  const depositRequired = totalAmount * (profile.depositPercentage / 100);
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Remove any prior WITHDRAWN quote from this provider so we can create a fresh one
+    await tx.quote.deleteMany({
+      where: { eventRequestId: id, providerId: profile.id, status: 'WITHDRAWN' },
+    });
+
+    const quote = await tx.quote.create({
+      data: {
+        eventRequestId: id,
+        providerId: profile.id,
+        message: message || null,
+        subtotal: totalAmount,
+        totalAmount,
+        depositRequired,
+        validUntil,
+        status: 'ACCEPTED',
+        sentAt: new Date(),
+        respondedAt: new Date(),
+        items: {
+          create: items.map((item: any) => ({
+            name: item.name,
+            description: item.description || null,
+            quantity: item.quantity || 1,
+            unitPrice: item.amount || item.unitPrice || 0,
+            totalPrice: (item.quantity || 1) * (item.amount || item.unitPrice || 0),
+          })),
+        },
+      },
+      include: { items: true },
+    });
+
+    const booking = await tx.booking.create({
+      data: {
+        eventRequestId: id,
+        quoteId: quote.id,
+        clientId: eventRequest.clientId,
+        providerId: profile.id,
+        totalAmount,
+        depositAmount: depositRequired,
+        balanceAmount: totalAmount - depositRequired,
+        eventDate: eventRequest.eventDate,
+        eventStartTime: eventRequest.eventStartTime,
+        eventEndTime: eventRequest.eventEndTime,
+        guestCount: eventRequest.guestCount,
+        status: 'PENDING_DEPOSIT',
+      },
+    });
+
+    await tx.eventRequest.update({
+      where: { id },
+      data: { status: 'BOOKED' },
+    });
+
+    return { quote, booking };
+  });
+
+  const vendorName = profile.businessName
+    || [profile.user.firstName, profile.user.lastName].filter(Boolean).join(' ')
+    || 'Your vendor';
+
+  await prisma.notification.create({
+    data: {
+      userId: eventRequest.clientId,
+      type: 'BOOKING_CONFIRMED',
+      title: `${vendorName} Accepted Your Request!`,
+      message: `Your event "${eventRequest.title}" has been confirmed with ${vendorName}. View your contract details.`,
+      data: { quoteId: result.quote.id, bookingId: result.booking.id, eventRequestId: id },
+    },
+  });
+
+  res.json({
+    success: true,
+    data: result,
+    message: 'Request confirmed — planner has been notified.',
+  });
+});
+
 // Delete event request (only drafts)
 export const deleteEventRequest = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;

@@ -1741,8 +1741,18 @@
         if (_notifOpen) loadNotifications();
       };
 
-      window.markNotifRead = function(id, el) {
-        authFetch('/notifications/' + id, { method: 'GET' }).then(function() { loadNotifications(); }).catch(function(){});
+      window.markNotifRead = function(id) {
+        authFetch('/notifications/' + id, { method: 'GET' })
+          .then(function(res) {
+            loadNotifications();
+            var d = (res.data && res.data.data) ? res.data.data : {};
+            if (d.quoteId) {
+              window.location.href = 'plannerquote.html?quoteId=' + d.quoteId;
+            } else if (d.bookingId) {
+              window.location.href = 'plannerquote.html?quoteId=' + (d.quoteId || '');
+            }
+          })
+          .catch(function(){});
       };
 
       window.markAllNotifsRead = function() {
@@ -2207,9 +2217,8 @@
                 '</div>' +
                 '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.25rem;font-weight:600;color:var(--dark);flex-shrink:0;">' + amount + '</div>' +
               '</div>' +
-              '<div style="display:flex;gap:0.5rem;margin-top:0.65rem;">' +
-                '<button onclick="acceptPlannerQuote(\'' + q.id + '\',\'' + rowId + '\')" style="flex:1;padding:0.5rem;background:var(--dark);color:var(--gold-light);border:none;border-radius:6px;font-family:\'Montserrat\',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'">Accept</button>' +
-                '<button onclick="rejectPlannerQuote(\'' + q.id + '\',\'' + rowId + '\')" style="flex:1;padding:0.5rem;background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:6px;font-family:\'Montserrat\',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor=\'#B84040\';this.style.color=\'#B84040\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">Decline</button>' +
+              '<div style="margin-top:0.65rem;">' +
+                '<a href="plannerquote.html?quoteId=' + q.id + '" style="display:block;width:100%;padding:0.55rem;background:var(--dark);color:var(--gold-light);border:none;border-radius:6px;font-family:\'Montserrat\',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;text-align:center;">Review Contract →</a>' +
               '</div>' +
             '</div>';
           }).join('');

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FESTV — Quote Details</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --gold: #C4A06A; --gold-light: #D9BF8C; --gold-dark: #9C7A45; --bg: #F5F3EF; --white: #FFFFFF; --dark: #1A1714; --charcoal: #3A3530; --muted: #7A7068; --border: rgba(0,0,0,0.09); --green: #3A8A55; --red: #B84040; }
+    body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 2.5rem; background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; letter-spacing: 0.35em; color: var(--dark); text-decoration: none; }
+    .logo .v { color: var(--gold); }
+    .back-link { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+    .back-link:hover { color: var(--gold-dark); }
+    .page { max-width: 780px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+    .page-eyebrow { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.4rem; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 500; color: var(--dark); letter-spacing: 0.03em; margin-bottom: 0.35rem; }
+    .page-sub { font-size: 0.83rem; color: var(--muted); margin-bottom: 2rem; }
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.75rem; margin-bottom: 1.25rem; }
+    .card-label { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.1rem; }
+    .gold-rule { width: 28px; height: 2px; background: var(--gold); margin-bottom: 1.25rem; }
+
+    /* Vendor header */
+    .vendor-top { display: flex; align-items: flex-start; gap: 1.25rem; }
+    .vendor-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; background: linear-gradient(135deg,#E8E0D4,#D5C9BA); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: var(--charcoal); }
+    .vendor-name { font-family: 'Cormorant Garamond', serif; font-size: 1.55rem; font-weight: 600; color: var(--dark); margin-bottom: 0.2rem; }
+    .vendor-meta { font-size: 0.74rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .badge { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.22rem 0.6rem; border-radius: 999px; display: inline-block; }
+    .badge-gold { background: rgba(196,160,106,0.15); color: var(--gold-dark); border: 1px solid rgba(196,160,106,0.35); }
+
+    /* Status badge */
+    .status-pill { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 999px; }
+    .status-sent { background: rgba(196,160,106,0.12); color: var(--gold-dark); border: 1px solid rgba(196,160,106,0.3); }
+    .status-viewed { background: rgba(58,138,85,0.08); color: var(--green); border: 1px solid rgba(58,138,85,0.2); }
+    .status-accepted { background: rgba(58,138,85,0.12); color: var(--green); border: 1px solid rgba(58,138,85,0.3); }
+    .status-rejected { background: rgba(184,64,64,0.08); color: var(--red); border: 1px solid rgba(184,64,64,0.2); }
+
+    /* Event summary row */
+    .event-summary { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding: 1rem 1.25rem; background: var(--bg); border-radius: 6px; margin-bottom: 0; }
+    .ev-item { display: flex; flex-direction: column; gap: 0.15rem; }
+    .ev-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .ev-value { font-size: 0.82rem; font-weight: 600; color: var(--dark); }
+
+    /* Line items table */
+    .line-items { width: 100%; border-collapse: collapse; }
+    .line-items th { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 0 0.65rem; border-bottom: 1px solid var(--border); }
+    .line-items th:last-child { text-align: right; }
+    .line-items td { padding: 0.85rem 0; border-bottom: 1px solid rgba(0,0,0,0.04); vertical-align: top; }
+    .line-items td:last-child { text-align: right; font-weight: 600; }
+    .line-item-name { font-size: 0.85rem; font-weight: 600; color: var(--dark); margin-bottom: 0.15rem; }
+    .line-item-desc { font-size: 0.7rem; color: var(--muted); line-height: 1.5; }
+    .line-item-qty { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+    .line-item-amount { font-size: 0.88rem; color: var(--dark); white-space: nowrap; }
+
+    /* Totals */
+    .totals-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; font-size: 0.8rem; color: var(--charcoal); }
+    .totals-row.total-final { border-top: 1.5px solid var(--border); margin-top: 0.35rem; padding-top: 0.75rem; }
+    .totals-row.total-final span:first-child { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark); }
+    .totals-row.total-final span:last-child { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: var(--dark); }
+
+    /* Message bubble */
+    .message-bubble { background: var(--bg); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--charcoal); line-height: 1.7; font-style: italic; }
+
+    /* Validity notice */
+    .validity-notice { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; background: rgba(196,160,106,0.07); border: 1px solid rgba(196,160,106,0.22); border-radius: 6px; font-size: 0.74rem; color: var(--charcoal); margin-bottom: 1.25rem; }
+
+    /* Action area */
+    .action-area { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.75rem; margin-bottom: 1.25rem; }
+    .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .btn-accept { background: var(--dark); color: var(--gold-light); border: none; padding: 1.1rem; border-radius: 3px; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s; }
+    .btn-accept:hover { background: var(--green); }
+    .btn-accept:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-reject { background: transparent; color: var(--charcoal); border: 1px solid var(--charcoal); padding: 1.1rem; border-radius: 3px; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; }
+    .btn-reject:hover { border-color: var(--red); color: var(--red); }
+    .btn-reject:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .action-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 0.85rem; line-height: 1.6; }
+    .error-msg { font-size: 0.75rem; color: var(--red); margin-top: 0.75rem; display: none; text-align: center; }
+
+    /* Success */
+    .success-banner { display: none; text-align: center; padding: 2.5rem 1rem; }
+    .success-banner.show { display: block; }
+    .success-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .success-icon.accept { background: rgba(58,138,85,0.12); }
+    .success-icon.reject { background: rgba(184,64,64,0.1); }
+    .success-icon svg { width: 24px; height: 24px; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .success-icon.accept svg { stroke: var(--green); }
+    .success-icon.reject svg { stroke: var(--red); }
+    .success-title { font-family: 'Cormorant Garamond', serif; font-size: 1.65rem; font-weight: 600; color: var(--dark); margin-bottom: 0.4rem; }
+    .success-sub { font-size: 0.83rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.75rem; max-width: 420px; margin-left: auto; margin-right: auto; }
+    .btn-back { display: inline-block; padding: 0.85rem 2rem; background: var(--dark); color: var(--gold-light); border-radius: 6px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      header { padding: 1rem 1.25rem; }
+      .page { padding: 1.5rem 1rem 4rem; }
+      .action-buttons { grid-template-columns: 1fr; }
+      .totals-row.total-final span:last-child { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="festv-index.html" class="logo">FEST<span class="v">V</span></a>
+    <a href="plannerdashboard.html" class="back-link">← Back to Dashboard</a>
+  </header>
+
+  <div class="page" id="mainPage">
+
+    <div class="page-eyebrow" id="eyebrow">Quote Received</div>
+    <h1 class="page-title" id="pageTitle">Loading…</h1>
+    <p class="page-sub" id="pageSub">Review the details below before accepting.</p>
+
+    <!-- VENDOR INFO -->
+    <div class="card" id="vendorCard">
+      <div class="card-label">From Vendor</div>
+      <div class="gold-rule"></div>
+      <div class="vendor-top">
+        <div class="vendor-avatar" id="vendorAvatar">?</div>
+        <div>
+          <div class="vendor-name" id="vendorName">—</div>
+          <div class="vendor-meta" id="vendorType">—</div>
+          <div class="vendor-meta" id="vendorContact" style="margin-top:0.2rem;"></div>
+          <div style="margin-top:0.5rem;"><span class="badge badge-gold" id="vendorTypeBadge">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENT SUMMARY -->
+    <div class="card" id="eventCard">
+      <div class="card-label">Event Details</div>
+      <div class="gold-rule"></div>
+      <div class="event-summary" id="eventSummary"></div>
+    </div>
+
+    <!-- QUOTE LINE ITEMS -->
+    <div class="card" id="lineItemsCard">
+      <div class="card-label">Quote Breakdown</div>
+      <div class="gold-rule"></div>
+      <table class="line-items">
+        <thead>
+          <tr>
+            <th>Service / Item</th>
+            <th style="text-align:right;white-space:nowrap;">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="lineItemsBody"></tbody>
+      </table>
+      <div style="margin-top:0.75rem;" id="totalsSection"></div>
+    </div>
+
+    <!-- VENDOR MESSAGE -->
+    <div class="card" id="messageCard" style="display:none;">
+      <div class="card-label">Message from Vendor</div>
+      <div class="gold-rule"></div>
+      <div class="message-bubble" id="vendorMessage"></div>
+    </div>
+
+    <!-- VALIDITY -->
+    <div class="validity-notice" id="validityNotice" style="display:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="validityText">This quote is valid until —</span>
+    </div>
+
+    <!-- ACTION AREA -->
+    <div class="action-area" id="actionArea">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;">Your Decision</div>
+      <div class="action-buttons">
+        <button class="btn-accept" id="btnAccept" onclick="acceptQuote()">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Accept & Book
+        </button>
+        <button class="btn-reject" id="btnReject" onclick="rejectQuote()">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Decline Quote
+        </button>
+      </div>
+      <div class="action-note">Accepting this quote creates a confirmed booking with <strong id="vendorNameInline">this vendor</strong>.<br>Any other pending quotes for this event will be automatically declined.</div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- Already responded -->
+    <div id="respondedArea" style="display:none;" class="card">
+      <div style="text-align:center;padding:0.5rem 0;">
+        <div id="respondedIcon" style="font-size:2rem;margin-bottom:0.5rem;"></div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--dark);margin-bottom:0.25rem;" id="respondedTitle">—</div>
+        <div style="font-size:0.78rem;color:var(--muted);" id="respondedSub">—</div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-banner" id="successBanner">
+      <div class="success-icon" id="successIcon">
+        <svg viewBox="0 0 24 24" id="successSvg"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-title" id="successTitle">Booking Confirmed!</div>
+      <div class="success-sub" id="successSub">Your event is officially on the books.</div>
+      <a href="plannerdashboard.html" class="btn-back">Back to Dashboard</a>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    var API   = '/api/v1';
+    var token = localStorage.getItem('accessToken');
+    var params = new URLSearchParams(window.location.search);
+    var quoteId = params.get('quoteId');
+
+    if (!token) { window.location.href = 'signin.html'; return; }
+    if (!quoteId) { window.location.href = 'plannerdashboard.html'; return; }
+
+    var typeLabels = {
+      CATERER:'Caterer', DJ:'DJ', DECORATOR:'Decorator', MUSICIAN:'Musician',
+      PHOTOGRAPHER:'Photographer', VIDEOGRAPHER:'Videographer', FLORIST:'Florist',
+      EVENT_PLANNER:'Event Planner', BARTENDER:'Bartender',
+      RENTAL_EQUIPMENT:'Rental & Equipment', OTHER:'Restaurant / Venue'
+    };
+    var eventTypeLabels = {
+      BIRTHDAY:'Birthday', WEDDING:'Wedding', CORPORATE:'Corporate', ANNIVERSARY:'Anniversary',
+      GRADUATION:'Graduation', BABY_SHOWER:'Baby Shower', BRIDAL_SHOWER:'Bridal Shower',
+      BAR_MITZVAH:'Bar/Bat Mitzvah', QUINCEANERA:'Quinceañera', HOLIDAY:'Holiday Party', OTHER:'Special Event'
+    };
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function fmt(n) { return '$' + parseFloat(n||0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+
+    // ── Load quote ──
+    fetch(API + '/quotes/' + quoteId, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      var q = res.data;
+      if (!q || !q.id) { document.getElementById('pageTitle').textContent = 'Quote not found'; return; }
+
+      var provider  = q.provider || {};
+      var user      = provider.user || {};
+      var eventReq  = q.eventRequest || {};
+      var vendorName = provider.businessName || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Vendor';
+      var typeLabel  = typeLabels[provider.providerType] || provider.providerType || 'Vendor';
+      var initials   = vendorName.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+      var eventType  = eventTypeLabels[eventReq.eventType] || eventReq.eventType || 'Event';
+      var eventTitle = eventReq.title || (eventType + ' Event');
+
+      // Header
+      document.getElementById('eyebrow').textContent = typeLabel + ' Quote';
+      document.getElementById('pageTitle').textContent = eventTitle;
+      document.getElementById('pageSub').textContent = 'Quote from ' + vendorName + ' — received ' + timeSince(new Date(q.createdAt));
+
+      // Vendor card
+      if (user.avatarUrl) {
+        var img = document.createElement('img');
+        img.src = user.avatarUrl;
+        img.style.cssText = 'width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid rgba(0,0,0,0.09);';
+        document.getElementById('vendorAvatar').replaceWith(img);
+      } else {
+        document.getElementById('vendorAvatar').textContent = initials;
+      }
+      document.getElementById('vendorName').textContent = vendorName;
+      document.getElementById('vendorType').textContent = typeLabel;
+      document.getElementById('vendorTypeBadge').textContent = typeLabel;
+      if (user.email || user.phoneNumber) {
+        document.getElementById('vendorContact').textContent = [user.email, user.phoneNumber].filter(Boolean).join('  ·  ');
+      }
+      document.getElementById('vendorNameInline').textContent = vendorName;
+
+      // Event summary
+      var dateStr = eventReq.eventDate ? new Date(eventReq.eventDate).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) : '—';
+      var timeStr = (eventReq.eventStartTime && eventReq.eventEndTime) ? eventReq.eventStartTime + ' – ' + eventReq.eventEndTime : '';
+      var venue   = [eventReq.venueName, eventReq.venueCity, eventReq.venueState].filter(Boolean).join(', ');
+      document.getElementById('eventSummary').innerHTML =
+        '<div class="ev-item"><div class="ev-label">Date</div><div class="ev-value">' + esc(dateStr) + (timeStr ? '<br><span style="font-weight:400;font-size:0.72rem;color:var(--muted);">' + esc(timeStr) + '</span>' : '') + '</div></div>' +
+        (eventReq.guestCount ? '<div class="ev-item"><div class="ev-label">Guests</div><div class="ev-value">' + esc(String(eventReq.guestCount)) + '</div></div>' : '') +
+        '<div class="ev-item"><div class="ev-label">Type</div><div class="ev-value">' + esc(eventType) + '</div></div>' +
+        (venue ? '<div class="ev-item"><div class="ev-label">Venue</div><div class="ev-value">' + esc(venue) + '</div></div>' : '');
+
+      // Line items
+      var items = q.items || [];
+      var tbody = document.getElementById('lineItemsBody');
+      if (items.length) {
+        tbody.innerHTML = items.map(function(item) {
+          var qty = item.quantity && item.quantity > 1 ? '<div class="line-item-qty">Qty: ' + item.quantity + ' × ' + fmt(item.unitPrice) + '</div>' : '';
+          return '<tr>'
+            + '<td><div class="line-item-name">' + esc(item.name) + '</div>'
+            + (item.description ? '<div class="line-item-desc">' + esc(item.description) + '</div>' : '')
+            + qty + '</td>'
+            + '<td class="line-item-amount">' + fmt(item.totalPrice || (item.quantity * item.unitPrice)) + '</td>'
+            + '</tr>';
+        }).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="2" style="font-size:0.78rem;color:var(--muted);padding:0.75rem 0;">No line items specified</td></tr>';
+      }
+
+      // Totals
+      var totalsHtml = '';
+      if (q.taxAmount > 0) totalsHtml += '<div class="totals-row"><span>Subtotal</span><span>' + fmt(q.subtotal) + '</span></div><div class="totals-row"><span>Tax (' + (q.taxRate||0) + '%)</span><span>' + fmt(q.taxAmount) + '</span></div>';
+      if (q.serviceFee > 0) totalsHtml += '<div class="totals-row"><span>Service Fee</span><span>' + fmt(q.serviceFee) + '</span></div>';
+      if (q.gratuity > 0) totalsHtml += '<div class="totals-row"><span>Gratuity</span><span>' + fmt(q.gratuity) + '</span></div>';
+      if (q.discount > 0) totalsHtml += '<div class="totals-row"><span>Discount</span><span>−' + fmt(q.discount) + '</span></div>';
+      totalsHtml += '<div class="totals-row total-final"><span>Total</span><span>' + fmt(q.totalAmount) + '</span></div>';
+      if (q.depositRequired > 0) totalsHtml += '<div style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem;text-align:right;">Deposit required on booking: <strong>' + fmt(q.depositRequired) + '</strong></div>';
+      document.getElementById('totalsSection').innerHTML = totalsHtml;
+
+      // Message
+      if (q.message) {
+        document.getElementById('vendorMessage').textContent = q.message;
+        document.getElementById('messageCard').style.display = '';
+      }
+
+      // Validity
+      if (q.validUntil) {
+        var validDate = new Date(q.validUntil);
+        var isExpired = validDate < new Date();
+        var validStr  = validDate.toLocaleDateString('en-CA', { month:'long', day:'numeric', year:'numeric' });
+        document.getElementById('validityText').textContent = isExpired
+          ? '⚠ This quote expired on ' + validStr
+          : 'This quote is valid until ' + validStr;
+        document.getElementById('validityNotice').style.display = '';
+        if (isExpired) document.getElementById('validityNotice').style.background = 'rgba(184,64,64,0.05)';
+      }
+
+      // Handle non-actionable status
+      var status = q.status;
+      if (status === 'ACCEPTED') {
+        showResponded('✓', 'Quote Accepted', 'You accepted this quote and a booking has been created.');
+      } else if (status === 'REJECTED') {
+        showResponded('✕', 'Quote Declined', 'You declined this quote.');
+      } else if (status === 'WITHDRAWN') {
+        showResponded('—', 'Quote Withdrawn', 'This quote has been withdrawn by the vendor.');
+      } else if (status === 'EXPIRED') {
+        showResponded('⏱', 'Quote Expired', 'This quote has expired. Contact the vendor for a new one.');
+      }
+    })
+    .catch(function() { document.getElementById('pageTitle').textContent = 'Could not load quote'; });
+
+    function showResponded(icon, title, sub) {
+      document.getElementById('actionArea').style.display = 'none';
+      document.getElementById('respondedArea').style.display = '';
+      document.getElementById('respondedIcon').textContent = icon;
+      document.getElementById('respondedTitle').textContent = title;
+      document.getElementById('respondedSub').textContent = sub;
+    }
+
+    function timeSince(date) {
+      var secs = Math.floor((new Date() - date) / 1000);
+      if (secs < 60) return 'just now';
+      if (secs < 3600) return Math.floor(secs/60) + ' minutes ago';
+      if (secs < 86400) return Math.floor(secs/3600) + ' hours ago';
+      return Math.floor(secs/86400) + ' days ago';
+    }
+
+    // ── Accept ──
+    window.acceptQuote = function() {
+      var btn = document.getElementById('btnAccept');
+      var errEl = document.getElementById('errorMsg');
+      errEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Booking…';
+      fetch(API + '/quotes/' + quoteId + '/accept', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.success) throw new Error(res.message || res.error || 'Could not accept quote');
+        document.getElementById('actionArea').style.display = 'none';
+        document.getElementById('messageCard').style.display = 'none';
+        document.getElementById('validityNotice').style.display = 'none';
+        document.getElementById('successIcon').className = 'success-icon accept';
+        document.getElementById('successSvg').setAttribute('points', '20 6 9 17 4 12');
+        document.getElementById('successTitle').textContent = 'Booking Confirmed!';
+        document.getElementById('successSub').textContent = 'Your event has been confirmed with ' + (document.getElementById('vendorName').textContent || 'the vendor') + '. You'll find it in your upcoming bookings.';
+        document.getElementById('successBanner').classList.add('show');
+      })
+      .catch(function(err) {
+        btn.disabled = false; btn.textContent = 'Accept & Book';
+        errEl.textContent = err.message || 'Could not accept quote. Please try again.';
+        errEl.style.display = '';
+      });
+    };
+
+    // ── Reject ──
+    window.rejectQuote = function() {
+      if (!confirm('Are you sure you want to decline this quote?')) return;
+      var btn = document.getElementById('btnReject');
+      var errEl = document.getElementById('errorMsg');
+      errEl.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Declining…';
+      fetch(API + '/quotes/' + quoteId + '/reject', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.success) throw new Error(res.message || res.error || 'Could not decline');
+        document.getElementById('actionArea').style.display = 'none';
+        document.getElementById('successIcon').className = 'success-icon reject';
+        document.getElementById('successSvg').setAttribute('points', '');
+        document.getElementById('successSvg').innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+        document.getElementById('successTitle').textContent = 'Quote Declined';
+        document.getElementById('successSub').textContent = 'You\'ve declined this quote. The vendor has been notified and you can continue reviewing other quotes for this event.';
+        document.getElementById('successBanner').classList.add('show');
+      })
+      .catch(function(err) {
+        btn.disabled = false; btn.textContent = 'Decline Quote';
+        errEl.textContent = err.message || 'Could not decline quote. Please try again.';
+        errEl.style.display = '';
+      });
+    };
+
+  })();
+  </script>
+
+</body>
+</html>
