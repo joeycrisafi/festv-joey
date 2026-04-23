@@ -1099,7 +1099,7 @@
         localStorage.setItem('pendingEvent', JSON.stringify(ev));
         btn.style.display = 'none';
         document.getElementById('saveStatusLabel').style.display = '';
-        showToast('✓ Event saved to your account — accessible from any device');
+        showToast('✓ Event saved to your account');
       })
       .catch(function(err) {
         btn.disabled = false; btn.textContent = 'Save Request';
