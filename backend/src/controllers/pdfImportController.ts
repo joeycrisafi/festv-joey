@@ -2,7 +2,8 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 import Anthropic from '@anthropic-ai/sdk';
-import pdfParse from 'pdf-parse';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

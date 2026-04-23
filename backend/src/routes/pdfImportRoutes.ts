@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { authenticate, requireProvider } from '../middleware/auth';
-import { asyncHandler } from '../middleware/errorHandler';
-import { importFromPdf } from '../controllers/pdfImportController';
+import { authenticate, requireProvider } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+import { importFromPdf } from '../controllers/pdfImportController.js';
 
 const router = Router();
 
