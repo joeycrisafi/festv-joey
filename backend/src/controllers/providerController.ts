@@ -245,7 +245,6 @@ export const getProviderById = asyncHandler(async (req: AuthenticatedRequest, re
         orderBy: { displayOrder: 'asc' },
       },
       menuItems: {
-        where: { isAvailable: true },
         include: {
           pricingTiers: {
             orderBy: { minQuantity: 'asc' },
