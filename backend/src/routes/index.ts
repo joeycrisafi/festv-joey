@@ -10,6 +10,7 @@ import reviewRoutes from './reviewRoutes';
 import adminRoutes from './adminRoutes';
 import verificationRoutes from './verificationRoutes';
 import notificationRoutes from './notificationRoutes';
+import pdfImportRoutes from './pdfImportRoutes';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/reviews', reviewRoutes);
 router.use('/admin', adminRoutes);
 router.use('/verification', verificationRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/pdf-import', pdfImportRoutes);
 
 export default router;

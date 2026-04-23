@@ -420,13 +420,75 @@
       .form-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 0; }
       .card { padding: 1.25rem; }
     }
+
+    /* ── PDF ZONE ── */
+    .pdf-zone {
+      border: 2px dashed rgba(196,160,106,0.35);
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      background: rgba(196,160,106,0.03);
+      transition: border-color 0.2s;
+    }
+    .pdf-zone.drag-over { border-color: var(--gold); background: rgba(196,160,106,0.08); }
+    .pdf-zone-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .pdf-zone-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 500; color: var(--dark);
+      margin-bottom: 0.4rem;
+    }
+    .pdf-zone-sub { font-size: 0.73rem; color: var(--muted); line-height: 1.55; margin-bottom: 1.25rem; }
+    .btn-pdf-upload {
+      padding: 0.65rem 1.75rem;
+      background: var(--dark); color: var(--white);
+      border: none; border-radius: 8px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-pdf-upload:hover { background: var(--charcoal); }
+    .pdf-zone-skip { margin-top: 0.9rem; font-size: 0.7rem; color: var(--muted); }
+    .pdf-zone-skip a { color: var(--muted); font-weight: 600; text-decoration: none; }
+    .pdf-zone-skip a:hover { color: var(--gold-dark); text-decoration: underline; }
+    .pdf-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(196,160,106,0.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+    .pdf-loading-text { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+    .pdf-success-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+    .pdf-success-text { font-size: 0.78rem; font-weight: 600; color: var(--green); }
+
+    /* ── SECTION DIVIDERS ── */
+    .section-divider {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+    .section-label {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--charcoal);
+    }
+    .btn-section-add {
+      background: none; border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 0.28rem 0.75rem;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.67rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-section-add:hover { border-color: var(--gold); color: var(--gold-dark); }
   </style>
 </head>
 <body>
 
   <!-- Top progress bar -->
   <div class="progress-bar-wrap">
-    <div class="progress-bar" id="progressBar" style="width:25%"></div>
+    <div class="progress-bar" id="progressBar" style="width:50%"></div>
   </div>
 
   <!-- HEADER -->
@@ -444,16 +506,11 @@
     <div class="step-connector"></div>
     <div class="step-item" id="si-2">
       <div class="step-num">2</div>
-      <div class="step-label">Services</div>
+      <div class="step-label">Services &amp; Menu</div>
     </div>
     <div class="step-connector"></div>
     <div class="step-item" id="si-3">
       <div class="step-num">3</div>
-      <div class="step-label">Menu / Equipment</div>
-    </div>
-    <div class="step-connector"></div>
-    <div class="step-item" id="si-4">
-      <div class="step-num">4</div>
       <div class="step-label">Done</div>
     </div>
   </div>
@@ -464,7 +521,7 @@
       <!-- ── STEP 1: BUSINESS PROFILE ── -->
       <div class="step-panel active" id="panel-1">
         <div class="panel-heading">
-          <div class="panel-label">Step 1 of 3</div>
+          <div class="panel-label">Step 1 of 2</div>
           <h1 class="panel-title">Your Business</h1>
           <p class="panel-sub">Tell planners who you are and what you offer.</p>
         </div>
@@ -474,7 +531,7 @@
           <div class="form-row">
             <div class="form-group" style="flex:2;">
               <label class="form-label">Business Name <span class="req">*</span></label>
-              <input class="form-input" id="s1-businessName" type="text" placeholder="Milo Sound & Lights">
+              <input class="form-input" id="s1-businessName" type="text" placeholder="Milo Sound &amp; Lights">
             </div>
           </div>
 
@@ -558,21 +615,49 @@
         </div>
       </div>
 
-      <!-- ── STEP 2: SERVICES ── -->
+      <!-- ── STEP 2: SERVICES & MENU ── -->
       <div class="step-panel" id="panel-2">
         <div class="panel-heading">
-          <div class="panel-label">Step 2 of 3</div>
-          <h1 class="panel-title">Your Services</h1>
-          <p class="panel-sub">Add the packages or service tiers you offer. Planners will see these on your profile.</p>
+          <div class="panel-label">Step 2 of 2</div>
+          <h1 class="panel-title">Services &amp; Menu</h1>
+          <p class="panel-sub">Add your packages and menu items. Upload your PDF for instant setup.</p>
         </div>
         <div class="card">
-          <div class="error-msg" id="err-2"></div>
 
-          <!-- Added services list -->
+          <!-- PDF Import Zone -->
+          <div class="pdf-zone" id="pdfZone">
+            <div class="pdf-zone-icon">📄</div>
+            <div class="pdf-zone-title">Upload Your Menu or Services PDF</div>
+            <div class="pdf-zone-sub">Claude reads your PDF and pre-fills your services and menu items. Takes about 10 seconds.</div>
+            <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
+            <button class="btn-pdf-upload" id="btnPickPdf" type="button">Choose PDF</button>
+            <div class="pdf-zone-skip"><a href="#" id="skipPdfLink">Skip — I'll add manually</a></div>
+
+            <!-- Upload in progress state (hidden by default) -->
+            <div id="pdfLoading" style="display:none">
+              <div class="pdf-spinner"></div>
+              <div class="pdf-loading-text">Reading your PDF with Claude AI...</div>
+            </div>
+
+            <!-- Success state (hidden by default) -->
+            <div id="pdfSuccess" style="display:none">
+              <div class="pdf-success-icon">✓</div>
+              <div class="pdf-success-text" id="pdfSuccessText">Extracted X items — review and edit below</div>
+            </div>
+
+            <!-- Error state (hidden by default) -->
+            <div id="pdfError" class="error-msg" style="margin-top:1rem;"></div>
+          </div>
+
+          <!-- Services Section -->
+          <div class="section-divider">
+            <div class="section-label">Service Packages</div>
+            <button class="btn-section-add" id="btnShowAddService" type="button">+ Add Manually</button>
+          </div>
           <div class="services-list" id="servicesList"></div>
 
-          <!-- Add service form -->
-          <div class="add-service-form" id="addServiceForm">
+          <!-- Add service form (initially hidden) -->
+          <div class="add-service-form" id="addServiceForm" style="display:none">
             <div class="add-service-title">+ Add a Service Package</div>
 
             <div class="form-group">
@@ -613,30 +698,15 @@
             <button class="btn-add-service" type="button" id="btnSaveService">Save Package</button>
           </div>
 
-          <button class="btn-primary" id="btn2">
-            <div class="spinner"></div>
-            <span class="btn-text">Continue</span>
-            <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="btn-secondary" id="btn2skip">Skip for now</button>
-        </div>
-      </div>
-
-      <!-- ── STEP 3: MENU / EQUIPMENT ── -->
-      <div class="step-panel" id="panel-3">
-        <div class="panel-heading">
-          <div class="panel-label">Step 3 of 3</div>
-          <h1 class="panel-title" id="step3Title">Menu Items</h1>
-          <p class="panel-sub" id="step3Sub">Add individual items from your menu so planners can see exactly what you offer.</p>
-        </div>
-        <div class="card">
-          <div class="error-msg" id="err-3"></div>
-
-          <!-- Added menu/equipment list -->
+          <!-- Menu / Equipment Section -->
+          <div class="section-divider" id="menuSection">
+            <div class="section-label" id="menuSectionLabel">Menu Items</div>
+            <button class="btn-section-add" id="btnShowAddMenu" type="button">+ Add Manually</button>
+          </div>
           <div class="menu-list" id="menuList"></div>
 
-          <!-- Add menu item form -->
-          <div class="add-service-form" id="addMenuForm">
+          <!-- Add menu item form (initially hidden) -->
+          <div class="add-service-form" id="addMenuForm" style="display:none">
             <div class="add-service-title" id="addMenuTitle">+ Add a Menu Item</div>
 
             <div class="form-row">
@@ -670,17 +740,19 @@
             <button class="btn-add-service" type="button" id="btnSaveMenuItem" style="margin-top:1rem; margin-bottom:0;">Save Item</button>
           </div>
 
-          <button class="btn-primary" id="btn3">
+          <!-- Publish button -->
+          <div id="err-2" class="error-msg"></div>
+          <button class="btn-primary" id="btn2">
             <div class="spinner"></div>
             <span class="btn-text">Publish Profile</span>
             <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button class="btn-secondary" id="btn3skip">Skip for now</button>
+          <button class="btn-secondary" id="btn2skip">Skip — do this later</button>
         </div>
       </div>
 
-      <!-- ── STEP 4: DONE ── -->
-      <div class="step-panel" id="panel-4">
+      <!-- ── STEP 3: DONE ── -->
+      <div class="step-panel" id="panel-3">
         <div class="card">
           <div class="done-panel">
             <div class="done-icon">
@@ -743,7 +815,9 @@
       currentStep = n;
       document.getElementById('panel-' + n).classList.add('active');
       document.getElementById('si-' + n).classList.add('active');
-      document.getElementById('progressBar').style.width = (n / 4 * 100) + '%';
+      // step 1 = 50%, step 2 = 66% (in progress), step 3 = 100%
+      var pct = n === 1 ? 50 : n === 2 ? 66 : 100;
+      document.getElementById('progressBar').style.width = pct + '%';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -792,6 +866,10 @@
         document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
         document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
 
+        // Update menu section label based on type
+        var isFoodOrFloral = selectedTypes.some(function (t) { return ['CATERER','RESTO_VENUE','FLORIST_DECOR'].indexOf(t) !== -1; });
+        document.getElementById('menuSectionLabel').textContent = isFoodOrFloral ? 'Menu Items' : 'Equipment & Gear';
+
         // Update button text to reflect editing
         document.getElementById('btn1').textContent = 'Update Profile →';
       })
@@ -814,16 +892,10 @@
         document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
         document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
 
-        // Update step 3 title
-        if (isFoodVendor) {
-          document.getElementById('step3Title').textContent = 'Menu Items';
-          document.getElementById('step3Sub').textContent   = 'Add items from your menu so planners can see exactly what you offer.';
-          document.getElementById('addMenuTitle').textContent = '+ Add a Menu Item';
-        } else {
-          document.getElementById('step3Title').textContent = 'Equipment & Gear';
-          document.getElementById('step3Sub').textContent   = 'List the key equipment included in your service.';
-          document.getElementById('addMenuTitle').textContent = '+ Add Equipment';
-        }
+        // Update menu section label
+        var isFoodOrFloral = selectedTypes.some(function (t) { return ['CATERER','RESTO_VENUE','FLORIST_DECOR'].indexOf(t) !== -1; });
+        document.getElementById('menuSectionLabel').textContent = isFoodOrFloral ? 'Menu Items' : 'Equipment & Gear';
+        document.getElementById('addMenuTitle').textContent = isFoodOrFloral ? '+ Add a Menu Item' : '+ Add Equipment';
       });
     });
 
@@ -965,33 +1037,6 @@
       document.getElementById('servicesList').innerHTML = html;
     }
 
-    // ── STEP 2: Submit services ──
-    document.getElementById('btn2').addEventListener('click', function () {
-      clearError('err-2');
-      if (pendingServices.length === 0) { showError('err-2', 'Add at least one service package, or skip.'); return; }
-      submitServices(false);
-    });
-    document.getElementById('btn2skip').addEventListener('click', function () { goToStep(3); });
-
-    function submitServices(skipToNext) {
-      var btn = document.getElementById('btn2');
-      btn.classList.add('loading');
-      var chain = Promise.resolve();
-      pendingServices.forEach(function (svc) {
-        chain = chain.then(function () {
-          return authFetch('/providers/services', { method: 'POST', body: JSON.stringify(svc) });
-        });
-      });
-      chain.then(function () {
-        btn.classList.remove('loading');
-        goToStep(3);
-      }).catch(function () {
-        btn.classList.remove('loading');
-        showError('err-2', 'Failed to save some services. You can add more from your dashboard.');
-        goToStep(3);
-      });
-    }
-
     // ── Save Menu Item ──
     document.getElementById('btnSaveMenuItem').addEventListener('click', function () {
       var name     = document.getElementById('mi-name').value.trim();
@@ -1000,8 +1045,8 @@
       var dietary  = document.getElementById('mi-dietary').value.trim();
       var desc     = document.getElementById('mi-desc').value.trim();
 
-      if (!name || !category) { showError('err-3', 'Item name and category are required.'); return; }
-      clearError('err-3');
+      if (!name || !category) { showError('err-2', 'Item name and category are required.'); return; }
+      clearError('err-2');
 
       pendingMenuItems.push({
         name:        name,
@@ -1031,32 +1076,219 @@
       document.getElementById('menuList').innerHTML = html;
     }
 
-    // ── STEP 3: Submit menu items ──
-    document.getElementById('btn3').addEventListener('click', function () {
-      clearError('err-3');
-      var btn = document.getElementById('btn3');
-      if (pendingMenuItems.length === 0) { goToStep(4); return; }
+    // ── Section toggle buttons ──
+    document.getElementById('btnShowAddService').addEventListener('click', function() {
+      var f = document.getElementById('addServiceForm');
+      f.style.display = f.style.display === 'none' ? '' : 'none';
+    });
+    document.getElementById('btnShowAddMenu').addEventListener('click', function() {
+      var f = document.getElementById('addMenuForm');
+      f.style.display = f.style.display === 'none' ? '' : 'none';
+    });
+
+    // ── STEP 2: Publish Profile (services + menu items) ──
+    document.getElementById('btn2').addEventListener('click', function() {
+      clearError('err-2');
+      var btn = this;
       btn.classList.add('loading');
       var chain = Promise.resolve();
-      pendingMenuItems.forEach(function (item) {
-        chain = chain.then(function () {
+      pendingServices.forEach(function(svc) {
+        chain = chain.then(function() {
+          return authFetch('/providers/services', { method: 'POST', body: JSON.stringify(svc) });
+        });
+      });
+      pendingMenuItems.forEach(function(item) {
+        chain = chain.then(function() {
           return authFetch('/providers/menu-items', { method: 'POST', body: JSON.stringify(item) });
         });
       });
-      chain.then(function () {
+      chain.then(function() {
         btn.classList.remove('loading');
-        goToStep(4);
-      }).catch(function () {
+        goToStep(3);
+      }).catch(function() {
         btn.classList.remove('loading');
-        goToStep(4);
+        goToStep(3); // still proceed even if some fail
       });
     });
-    document.getElementById('btn3skip').addEventListener('click', function () { goToStep(4); });
+    document.getElementById('btn2skip').addEventListener('click', function() { goToStep(3); });
 
     // ── Done: go to dashboard ──
     document.getElementById('btnToDashboard').addEventListener('click', function () {
       window.location.href = 'vendordashboard.html';
     });
+
+    // ── PDF Import ──
+    var pdfFileInput = document.getElementById('pdfFileInput');
+    var btnPickPdf   = document.getElementById('btnPickPdf');
+    var skipPdfLink  = document.getElementById('skipPdfLink');
+    var pdfZone      = document.getElementById('pdfZone');
+    var pdfLoading   = document.getElementById('pdfLoading');
+    var pdfSuccess   = document.getElementById('pdfSuccess');
+    var pdfError     = document.getElementById('pdfError');
+
+    btnPickPdf.addEventListener('click', function() { pdfFileInput.click(); });
+    pdfFileInput.addEventListener('change', function() {
+      if (pdfFileInput.files && pdfFileInput.files[0]) {
+        uploadPdf(pdfFileInput.files[0]);
+      }
+    });
+
+    // Drag and drop
+    pdfZone.addEventListener('dragover', function(e) { e.preventDefault(); pdfZone.classList.add('drag-over'); });
+    pdfZone.addEventListener('dragleave', function() { pdfZone.classList.remove('drag-over'); });
+    pdfZone.addEventListener('drop', function(e) {
+      e.preventDefault(); pdfZone.classList.remove('drag-over');
+      var file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') uploadPdf(file);
+      else { pdfError.textContent = 'Please drop a PDF file.'; pdfError.classList.add('show'); }
+    });
+
+    skipPdfLink.addEventListener('click', function(e) { e.preventDefault(); hidePdfZone(); });
+
+    function hidePdfZone() {
+      pdfZone.style.display = 'none';
+      document.getElementById('addServiceForm').style.display = '';
+      document.getElementById('addMenuForm').style.display = '';
+    }
+
+    function uploadPdf(file) {
+      if (!selectedTypes.length) {
+        pdfError.textContent = 'Please go back to Step 1 and select your vendor type first.';
+        pdfError.classList.add('show');
+        return;
+      }
+      pdfError.classList.remove('show');
+      // Show loading
+      btnPickPdf.style.display = 'none';
+      document.querySelector('.pdf-zone-skip').style.display = 'none';
+      pdfLoading.style.display = '';
+      pdfSuccess.style.display = 'none';
+
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('vendorType', selectedTypes[0]);
+
+      fetch(API + '/pdf-import', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        pdfLoading.style.display = 'none';
+        if (!data.success) {
+          throw new Error(data.error || 'Extraction failed.');
+        }
+        var counts = normalizePdfData(data.data, data.vendorType);
+        pdfSuccess.style.display = '';
+        document.getElementById('pdfSuccessText').textContent =
+          'Extracted ' + counts.services + ' packages and ' + counts.items + ' items — review and edit below';
+        hidePdfZone();
+      })
+      .catch(function(err) {
+        pdfLoading.style.display = 'none';
+        btnPickPdf.style.display = '';
+        document.querySelector('.pdf-zone-skip').style.display = '';
+        pdfError.textContent = err.message || 'Could not read PDF. Try again or add manually.';
+        pdfError.classList.add('show');
+      });
+    }
+
+    // Normalize extracted JSON into pendingServices and pendingMenuItems
+    function normalizePdfData(d, vType) {
+      var svcCount = 0, itemCount = 0;
+
+      // Services / packages
+      var pkgs = d.packages || d.services || [];
+      pkgs.forEach(function(pkg) {
+        pendingServices.push({
+          name:        pkg.name || 'Package',
+          description: pkg.description || (pkg.includes ? pkg.includes.join(', ') : ''),
+          priceType:   pkg.pricePerPerson ? 'PER_PERSON' : 'FLAT_RATE',
+          basePrice:   pkg.flatPrice || pkg.pricePerPerson || 0,
+          features:    pkg.includes || [],
+          providerType: selectedTypes[0] || 'RESTO_VENUE',
+        });
+        svcCount++;
+      });
+
+      // Menu items (caterer / resto)
+      if (d.menuSections) {
+        d.menuSections.forEach(function(section) {
+          (section.items || []).forEach(function(item) {
+            pendingMenuItems.push({
+              name:        item.name || 'Item',
+              category:    section.section || 'Menu',
+              price:       item.price || item.pricePerPerson || 0,
+              description: item.description || '',
+              dietaryInfo: item.dietaryTags || [],
+            });
+            itemCount++;
+          });
+        });
+      }
+
+      // Bar packages → services
+      if (d.barPackages) {
+        d.barPackages.forEach(function(bp) {
+          pendingServices.push({
+            name:        bp.name || 'Bar Package',
+            description: bp.includes ? bp.includes.join(', ') : '',
+            priceType:   bp.pricePerPerson ? 'PER_PERSON' : 'FLAT_RATE',
+            basePrice:   bp.flatPrice || bp.pricePerPerson || 0,
+            features:    bp.includes || [],
+            providerType: selectedTypes[0] || 'RESTO_VENUE',
+          });
+          svcCount++;
+        });
+      }
+
+      // Arrangements (florist) → menu items
+      if (d.arrangements) {
+        d.arrangements.forEach(function(a) {
+          pendingMenuItems.push({
+            name:        a.name || 'Arrangement',
+            category:    'Arrangements',
+            price:       a.pricePerUnit || a.flatPrice || 0,
+            description: a.description || '',
+            dietaryInfo: [],
+          });
+          itemCount++;
+        });
+      }
+
+      // Add-ons → menu items
+      if (d.addOns) {
+        d.addOns.forEach(function(ao) {
+          pendingMenuItems.push({
+            name:        ao.name || 'Add-on',
+            category:    'Add-ons',
+            price:       ao.price || 0,
+            description: ao.unit ? 'Per ' + ao.unit : '',
+            dietaryInfo: [],
+          });
+          itemCount++;
+        });
+      }
+
+      // Equipment (entertainment)
+      if (d.equipmentIncluded && d.equipmentIncluded.length) {
+        d.equipmentIncluded.forEach(function(eq) {
+          pendingMenuItems.push({
+            name:        eq,
+            category:    'Equipment',
+            price:       0,
+            description: '',
+            dietaryInfo: [],
+          });
+          itemCount++;
+        });
+      }
+
+      renderServicesList();
+      renderMenuList();
+      return { services: svcCount, items: itemCount };
+    }
 
     // ── Global helpers (called from inline onclick) ──
     window.removeSvc = function (i) {
