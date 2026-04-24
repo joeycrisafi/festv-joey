@@ -57,7 +57,7 @@ export const createPortfolioItem = asyncHandler(async (req: AuthenticatedRequest
     throw new AppError('Media file is required', 400);
   }
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -110,7 +110,7 @@ export const getMyPortfolio = asyncHandler(async (req: AuthenticatedRequest, res
   const userId = req.user!.id;
   const { mediaType, page = 1, limit = 20 } = req.query;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -159,7 +159,7 @@ export const getProviderPortfolio = asyncHandler(async (req: AuthenticatedReques
   const { providerId } = req.params;
   const { mediaType, page = 1, limit = 20 } = req.query;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { id: providerId },
   });
   
@@ -295,7 +295,7 @@ export const setFeaturedItems = asyncHandler(async (req: AuthenticatedRequest, r
   const userId = req.user!.id;
   const { itemIds } = req.body;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -335,7 +335,7 @@ export const reorderPortfolio = asyncHandler(async (req: AuthenticatedRequest, r
   const userId = req.user!.id;
   const { orderedIds } = req.body;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   

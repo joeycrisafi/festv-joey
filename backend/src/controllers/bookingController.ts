@@ -70,7 +70,7 @@ export const getProviderBookings = asyncHandler(async (req: AuthenticatedRequest
   const userId = req.user!.id;
   const { status, page = 1, limit = 10 } = req.query;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -193,7 +193,7 @@ export const getBooking = asyncHandler(async (req: AuthenticatedRequest, res: Re
   }
   
   if (userRole === 'PROVIDER') {
-    const profile = await prisma.providerProfile.findUnique({
+    const profile = await prisma.providerProfile.findFirst({
       where: { userId },
     });
     if (booking.providerId !== profile?.id) {
@@ -357,7 +357,7 @@ export const confirmBooking = asyncHandler(async (req: AuthenticatedRequest, res
   const userId = req.user!.id;
   const { id } = req.params;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -410,7 +410,7 @@ export const startBooking = asyncHandler(async (req: AuthenticatedRequest, res: 
   const userId = req.user!.id;
   const { id } = req.params;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -451,7 +451,7 @@ export const completeBooking = asyncHandler(async (req: AuthenticatedRequest, re
   const userId = req.user!.id;
   const { id } = req.params;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -657,7 +657,7 @@ export const getUpcomingBookings = asyncHandler(async (req: AuthenticatedRequest
   if (userRole === 'CLIENT') {
     where.clientId = userId;
   } else if (userRole === 'PROVIDER') {
-    const profile = await prisma.providerProfile.findUnique({
+    const profile = await prisma.providerProfile.findFirst({
       where: { userId },
     });
     if (!profile) {

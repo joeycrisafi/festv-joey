@@ -10,7 +10,7 @@ export const createQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
   const data = createQuoteSchema.parse(req.body);
   
   // Get provider profile
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   
@@ -192,7 +192,7 @@ export const getMyQuotes = asyncHandler(async (req: AuthenticatedRequest, res: R
   const userId = req.user!.id;
   const { status, page = 1, limit = 10 } = req.query;
   
-  const profile = await prisma.providerProfile.findUnique({
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
   });
   

@@ -181,7 +181,7 @@ export const getEventRequest = asyncHandler(async (req: AuthenticatedRequest, re
   }
   
   if (userRole === 'PROVIDER') {
-    const providerProfile = await prisma.providerProfile.findUnique({
+    const providerProfile = await prisma.providerProfile.findFirst({
       where: { userId },
     });
     
@@ -348,8 +348,8 @@ export const getAvailableEventRequests = asyncHandler(async (req: AuthenticatedR
   const userId = req.user!.id;
   const { page = 1, limit = 10, eventType, minBudget, maxBudget, minGuests, maxGuests, city, state } = req.query;
   
-  // Get provider profile
-  const profile = await prisma.providerProfile.findUnique({
+  // Get provider profile (userId is not @unique — user can have multiple profiles)
+  const profile = await prisma.providerProfile.findFirst({
     where: { userId },
     include: {
       cuisineTypes: true,

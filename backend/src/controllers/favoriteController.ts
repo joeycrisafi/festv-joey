@@ -16,7 +16,7 @@ export const addToFavorites = async (req: AuthenticatedRequest, res: Response) =
   }
 
   // Check if provider exists
-  const provider = await prisma.providerProfile.findUnique({
+  const provider = await prisma.providerProfile.findFirst({
     where: { id: providerId },
     include: {
       user: {

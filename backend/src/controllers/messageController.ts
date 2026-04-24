@@ -14,7 +14,7 @@ export const getOrCreateConversation = async (req: AuthenticatedRequest, res: Re
   }
 
   // Check if provider exists
-  const provider = await prisma.providerProfile.findUnique({
+  const provider = await prisma.providerProfile.findFirst({
     where: { id: providerId },
     include: { user: true }
   });
