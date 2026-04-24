@@ -1476,8 +1476,17 @@
 
     /* ── SEND REQUEST FLOW ── */
     (function() {
-      // Vendors see none of this
-      if (_viewerIsVendor) return;
+      // Vendors viewing another vendor's profile — show a helpful note instead of blank
+      if (_viewerIsVendor) {
+        var noEventCta = document.getElementById('noEventCta');
+        if (noEventCta) {
+          noEventCta.style.display = 'block';
+          noEventCta.querySelector('div').innerHTML =
+            '<div style="font-family:\'Montserrat\',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;">VENDOR VIEW</div>' +
+            '<div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">You\'re signed in as a vendor. <a href="signin.html" style="color:var(--gold-dark);">Sign in as a planner</a> to create an event and send requests.</div>';
+        }
+        return;
+      }
 
       // Determine if the viewer is a logged-in planner
       var _viewerIsPlanner = (function() {
@@ -1493,6 +1502,16 @@
 
       var params = new URLSearchParams(window.location.search);
       var fromEvent = params.get('fromEvent');
+
+      // If no fromEvent in URL, check localStorage for an active pending event
+      // This handles navigation from planner dashboard where fromEvent isn't added
+      if (!fromEvent) {
+        var _pendingCheck = null;
+        try { _pendingCheck = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
+        if (_pendingCheck && _pendingCheck.name) {
+          fromEvent = '1'; // treat as if coming from an active event
+        }
+      }
 
       if (!fromEvent) {
         if (_viewerIsPlanner) {
