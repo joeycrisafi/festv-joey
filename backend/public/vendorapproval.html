@@ -302,13 +302,20 @@
       document.getElementById('detVenue').textContent  = venue;
       document.getElementById('detBudget').textContent = budget;
 
-      // Services wanted
-      var services = r.servicesWanted || [];
-      if (services.length) {
-        document.getElementById('detServices').innerHTML = services.map(function(s) {
-          return '<span class="tag">' + (typeLabels[s] || s) + '</span>';
-        }).join('');
+      // Services wanted — show specific service names from description, then enum type as fallback
+      var servicesEl = document.getElementById('detServices');
+      var specificNames = [];
+      if (r.description) {
+        var svcMatch = r.description.match(/^Service:\s*([^.]+)/i);
+        if (svcMatch) specificNames = svcMatch[1].split(',').map(function(s) { return s.trim(); }).filter(Boolean);
       }
+      var typeTagsHtml = (r.servicesWanted || []).map(function(s) {
+        return '<span class="tag" style="background:rgba(196,160,106,0.12);border-color:rgba(196,160,106,0.3);color:var(--gold-dark);">' + (typeLabels[s] || s) + '</span>';
+      }).join('');
+      var nameTagsHtml = specificNames.map(function(n) {
+        return '<span class="tag">' + esc(n) + '</span>';
+      }).join('');
+      servicesEl.innerHTML = nameTagsHtml + (typeTagsHtml ? '<span style="display:inline-block;margin:0.15rem 0.3rem;font-size:0.65rem;color:var(--muted);">·</span>' + typeTagsHtml : '');
 
       // Dietary / allergies
       var dietary = (r.dietaryRestrictions || []).concat(r.allergies || []);
@@ -317,10 +324,13 @@
         document.getElementById('dietarySection').style.display = '';
       }
 
-      // Description / message
+      // Description / message — strip "Service: X, Y. " prefix, show only planner's actual note
       if (r.description) {
-        document.getElementById('plannerMessage').textContent = r.description;
-        document.getElementById('messageCard').style.display = '';
+        var plannerNote = r.description.replace(/^Service:[^.]*\.\s*/i, '').trim();
+        if (plannerNote) {
+          document.getElementById('plannerMessage').textContent = plannerNote;
+          document.getElementById('messageCard').style.display = '';
+        }
       }
     })
     .catch(function() { document.getElementById('pageTitle').textContent = 'Could not load request'; });
