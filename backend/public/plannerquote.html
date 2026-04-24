@@ -238,7 +238,9 @@
       var user      = provider.user || {};
       var eventReq  = q.eventRequest || {};
       var vendorName = provider.businessName || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Vendor';
-      var typeLabel  = typeLabels[provider.providerType] || provider.providerType || 'Vendor';
+      // primaryType is the canonical field; providerType is a legacy alias
+      var rawType   = provider.primaryType || provider.providerType || (provider.providerTypes && provider.providerTypes[0]) || '';
+      var typeLabel  = typeLabels[rawType] || rawType || 'Vendor';
       var initials   = vendorName.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
       var eventType  = eventTypeLabels[eventReq.eventType] || eventReq.eventType || 'Event';
       var eventTitle = eventReq.title || (eventType + ' Event');
@@ -265,8 +267,11 @@
       }
       document.getElementById('vendorNameInline').textContent = vendorName;
 
-      // Event summary
-      var dateStr = eventReq.eventDate ? new Date(eventReq.eventDate).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) : '—';
+      // Event summary — guard against null eventRequest (e.g. if event was deleted)
+      if (!eventReq || !eventReq.id) {
+        document.getElementById('eventSummary').innerHTML = '<div class="ev-item"><div class="ev-value" style="color:var(--muted);">Event details unavailable</div></div>';
+      }
+      var dateStr = (eventReq && eventReq.eventDate) ? new Date(eventReq.eventDate).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) : '—';
       var timeStr = (eventReq.eventStartTime && eventReq.eventEndTime) ? eventReq.eventStartTime + ' – ' + eventReq.eventEndTime : '';
       var venue   = [eventReq.venueName, eventReq.venueCity, eventReq.venueState].filter(Boolean).join(', ');
       document.getElementById('eventSummary').innerHTML =
@@ -350,17 +355,28 @@
       return Math.floor(secs/86400) + ' days ago';
     }
 
+    // ── Shared auth-aware fetch ──
+    function authFetch(url, opts) {
+      return fetch(url, opts).then(function(r) {
+        if (r.status === 401) {
+          localStorage.removeItem('accessToken');
+          window.location.href = 'signin.html?returnTo=' + encodeURIComponent(window.location.href);
+          throw new Error('SESSION_EXPIRED');
+        }
+        return r.json();
+      });
+    }
+
     // ── Accept ──
     window.acceptQuote = function() {
       var btn = document.getElementById('btnAccept');
       var errEl = document.getElementById('errorMsg');
       errEl.style.display = 'none';
       btn.disabled = true; btn.textContent = 'Booking…';
-      fetch(API + '/quotes/' + quoteId + '/accept', {
+      authFetch(API + '/quotes/' + quoteId + '/accept', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token }
       })
-      .then(function(r) { return r.json(); })
       .then(function(res) {
         if (!res.success) throw new Error(res.message || res.error || 'Could not accept quote');
         document.getElementById('actionArea').style.display = 'none';
@@ -369,10 +385,11 @@
         document.getElementById('successIcon').className = 'success-icon accept';
         document.getElementById('successSvg').setAttribute('points', '20 6 9 17 4 12');
         document.getElementById('successTitle').textContent = 'Booking Confirmed!';
-        document.getElementById('successSub').textContent = 'Your event has been confirmed with ' + (document.getElementById('vendorName').textContent || 'the vendor') + '. You'll find it in your upcoming bookings.';
+        document.getElementById('successSub').textContent = 'Your event has been confirmed with ' + (document.getElementById('vendorName').textContent || 'the vendor') + '. You\'ll find it in your upcoming bookings.';
         document.getElementById('successBanner').classList.add('show');
       })
       .catch(function(err) {
+        if (err.message === 'SESSION_EXPIRED') return;
         btn.disabled = false; btn.textContent = 'Accept & Book';
         errEl.textContent = err.message || 'Could not accept quote. Please try again.';
         errEl.style.display = '';
@@ -386,12 +403,11 @@
       var errEl = document.getElementById('errorMsg');
       errEl.style.display = 'none';
       btn.disabled = true; btn.textContent = 'Declining…';
-      fetch(API + '/quotes/' + quoteId + '/reject', {
+      authFetch(API + '/quotes/' + quoteId + '/reject', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       })
-      .then(function(r) { return r.json(); })
       .then(function(res) {
         if (!res.success) throw new Error(res.message || res.error || 'Could not decline');
         document.getElementById('actionArea').style.display = 'none';
@@ -403,6 +419,7 @@
         document.getElementById('successBanner').classList.add('show');
       })
       .catch(function(err) {
+        if (err.message === 'SESSION_EXPIRED') return;
         btn.disabled = false; btn.textContent = 'Decline Quote';
         errEl.textContent = err.message || 'Could not decline quote. Please try again.';
         errEl.style.display = '';

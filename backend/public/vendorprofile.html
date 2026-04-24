@@ -1657,10 +1657,10 @@
           eventDate:      ev.date,
           eventStartTime: ev.startTime || '18:00',
           eventEndTime:   ev.endTime || '23:00',
-          venueAddress:   ev.venueAddress || '123 Main St',
-          venueCity:      ev.venueCity || 'My City',
-          venueState:     ev.venueState || 'N/A',
-          venueZipCode:   ev.venueZip || '00000',
+          venueAddress:   ev.venueAddress || undefined,
+          venueCity:      ev.venueCity || undefined,
+          venueState:     ev.venueState || undefined,
+          venueZipCode:   ev.venueZip || undefined,
           servicesWanted: [vendorType],
           description:    (service.value ? 'Service: ' + service.value + '. ' : '') + notes
         };
@@ -1672,47 +1672,48 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          if (data.success || data.data) {
-            var requestId = data.data && data.data.id;
-
-            // Auto-submit so vendors can see it (DRAFT → SUBMITTED)
-            if (requestId) {
-              fetch('/api/v1/event-requests/' + requestId + '/submit', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token }
-              }).catch(function() {}); // fire-and-forget
-            }
-
-            // Save request to pending event
-            ev.requests = ev.requests || [];
-            ev.requests.push({
-              id: requestId || null,
-              vendorType: vendorType,
-              vendorName: window._currentVendorName || 'Vendor',
-              service: service.value,
-              status: 'PENDING',
-              sentAt: new Date().toISOString()
-            });
-            localStorage.setItem('pendingEvent', JSON.stringify(ev));
-
-            // Show success
-            document.getElementById('srStep2').style.display = 'none';
-            document.getElementById('srSuccess').style.display = 'block';
-            document.getElementById('srSuccessVendor').textContent = window._currentVendorName || 'the vendor';
-            document.getElementById('sendRequestSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else {
-            btn.disabled = false;
-            btn.textContent = 'Send to Vendor →';
+          if (!data.success && !data.data) {
             var msg = data.error || data.message || 'Could not send request. Please try again.';
             if (data.details && data.details.length) msg += ' (' + data.details.map(function(d){return d.field+': '+d.message;}).join('; ') + ')';
-            errEl.textContent = msg;
-            errEl.style.display = 'block';
+            throw new Error(msg);
           }
+          var requestId = data.data && data.data.id;
+          if (!requestId) throw new Error('Request created but ID missing. Please try again.');
+
+          // SUBMIT the request so vendors can see it (DRAFT → SUBMITTED)
+          return fetch('/api/v1/event-requests/' + requestId + '/submit', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(submitRes) {
+            if (!submitRes.success && !submitRes.data) throw new Error('Request created but could not be submitted. Please try again.');
+            return requestId;
+          });
         })
-        .catch(function() {
+        .then(function(requestId) {
+          // Save request to pending event
+          ev.requests = ev.requests || [];
+          ev.requests.push({
+            id: requestId,
+            vendorType: vendorType,
+            vendorName: window._currentVendorName || 'Vendor',
+            service: service.value,
+            status: 'PENDING',
+            sentAt: new Date().toISOString()
+          });
+          localStorage.setItem('pendingEvent', JSON.stringify(ev));
+
+          // Show success
+          document.getElementById('srStep2').style.display = 'none';
+          document.getElementById('srSuccess').style.display = 'block';
+          document.getElementById('srSuccessVendor').textContent = window._currentVendorName || 'the vendor';
+          document.getElementById('sendRequestSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(function(err) {
           btn.disabled = false;
           btn.textContent = 'Send to Vendor →';
-          errEl.textContent = 'Unable to connect. Please try again.';
+          errEl.textContent = err.message || 'Unable to connect. Please try again.';
           errEl.style.display = 'block';
         });
       });

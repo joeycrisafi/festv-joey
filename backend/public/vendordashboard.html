@@ -1340,6 +1340,12 @@
       errEl.style.display = 'none';
       var btn = document.getElementById('btnSubmitQuote');
 
+      if (!_activeRequestId) {
+        errEl.textContent = 'No request selected. Please close and try again.';
+        errEl.style.display = 'block';
+        return;
+      }
+
       var items = [];
       document.querySelectorAll('.quote-item-row').forEach(function(row) {
         var name = row.querySelector('.qi-name').value.trim();
