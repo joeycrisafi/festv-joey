@@ -1281,6 +1281,15 @@
     var id = new URLSearchParams(window.location.search).get('id');
     if (!id) return; // no id = show static demo page as-is
 
+    // Hide all static mock content immediately — real data replaces it on load
+    var mockEls = ['vp-name','vp-stickyName','vp-badge','vp-location','vp-cover'];
+    mockEls.forEach(function(elId) {
+      var el = document.getElementById(elId);
+      if (el) el.style.opacity = '0';
+    });
+    var sl = document.querySelector('.services-list');
+    if (sl) sl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:0.82rem;">Loading…</div>';
+
     var typeLabels = { RESTO_VENUE:'Restaurant / Venue', CATERER:'Caterer', ENTERTAINMENT:'Entertainment', PHOTO_VIDEO:'Photo & Video', FLORIST_DECOR:'Florist & Decor' };
     var fallbackImgs = {
       RESTO_VENUE:'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1400&q=80',
@@ -1296,10 +1305,18 @@
         var p = (res.data) ? res.data : res;
         if (!p || !p.id) return;
 
+        // Reveal all hidden elements now that real data is ready
+        mockEls.forEach(function(elId) {
+          var el = document.getElementById(elId);
+          if (el) el.style.opacity = '1';
+        });
+
         var type = p.primaryType || (p.providerTypes && p.providerTypes[0]) || 'OTHER';
         var name = p.businessName || 'Vendor';
         window._currentVendorName = name;
         window._currentVendorType = type;
+        // Notify the CTA link updater that the name is now known
+        document.dispatchEvent(new CustomEvent('vendorNameLoaded', { detail: name }));
         if (window._buildSrServices) window._buildSrServices(name, type, p.services);
         var location = (p.serviceAreas && p.serviceAreas[0]) || 'Location TBD';
         var img  = (p.user && p.user.bannerUrl) || (p.user && p.user.avatarUrl) || fallbackImgs[type] || fallbackImgs.OTHER;
@@ -1474,7 +1491,13 @@
           var vendorIdParam = params.get('id');
           var ctaLink = document.getElementById('createEventCtaLink');
           if (ctaLink && vendorIdParam) {
-            ctaLink.href = 'createevent.html?returnTo=' + encodeURIComponent(vendorIdParam);
+            // Include vendorName so profile can show it instantly on redirect back
+            var vName = window._currentVendorName || document.getElementById('vp-name').textContent || '';
+            ctaLink.href = 'createevent.html?returnTo=' + encodeURIComponent(vendorIdParam) + (vName ? '&vendorName=' + encodeURIComponent(vName) : '');
+            // Update link dynamically once API loads the name
+            document.addEventListener('vendorNameLoaded', function(e) {
+              ctaLink.href = 'createevent.html?returnTo=' + encodeURIComponent(vendorIdParam) + '&vendorName=' + encodeURIComponent(e.detail);
+            });
           }
         } else {
           // Guest / not logged in — prompt to sign in
