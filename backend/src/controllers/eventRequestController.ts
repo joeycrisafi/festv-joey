@@ -369,13 +369,8 @@ export const getAvailableEventRequests = asyncHandler(async (req: AuthenticatedR
     eventDate: { gte: startOfToday },
   };
 
-  // Only apply guest count filter if profile has meaningful limits set
-  if (profile.minGuestCount > 0 || profile.maxGuestCount < 10000) {
-    where.guestCount = {
-      gte: profile.minGuestCount,
-      lte: profile.maxGuestCount,
-    };
-  }
+  // Guest count filter intentionally removed for MVP — default DB values (10/500)
+  // would always apply the filter and silently drop requests with small guest counts.
   
   // Filter by event type
   if (eventType) {
