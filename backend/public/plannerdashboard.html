@@ -1909,44 +1909,89 @@
       // ──────────────────────────────────────────────────────────────
       // SAVED VENDORS
       // ──────────────────────────────────────────────────────────────
-      function renderSavedVendors() {
-        var saved = [];
-        try { saved = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
+      function renderSavedVendors(vendors) {
         var card = document.getElementById('savedVendorsCard');
         var list = document.getElementById('savedVendorsList');
-        if (!saved.length) { card.style.display = 'none'; return; }
+        if (!vendors.length) { card.style.display = 'none'; return; }
         card.style.display = '';
         list.innerHTML = '';
-        saved.forEach(function(v) {
+        vendors.forEach(function(v) {
+          var id = v.providerId || v.id;
+          var name = (v.provider && v.provider.businessName) ? v.provider.businessName : (v.name || 'Vendor');
+          var types = (v.provider && v.provider.providerTypes) ? v.provider.providerTypes.join(', ') : (v.category || '');
+          var img = (v.provider && v.provider.portfolioItems && v.provider.portfolioItems[0]) ? v.provider.portfolioItems[0].mediaUrl : (v.img || '');
+          var price = v.priceLabel || '';
           var row = document.createElement('div');
           row.style.cssText = 'display:flex;align-items:center;gap:0.85rem;padding:0.65rem 0;border-bottom:1px solid var(--border);';
           row.innerHTML =
-            '<img src="' + (v.img || '') + '" style="width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+            '<img src="' + img + '" style="width:46px;height:46px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.background=\'#f0ede8\';this.style.display=\'block\'">' +
             '<div style="flex:1;min-width:0;">' +
-              '<div style="font-size:0.82rem;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (v.name || 'Vendor') + '</div>' +
-              '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem;">' + (v.category || '') + (v.priceLabel ? ' · ' + v.priceLabel : '') + '</div>' +
+              '<div style="font-size:0.82rem;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</div>' +
+              '<div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem;">' + types + (price ? ' · ' + price : '') + '</div>' +
             '</div>' +
             '<div style="display:flex;gap:0.5rem;flex-shrink:0;">' +
-              '<a href="vendorprofile.html?id=' + v.id + '" style="font-size:0.68rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold-dark);text-decoration:none;padding:0.35rem 0.75rem;border:1px solid var(--gold);border-radius:6px;">View</a>' +
-              '<button onclick="unsaveVendor(\'' + v.id + '\', this)" style="font-size:0.68rem;font-weight:700;background:none;border:1px solid var(--border);border-radius:6px;padding:0.35rem 0.6rem;cursor:pointer;color:var(--muted);">✕</button>' +
+              '<a href="vendorprofile.html?id=' + id + '" style="font-size:0.68rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold-dark);text-decoration:none;padding:0.35rem 0.75rem;border:1px solid var(--gold);border-radius:6px;">View</a>' +
+              '<button onclick="unsaveVendor(\'' + id + '\', \'' + (v.providerId ? 'api' : 'local') + '\')" style="font-size:0.68rem;font-weight:700;background:none;border:1px solid var(--border);border-radius:6px;padding:0.35rem 0.6rem;cursor:pointer;color:var(--muted);">✕</button>' +
             '</div>';
           list.appendChild(row);
         });
-        // remove border from last row
         var rows = list.children;
         if (rows.length) rows[rows.length - 1].style.borderBottom = 'none';
       }
 
-      window.unsaveVendor = function(id, btn) {
-        var saved = [];
-        try { saved = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
-        saved = saved.filter(function(v) { return String(v.id) !== String(id); });
-        localStorage.setItem('savedVendors', JSON.stringify(saved));
-        renderSavedVendors();
+      window.unsaveVendor = function(id, source) {
+        var token = localStorage.getItem('accessToken');
+        if (source === 'api' && token) {
+          fetch('/api/v1/favorites/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          })
+            .then(function() { loadSavedVendors(); })
+            .catch(function() {});
+        } else {
+          var saved = [];
+          try { saved = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
+          saved = saved.filter(function(v) { return String(v.id) !== String(id); });
+          localStorage.setItem('savedVendors', JSON.stringify(saved));
+          loadSavedVendors();
+        }
         showToast('Vendor removed from saved list');
       };
 
-      renderSavedVendors();
+      function loadSavedVendors() {
+        var token = localStorage.getItem('accessToken');
+        if (token) {
+          // Load from API (cross-device)
+          fetch('/api/v1/favorites', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.success && d.data && d.data.favorites) {
+                var apiFavs = d.data.favorites;
+                // Also merge any localStorage saves that aren't in the API yet
+                var local = [];
+                try { local = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
+                var apiIds = apiFavs.map(function(f) { return String(f.providerId); });
+                var localOnly = local.filter(function(v) { return apiIds.indexOf(String(v.id)) === -1; });
+                renderSavedVendors(apiFavs.concat(localOnly));
+              } else {
+                loadLocalSavedVendors();
+              }
+            })
+            .catch(function() { loadLocalSavedVendors(); });
+        } else {
+          loadLocalSavedVendors();
+        }
+      }
+
+      function loadLocalSavedVendors() {
+        var saved = [];
+        try { saved = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
+        renderSavedVendors(saved);
+      }
+
+      loadSavedVendors();
 
       // ──────────────────────────────────────────────────────────────
       // FRIENDS COUNT

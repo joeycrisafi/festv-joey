@@ -192,6 +192,26 @@
 
     .btn-request-hero:hover { background: var(--gold-light); transform: translateY(-2px); }
 
+    .btn-save-hero {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 0.7rem 1.4rem;
+      border-radius: 3px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-save-hero:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); }
+    .btn-save-hero.saved { background: rgba(196,160,106,0.2); border-color: var(--gold); color: var(--gold-light); }
+
     .btn-message-hero {
       background: transparent;
       color: var(--white);
@@ -900,6 +920,10 @@
       </div>
       <div class="hero-cta" id="heroCta">
         <button class="btn-request-hero">Request Service</button>
+        <button class="btn-save-hero" id="btnSaveVendor" onclick="toggleSaveVendor()" style="display:none;">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span id="btnSaveLabel">Save</span>
+        </button>
         <button class="btn-message-hero">Send Message</button>
       </div>
     </div>
@@ -1730,6 +1754,61 @@
     function esc(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+  })();
+
+  /* ── SAVE / FAVORITE VENDOR ── */
+  (function() {
+    var token = localStorage.getItem('accessToken');
+    if (!token || _viewerIsVendor) return; // only planners can save
+
+    // Must be a planner (CLIENT)
+    try {
+      var payload = JSON.parse(atob(token.split('.')[1]));
+      var roles = payload.roles || (payload.role ? [payload.role] : []);
+      if (roles.indexOf('CLIENT') === -1) return;
+    } catch(e) { return; }
+
+    var providerId = new URLSearchParams(window.location.search).get('id');
+    if (!providerId) return;
+
+    var btn = document.getElementById('btnSaveVendor');
+    var lbl = document.getElementById('btnSaveLabel');
+    if (!btn) return;
+
+    btn.style.display = 'flex';
+
+    function setSaved(saved) {
+      if (saved) {
+        btn.classList.add('saved');
+        lbl.textContent = 'Saved';
+      } else {
+        btn.classList.remove('saved');
+        lbl.textContent = 'Save';
+      }
+    }
+
+    // Check current state
+    fetch('/api/v1/favorites/' + providerId + '/check', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.success) setSaved(d.data.isFavorited); })
+      .catch(function() {});
+
+    // Toggle on click
+    window.toggleSaveVendor = function() {
+      var isSaved = btn.classList.contains('saved');
+      var method = isSaved ? 'DELETE' : 'POST';
+      fetch('/api/v1/favorites/' + providerId, {
+        method: method,
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) setSaved(!isSaved);
+        })
+        .catch(function() {});
+    };
   })();
   </script>
   <script src="/jess-widget.js"></script>

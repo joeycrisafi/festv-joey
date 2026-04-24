@@ -9,8 +9,9 @@ export const addToFavorites = async (req: AuthenticatedRequest, res: Response) =
   const { providerId } = req.params;
   const { notes } = req.body;
 
-  // Check if user is a client
-  if (req.user!.role !== 'CLIENT') {
+  // Check if user is a client (handle both role string and roles array)
+  const userRoles: string[] = req.user!.roles || (req.user!.role ? [req.user!.role] : []);
+  if (!userRoles.includes('CLIENT')) {
     throw new ForbiddenError('Only clients can add favorites');
   }
 
