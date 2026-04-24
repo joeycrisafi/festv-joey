@@ -502,9 +502,9 @@
           message = data.data.message || '';
           links = data.data.links || [];
         } else if (data && data.error) {
-          message = "I'm having a little trouble right now. Please try again in a moment.";
+          message = "Error: " + data.error;
         } else {
-          message = "Sorry, I didn't catch that. Please try again!";
+          message = "Unexpected response: " + JSON.stringify(data).substring(0, 120);
         }
 
         conversation.push({ role: 'assistant', content: message });
