@@ -11,6 +11,7 @@ import adminRoutes from './adminRoutes';
 import verificationRoutes from './verificationRoutes';
 import notificationRoutes from './notificationRoutes';
 import pdfImportRoutes from './pdfImportRoutes';
+import jessRoutes from './jessRoutes';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/admin', adminRoutes);
 router.use('/verification', verificationRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/pdf-import', pdfImportRoutes);
+router.use('/jess', jessRoutes);
 
 export default router;
