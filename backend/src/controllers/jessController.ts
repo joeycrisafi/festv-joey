@@ -254,7 +254,7 @@ export const chat = async (req: AuthenticatedRequest, res: Response) => {
   let response;
   try {
     response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-7-sonnet-20250219',
       max_tokens: 400,
       system: systemPrompt,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
