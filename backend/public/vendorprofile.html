@@ -1303,7 +1303,13 @@
       .then(function (r) { return r.json(); })
       .then(function (res) {
         var p = (res.data) ? res.data : res;
-        if (!p || !p.id) return;
+        if (!p || !p.id) {
+          // Invalid or not-found ID — show error
+          var sl = document.querySelector('.services-list');
+          if (sl) sl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:0.82rem;">Vendor not found. <a href="browsevendors.html" style="color:var(--gold-dark);">Browse vendors →</a></div>';
+          mockEls.forEach(function(elId) { var el = document.getElementById(elId); if (el) el.style.opacity = '1'; });
+          return;
+        }
 
         // Reveal all hidden elements now that real data is ready
         mockEls.forEach(function(elId) {
@@ -1461,7 +1467,11 @@
           }
         }
       })
-      .catch(function () {});
+      .catch(function () {
+        var sl = document.querySelector('.services-list');
+        if (sl) sl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:0.82rem;">Couldn\'t load vendor. <a href="browsevendors.html" style="color:var(--gold-dark);">Browse vendors →</a></div>';
+        mockEls.forEach(function(elId) { var el = document.getElementById(elId); if (el) el.style.opacity = '1'; });
+      });
 
     /* ── SEND REQUEST FLOW ── */
     (function() {
