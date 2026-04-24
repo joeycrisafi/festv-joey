@@ -1,0 +1,28 @@
+# Festiv Roadmap
+
+## North Star
+Build Vendors, get to the point where we can book an event completely via etransfer or stripe.
+
+## Current 
+ small:
+	-[/] add menu on top right for navigation and maybe profile image
+	-[/] fix festv logo sign out bug
+	-[ ] re-add admin pages with admin email unlock (APB task)
+	-[ ] add phone sms verification with twilio (APB task. old .env api keys)
+ 	
+
+ bigger:
+	-[ ] 0auth google/fb sign-in options
+	-[ ] pdf reader
+	-[ ] stripe integration, e-transfer auto request for security?
+	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
+
+
+## Later 
+
+
+
+## Decisions log
+
+
+## Known risks / open questions
