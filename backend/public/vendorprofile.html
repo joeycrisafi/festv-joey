@@ -1222,19 +1222,26 @@
   </div>
 
   <script>
-  // Hide Request/Message buttons if viewer is a vendor (PROVIDER role)
-  (function() {
+  // Detect if viewer is a vendor — used to hide planner-only CTAs
+  var _viewerIsVendor = (function() {
     try {
       var token = localStorage.getItem('accessToken');
-      if (token) {
-        var payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.role === 'PROVIDER') {
-          var cta = document.getElementById('heroCta');
-          if (cta) cta.style.display = 'none';
-        }
-      }
-    } catch(e) {}
+      if (!token) return false;
+      var payload = JSON.parse(atob(token.split('.')[1]));
+      // JWT may store role as a string OR roles as an array
+      if (payload.role === 'PROVIDER') return true;
+      if (Array.isArray(payload.roles) && payload.roles.indexOf('PROVIDER') !== -1) return true;
+      return false;
+    } catch(e) { return false; }
   })();
+
+  if (_viewerIsVendor) {
+    // Hide all planner-facing CTAs immediately
+    ['heroCta', 'noEventCta', 'sendRequestSection', 'sendRequestBanner'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
 
   (function () {
     var id = new URLSearchParams(window.location.search).get('id');
@@ -1349,7 +1356,7 @@
                 return '<div class="service-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' + esc(f) + '</div>';
               }).join('');
               var fromEvent = new URLSearchParams(window.location.search).get('fromEvent');
-              var selectBtn = fromEvent ? '<button onclick="window.selectService(' + JSON.stringify(s.name) + ',' + JSON.stringify(priceLabel) + ')" style="margin-top:0.6rem;padding:0.4rem 1rem;background:var(--dark);color:var(--gold-light);border:none;border-radius:6px;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;" id="svcbtn-' + i + '">+ Select</button>' : '';
+              var selectBtn = (!_viewerIsVendor && fromEvent) ? '<button onclick="window.selectService(' + JSON.stringify(s.name) + ',' + JSON.stringify(priceLabel) + ')" style="margin-top:0.6rem;padding:0.4rem 1rem;background:var(--dark);color:var(--gold-light);border:none;border-radius:6px;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;" id="svcbtn-' + i + '">+ Select</button>' : '';
               return '<div class="service-row"><div class="service-info"><div class="service-name">' + esc(s.name) + '</div>'
                 + '<div class="service-desc">' + esc(s.description || '') + '</div>'
                 + (features ? '<div class="service-features">' + features + '</div>' : '')
@@ -1407,6 +1414,9 @@
 
     /* ── SEND REQUEST FLOW ── */
     (function() {
+      // Vendors previewing their own profile see neither CTA
+      if (_viewerIsVendor) return;
+
       var params = new URLSearchParams(window.location.search);
       var fromEvent = params.get('fromEvent');
       if (!fromEvent) {
