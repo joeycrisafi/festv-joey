@@ -4,6 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FESTV</title>
+  <script>
+    // If already logged in, go straight to the right dashboard — don't show landing page
+    (function() {
+      try {
+        var token = localStorage.getItem('accessToken');
+        if (!token) return;
+        var payload = JSON.parse(atob(token.split('.')[1]));
+        // Check token hasn't expired
+        if (payload.exp && payload.exp * 1000 < Date.now()) return;
+        var roles = payload.roles || (payload.role ? [payload.role] : []);
+        if (roles.indexOf('PROVIDER') !== -1) {
+          window.location.replace('vendordashboard.html');
+        } else if (roles.indexOf('CLIENT') !== -1) {
+          window.location.replace('plannerdashboard.html');
+        }
+      } catch(e) {}
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
