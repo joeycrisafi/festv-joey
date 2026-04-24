@@ -808,43 +808,8 @@
       wrap.querySelectorAll('[name="price"]').forEach(el => el.addEventListener('change', applyFilters));
     }
 
-    let allVendors = [
-      // Venues
-      { id:1,  name:"The Rosewood Estate",   category:"Venue",        location:"Toronto, ON",  rating:4.9, reviews:186, priceNum:3200, priceLabel:"From $3,200",  priceRange:"premium", img:"https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80", featured:true,  booked:["2026-05-17","2026-06-14","2026-07-04"] },
-      { id:2,  name:"The Skyline Loft",       category:"Venue",        location:"Toronto, ON",  rating:4.7, reviews:112, priceNum:1800, priceLabel:"From $1,800",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&q=80", featured:false, booked:["2026-05-24","2026-06-07"] },
-      { id:3,  name:"Maison Blanche Hall",    category:"Venue",        location:"Toronto, ON",  rating:4.8, reviews:94,  priceNum:2500, priceLabel:"From $2,500",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80", featured:false, booked:["2026-05-17","2026-08-09"] },
-      { id:4,  name:"The Garden Pavilion",    category:"Venue",        location:"Toronto, ON",  rating:4.6, reviews:71,  priceNum:1200, priceLabel:"From $1,200",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80", featured:false, booked:["2026-06-04","2026-07-22"] },
-      { id:5,  name:"Ember Hall",             category:"Venue",        location:"Toronto, ON",  rating:4.5, reviews:58,  priceNum:900,  priceLabel:"From $900",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80", featured:false, booked:[] },
-      { id:6,  name:"The Grand Manor",        category:"Venue",        location:"Toronto, ON",  rating:5.0, reviews:44,  priceNum:6500, priceLabel:"From $6,500",  priceRange:"luxury",  img:"https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80", featured:false, booked:["2026-05-17","2026-06-04","2026-07-22"] },
-      // Caterers
-      { id:7,  name:"Harvest & Co.",          category:"Caterer",      location:"Toronto, ON",  rating:4.9, reviews:143, priceNum:45,   priceLabel:"From $45/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80", featured:true,  booked:["2026-06-14","2026-08-09"] },
-      { id:8,  name:"The Seasonal Table",     category:"Caterer",      location:"Toronto, ON",  rating:4.6, reviews:88,  priceNum:35,   priceLabel:"From $35/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1555244162-803834f70033?w=600&q=80", featured:false, booked:["2026-05-17"] },
-      { id:9,  name:"Luxe Bites Catering",    category:"Caterer",      location:"Toronto, ON",  rating:4.8, reviews:120, priceNum:55,   priceLabel:"From $55/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80", featured:false, booked:["2026-07-04","2026-07-22"] },
-      { id:10, name:"Saveur Events",          category:"Caterer",      location:"Toronto, ON",  rating:4.7, reviews:65,  priceNum:70,   priceLabel:"From $70/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80", featured:false, booked:[] },
-      { id:11, name:"The Plated Co.",         category:"Caterer",      location:"Toronto, ON",  rating:4.5, reviews:52,  priceNum:30,   priceLabel:"From $30/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80", featured:false, booked:["2026-06-04"] },
-      { id:12, name:"Maison Cuisine",         category:"Caterer",      location:"Toronto, ON",  rating:5.0, reviews:37,  priceNum:95,   priceLabel:"From $95/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=600&q=80", featured:false, booked:["2026-05-24","2026-08-09"] },
-      // DJs
-      { id:13, name:"DJ Maelo",              category:"DJ",           location:"Toronto, ON",  rating:5.0, reviews:77,  priceNum:900,  priceLabel:"From $900",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", featured:true,  booked:["2026-05-17","2026-07-22"] },
-      { id:14, name:"Vibe Soundworks",       category:"DJ",           location:"Toronto, ON",  rating:4.7, reviews:54,  priceNum:700,  priceLabel:"From $700",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1571266028243-d220c6a8c252?w=600&q=80", featured:false, booked:["2026-06-04"] },
-      { id:15, name:"Neon Nights DJ Co.",    category:"DJ",           location:"Toronto, ON",  rating:4.8, reviews:63,  priceNum:850,  priceLabel:"From $850",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80", featured:false, booked:[] },
-      { id:16, name:"SoundWave Events",      category:"DJ",           location:"Toronto, ON",  rating:4.6, reviews:41,  priceNum:600,  priceLabel:"From $600",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80", featured:false, booked:["2026-08-09"] },
-      { id:17, name:"The Music House",       category:"DJ",           location:"Toronto, ON",  rating:4.5, reviews:29,  priceNum:500,  priceLabel:"From $500",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80", featured:false, booked:["2026-07-04"] },
-      { id:18, name:"Bass & Gold DJ",        category:"DJ",           location:"Toronto, ON",  rating:4.9, reviews:88,  priceNum:1100, priceLabel:"From $1,100",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&q=80", featured:false, booked:["2026-05-17","2026-06-14"] },
-      // Photographers
-      { id:19, name:"Lucent Photo Studio",   category:"Photographer", location:"Toronto, ON",  rating:4.9, reviews:201, priceNum:2200, priceLabel:"From $2,200",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80", featured:true,  booked:["2026-06-04","2026-07-22"] },
-      { id:20, name:"Golden Hour Co.",       category:"Photographer", location:"Toronto, ON",  rating:4.8, reviews:139, priceNum:1800, priceLabel:"From $1,800",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&q=80", featured:false, booked:["2026-05-17"] },
-      { id:21, name:"Frame & Light",         category:"Photographer", location:"Toronto, ON",  rating:4.7, reviews:95,  priceNum:1500, priceLabel:"From $1,500",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=600&q=80", featured:false, booked:[] },
-      { id:22, name:"Shutter & Soul",        category:"Photographer", location:"Toronto, ON",  rating:4.6, reviews:74,  priceNum:1200, priceLabel:"From $1,200",  priceRange:"mid",     img:"https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=600&q=80", featured:false, booked:["2026-08-09"] },
-      { id:23, name:"Timeless Captures",     category:"Photographer", location:"Toronto, ON",  rating:5.0, reviews:48,  priceNum:3500, priceLabel:"From $3,500",  priceRange:"premium", img:"https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&q=80", featured:false, booked:["2026-05-24","2026-07-04"] },
-      { id:24, name:"Candid & Co.",          category:"Photographer", location:"Toronto, ON",  rating:4.5, reviews:62,  priceNum:900,  priceLabel:"From $900",    priceRange:"budget",  img:"https://images.unsplash.com/photo-1471341971476-ae15ff5dd4ea?w=600&q=80", featured:false, booked:["2026-06-14"] },
-      // Bar
-      { id:25, name:"The Craft Bar Co.",     category:"Bar",          location:"Toronto, ON",  rating:4.9, reviews:108, priceNum:18,   priceLabel:"From $18/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80", featured:true,  booked:["2026-05-17","2026-07-22"] },
-      { id:26, name:"Pour & Clink",          category:"Bar",          location:"Toronto, ON",  rating:4.7, reviews:82,  priceNum:14,   priceLabel:"From $14/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", featured:false, booked:["2026-06-04"] },
-      { id:27, name:"Sip Society Events",    category:"Bar",          location:"Toronto, ON",  rating:4.8, reviews:67,  priceNum:20,   priceLabel:"From $20/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1543668189-8df3b1af7fa2?w=600&q=80", featured:false, booked:[] },
-      { id:28, name:"Barrel & Bloom",        category:"Bar",          location:"Toronto, ON",  rating:4.6, reviews:55,  priceNum:25,   priceLabel:"From $25/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1574096079513-d8259312b785?w=600&q=80", featured:false, booked:["2026-08-09"] },
-      { id:29, name:"The Open Bar Co.",      category:"Bar",          location:"Toronto, ON",  rating:4.5, reviews:43,  priceNum:12,   priceLabel:"From $12/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1536935338788-846bb9981813?w=600&q=80", featured:false, booked:["2026-07-04"] },
-      { id:30, name:"Mixology Masters",      category:"Bar",          location:"Toronto, ON",  rating:5.0, reviews:31,  priceNum:35,   priceLabel:"From $35/pp",  priceRange:"budget",  img:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80", featured:false, booked:["2026-05-24","2026-06-14"] },
-    ];
+    // Vendors loaded from API — no static mock data
+    let allVendors = [];
 
     function starHTML(rating) {
       let html = '<div class="mini-stars">';
@@ -894,6 +859,7 @@
       renderCards(filtered);
       renderTags({ cats, rating, search, date });
       document.getElementById('resultsCount').innerHTML = `<strong>${filtered.length}</strong> vendor${filtered.length !== 1 ? 's' : ''} found`;
+      document.getElementById('noResults').style.display = filtered.length ? 'none' : 'block';
     }
 
     function isVendorSaved(id) {
@@ -1001,51 +967,65 @@
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
-    // Init price options and render with static data first
+    // Init price options and show loading state
     renderPriceOptions([]);
-    applyFilters();
+    document.getElementById('vendorGrid').innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--muted);">
+        <div style="font-size:2rem;margin-bottom:0.75rem;">✦</div>
+        <div style="font-size:0.85rem;font-weight:500;">Loading vendors…</div>
+      </div>`;
+    document.getElementById('resultsCount').innerHTML = `<strong>–</strong> vendors`;
 
-    // Then fetch real vendors from API and merge in
+    // Fetch real vendors from API — this is the only source of truth
     (function fetchRealVendors() {
       const typeMap = { RESTO_VENUE:'Venue', CATERER:'Caterer', ENTERTAINMENT:'DJ', PHOTO_VIDEO:'Photographer', FLORIST_DECOR:'Venue' };
       const fallbackImgs = {
-        DJ: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
+        DJ:           'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
         Photographer: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
-        Caterer: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
-        Bar: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80',
-        Venue: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80',
+        Caterer:      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
+        Bar:          'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80',
+        Venue:        'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80',
       };
       fetch('/api/v1/providers/search')
         .then(r => r.json())
         .then(data => {
-          if (!data.success || !data.data || !data.data.length) return;
-          const realVendors = data.data.map(p => {
-            const category = typeMap[p.primaryType] || typeMap[p.providerTypes?.[0]] || 'Venue';
+          if (!data.success || !data.data || !data.data.length) {
+            document.getElementById('vendorGrid').innerHTML = '';
+            document.getElementById('noResults').style.display = 'block';
+            document.getElementById('resultsCount').innerHTML = `<strong>0</strong> vendors found`;
+            return;
+          }
+          allVendors = data.data.map(p => {
+            const firstType = p.primaryType || (p.providerTypes && p.providerTypes[0]);
+            const category  = typeMap[firstType] || 'Venue';
             const priceNum  = p.minimumBudget || p.pricePerPerson || p.hourlyRate || 0;
             const priceLabel = p.pricePerPerson ? `From $${p.pricePerPerson}/pp`
                              : p.hourlyRate     ? `From $${p.hourlyRate}/hr`
-                             : `From $${(p.minimumBudget || 0).toLocaleString()}`;
+                             : priceNum         ? `From $${priceNum.toLocaleString()}`
+                             : 'Contact for pricing';
             return {
               id:         p.id,
               name:       p.businessName,
               category,
-              location:   (p.serviceAreas && p.serviceAreas[0]) || 'Location TBD',
+              location:   (p.serviceAreas && p.serviceAreas[0]) || (p.user && p.user.city ? (p.user.city + (p.user.state ? ', '+p.user.state : '')) : 'Toronto, ON'),
               rating:     p.averageRating  || 0,
               reviews:    p.totalReviews   || 0,
               priceNum,
               priceLabel,
               priceRange: priceNum > 3000 ? 'luxury' : priceNum > 1500 ? 'premium' : priceNum > 500 ? 'mid' : 'budget',
-              img:        (p.user && p.user.avatarUrl) || p.bannerUrl || fallbackImgs[category] || fallbackImgs.Venue,
-              featured:   false,
+              img:        (p.user && (p.user.profileImage || p.user.avatarUrl)) || p.bannerUrl || fallbackImgs[category] || fallbackImgs.Venue,
+              featured:   p.verificationStatus === 'VERIFIED',
               booked:     [],
             };
           });
-          // Prepend real vendors before static placeholders
-          allVendors = [...realVendors, ...allVendors];
-          document.getElementById('resultsCount').innerHTML = `<strong>${allVendors.length}</strong> vendors found`;
           applyFilters();
         })
-        .catch(() => {});
+        .catch(() => {
+          document.getElementById('vendorGrid').innerHTML = '';
+          document.getElementById('noResults').innerHTML = '<div class="no-results-icon">⚡</div><h3>Couldn\'t load vendors</h3><p>Please refresh the page to try again.</p>';
+          document.getElementById('noResults').style.display = 'block';
+          document.getElementById('resultsCount').innerHTML = `<strong>–</strong> vendors`;
+        });
     })();
 
     /* ── PLANNING BANNER ── */
@@ -1140,7 +1120,7 @@
       var ev = null;
       try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
 
-      // Always save to a general saved vendors list
+      // Save to localStorage as fallback / for event planning flow
       var saved = [];
       try { saved = JSON.parse(localStorage.getItem('savedVendors')) || []; } catch(e) {}
       var alreadySaved = saved.some(function(v) { return v.id === id; });
@@ -1158,6 +1138,21 @@
         }
         localStorage.setItem('pendingEvent', JSON.stringify(ev));
         updateVendorCount();
+      }
+
+      // Save to API favorites if logged in as CLIENT (for cross-device persistence)
+      var token = localStorage.getItem('accessToken');
+      if (token && !alreadySaved) {
+        try {
+          var payload = JSON.parse(atob(token.split('.')[1]));
+          var roles = payload.roles || (payload.role ? [payload.role] : []);
+          if (roles.indexOf('CLIENT') !== -1) {
+            fetch('/api/v1/favorites/' + id, {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            }).catch(function() {});
+          }
+        } catch(e) {}
       }
 
       showToast(alreadySaved ? name + ' already saved!' : '♥ ' + name + ' saved' + (ev && ev.name ? ' to ' + ev.name : ''));
