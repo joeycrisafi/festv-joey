@@ -850,6 +850,15 @@
             4.7 &nbsp;<span class="reviews-count">(342 reviews)</span>
           </div>
         </div>
+        <div style="margin-top:0.75rem;">
+          <a id="previewProfileLink" href="#" target="_blank"
+             style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 1.1rem;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.35);border-radius:999px;font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.05em;text-decoration:none;backdrop-filter:blur(4px);transition:background 0.2s;"
+             onmouseover="this.style.background='rgba(255,255,255,0.22)'"
+             onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview My Profile
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -1401,6 +1410,12 @@
       .then(function(data) {
         var p = data.data || data;
         if (!p || !p.businessName) return;
+
+        // Wire "Preview My Profile" link to this vendor's actual profile ID
+        if (p.id) {
+          var previewLink = document.getElementById('previewProfileLink');
+          if (previewLink) previewLink.href = '/vendorprofile.html?id=' + encodeURIComponent(p.id);
+        }
 
         // Hero
         document.getElementById('heroName').textContent = p.businessName;
