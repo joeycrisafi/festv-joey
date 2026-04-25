@@ -1222,13 +1222,13 @@
         badge.textContent = requests.length;
         badge.style.display = 'inline';
 
-        list.innerHTML = requests.map(function(r) {
+        var LIMIT = 3;
+        function renderRequestRow(r) {
           var dateStr = r.eventDate ? new Date(r.eventDate.split('T')[0] + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
           var budget = r.budgetMin || r.budgetMax
             ? '$' + (r.budgetMin || 0).toLocaleString() + (r.budgetMax ? ' – $' + r.budgetMax.toLocaleString() : '')
             : 'Budget TBD';
           var plannerName = r.client ? (r.client.firstName + ' ' + r.client.lastName) : 'Planner';
-          var alreadyQuoted = r.hasQuoted;
           return '<div style="padding:1rem 0;border-bottom:1px solid var(--border);">'
             + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">'
             + '<div style="flex:1;">'
@@ -1242,13 +1242,21 @@
             + '<div style="font-size:0.68rem;color:var(--muted);">From: ' + esc(plannerName) + ' &nbsp;·&nbsp; ' + esc(r.venueCity || '') + (r.venueState ? ', ' + esc(r.venueState) : '') + '</div>'
             + '</div>'
             + '<div style="flex-shrink:0;">'
-            + (alreadyQuoted
+            + (r.hasQuoted
               ? '<span style="font-size:0.65rem;font-weight:700;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;">✓ Quoted</span>'
               : '<a href="vendorapproval.html?requestId=' + r.id + '" style="padding:0.55rem 1rem;background:var(--dark);color:var(--gold-light);border:none;border-radius:8px;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;">Review →</a>')
             + '</div>'
             + '</div>'
             + '</div>';
-        }).join('');
+        }
+        var visible = requests.slice(0, LIMIT);
+        var hidden  = requests.slice(LIMIT);
+        var html = visible.map(renderRequestRow).join('');
+        if (hidden.length) {
+          html += '<div id="incomingHidden" style="display:none;">' + hidden.map(renderRequestRow).join('') + '</div>';
+          html += '<button onclick="document.getElementById(\'incomingHidden\').style.display=\'\';this.style.display=\'none\';" style="margin-top:0.75rem;width:100%;padding:0.55rem;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Show ' + hidden.length + ' more</button>';
+        }
+        list.innerHTML = html;
       })
       .then(function(data) {
         // If provider profile doesn't exist yet, redirect to setup
@@ -1728,7 +1736,8 @@
           list.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);padding:0.5rem 0;text-align:center;">No confirmed bookings yet.</div>';
           return;
         }
-        list.innerHTML = bookings.map(function(b) {
+        var BLIMIT = 3;
+        function renderBookingRow(b) {
           var req    = b.eventRequest || {};
           var title  = req.title || 'Event';
           var rawDate = (req.eventDate || b.eventDate || '');
@@ -1745,7 +1754,15 @@
             + '</div>'
             + '<span style="font-size:0.62rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:' + statusColor + ';flex-shrink:0;margin-left:0.75rem;margin-top:0.15rem;">' + esc(b.status || '') + '</span>'
             + '</div>';
-        }).join('');
+        }
+        var visibleB = bookings.slice(0, BLIMIT);
+        var hiddenB  = bookings.slice(BLIMIT);
+        var htmlB = visibleB.map(renderBookingRow).join('');
+        if (hiddenB.length) {
+          htmlB += '<div id="bookedHidden" style="display:none;">' + hiddenB.map(renderBookingRow).join('') + '</div>';
+          htmlB += '<button onclick="document.getElementById(\'bookedHidden\').style.display=\'\';this.style.display=\'none\';" style="margin-top:0.75rem;width:100%;padding:0.55rem;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Show ' + hiddenB.length + ' more</button>';
+        }
+        list.innerHTML = htmlB;
       })
       .catch(function() {
         list.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);padding:0.5rem 0;">Could not load bookings.</div>';
