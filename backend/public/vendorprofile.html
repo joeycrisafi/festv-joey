@@ -1608,7 +1608,16 @@
           if (savedSvcNames.length) {
             setTimeout(function() {
               savedSvcNames.forEach(function(name) {
-                if (window.selectService) window.selectService(name, '');
+                // Look up the real price from the rendered service rows in the DOM
+                var price = '';
+                document.querySelectorAll('.services-list .service-row').forEach(function(row) {
+                  var nameEl = row.querySelector('.service-name');
+                  var priceEl = row.querySelector('.service-price');
+                  if (nameEl && nameEl.textContent.trim().toLowerCase() === name.toLowerCase()) {
+                    price = priceEl ? priceEl.textContent.trim() : '';
+                  }
+                });
+                if (window.selectService) window.selectService(name, price);
               });
               setTimeout(function() {
                 var reviewBtn = document.getElementById('btnReviewRequest');
