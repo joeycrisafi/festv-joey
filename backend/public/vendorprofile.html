@@ -1592,38 +1592,35 @@
             if (notesEl) notesEl.value = savedNotes;
           }
 
-          // If services were previously saved, restore them and jump to step 2
-          var savedSvcNames = [];
+          // Parse saved services — format: "Services: Name1($price1), Name2($price2). Notes"
+          var savedSvcs = [];
           if (d.description) {
-            // New format: "Services: Name1, Name2. Notes"
             var _mMulti = d.description.match(/^Services:\s*([^.]+)\./i);
             if (_mMulti) {
-              savedSvcNames = _mMulti[1].split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+              _mMulti[1].split(',').forEach(function(part) {
+                part = part.trim();
+                var pm = part.match(/^(.+?)\(([^)]+)\)\s*$/);
+                if (pm) {
+                  savedSvcs.push({ name: pm[1].trim(), price: pm[2].trim() });
+                } else if (part) {
+                  savedSvcs.push({ name: part, price: '' });
+                }
+              });
             } else {
-              // Legacy format: "Service: Name. Notes"
-              var _mSingle = d.description.match(/^Service:\s*([^.]+)/i);
-              if (_mSingle) savedSvcNames = [_mSingle[1].trim()];
+              var _mSingle = d.description.match(/^Service:\s*([^.(]+)/i);
+              if (_mSingle) savedSvcs.push({ name: _mSingle[1].trim(), price: '' });
             }
           }
-          if (savedSvcNames.length) {
+          if (savedSvcs.length) {
             setTimeout(function() {
-              savedSvcNames.forEach(function(name) {
-                // Look up the real price from the rendered service rows in the DOM
-                var price = '';
-                document.querySelectorAll('.services-list .service-row').forEach(function(row) {
-                  var nameEl = row.querySelector('.service-name');
-                  var priceEl = row.querySelector('.service-price');
-                  if (nameEl && nameEl.textContent.trim().toLowerCase() === name.toLowerCase()) {
-                    price = priceEl ? priceEl.textContent.trim() : '';
-                  }
-                });
-                if (window.selectService) window.selectService(name, price);
+              savedSvcs.forEach(function(svc) {
+                if (window.selectService) window.selectService(svc.name, svc.price);
               });
               setTimeout(function() {
                 var reviewBtn = document.getElementById('btnReviewRequest');
                 if (reviewBtn) reviewBtn.click();
               }, 80);
-            }, 600);
+            }, 300);
           }
         })
         .catch(function() {});
@@ -1937,8 +1934,10 @@
       var selectedSvcs = window._draftSelectedServices || [];
       var notesEl = document.getElementById('srNotes') || document.getElementById('additionalNotes');
       var notes = notesEl ? notesEl.value.trim() : '';
-      // Encode as "Services: Name1, Name2. Notes" so we can restore on Continue
-      var svcPrefix = selectedSvcs.length ? 'Services: ' + selectedSvcs.map(function(s){ return s.name; }).join(', ') + '. ' : '';
+      // Encode as "Services: Name1($price1), Name2($price2). Notes" — price stored so restore doesn't need DOM
+      var svcPrefix = selectedSvcs.length
+        ? 'Services: ' + selectedSvcs.map(function(s){ return s.name + (s.price ? '(' + s.price + ')' : ''); }).join(', ') + '. '
+        : '';
 
       var validTypes = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
       var rawType = window._currentVendorType || 'RESTO_VENUE';
