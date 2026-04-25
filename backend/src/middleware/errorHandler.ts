@@ -99,14 +99,16 @@ export const errorHandler = (
         return res.status(400).json({
           success: false,
           error: 'Database operation failed',
+          ...(config.env !== 'production' && { code: err.code, meta: err.meta }),
         });
     }
   }
-  
+
   if (err instanceof Prisma.PrismaClientValidationError) {
     return res.status(400).json({
       success: false,
       error: 'Invalid data provided',
+      ...(config.env !== 'production' && { detail: err.message.split('\n').slice(-3).join(' ') }),
     });
   }
   

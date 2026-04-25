@@ -6,6 +6,34 @@ import path from 'path';
 import { config } from './config';
 import routes from './routes';
 import { errorHandler, NotFoundError } from './middleware/errorHandler';
+import prisma from './config/database.js';
+
+// Run safe, idempotent schema migrations at startup.
+// These bypass prisma migrate deploy (which can fail if migrations were
+// applied manually and aren't tracked in _prisma_migrations).
+async function runStartupMigrations() {
+  try {
+    // Add targetedProviderProfileId column if missing
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "EventRequest" ADD COLUMN IF NOT EXISTS "targetedProviderProfileId" TEXT`
+    );
+    // Add NEW_REQUEST to NotificationType enum if missing
+    // ALTER TYPE … ADD VALUE can't run inside a transaction, so we check first
+    const existing = await prisma.$queryRaw<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_enum
+        WHERE enumtypid = 'NotificationType'::regtype
+          AND enumlabel = 'NEW_REQUEST'
+      ) AS exists
+    `;
+    if (!existing[0]?.exists) {
+      await prisma.$executeRawUnsafe(`ALTER TYPE "NotificationType" ADD VALUE 'NEW_REQUEST'`);
+    }
+    console.log('✅ Startup migrations OK');
+  } catch (err) {
+    console.error('⚠️  Startup migration warning (non-fatal):', err);
+  }
+}
 
 const app = express();
 
@@ -61,6 +89,7 @@ app.use(errorHandler);
 // Start server
 const PORT = config.port || 3000;
 
+runStartupMigrations().then(() => {
 app.listen(PORT, () => {
   console.log(`
 🚀 CaterEase API Server
@@ -71,6 +100,7 @@ app.listen(PORT, () => {
 ❤️  Health: http://localhost:${PORT}/health
 ━━━━━━━━━━━━━━━━━━━━━━━━
   `);
+});
 });
 
 export default app;
