@@ -1231,17 +1231,16 @@
     <!-- LEFT COLUMN -->
     <div class="left-col">
 
-      <!-- Favorites -->
-      <div class="events-card">
+      <!-- Quotes Received -->
+      <div class="events-card" id="quotesCard" style="display:none;">
         <div class="card-header">
-          <div class="card-title">Favorites</div>
-          <a href="browsevendors.html" class="card-link">Browse More</a>
+          <div class="card-title" style="display:flex;align-items:center;gap:0.5rem;">
+            Quotes Received
+            <span id="quotesBadge" style="display:none;background:var(--gold);color:var(--dark);font-size:0.6rem;font-weight:700;min-width:18px;height:18px;border-radius:999px;align-items:center;justify-content:center;padding:0 0.35rem;"></span>
+          </div>
+          <a href="#" class="card-link" onclick="loadPendingQuotes(); return false;">Refresh</a>
         </div>
-        <div id="favoritesList" style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.75rem;"></div>
-        <div id="favoritesEmpty" class="empty-state" style="display:none;">
-          <span>♡</span>
-          No favorites yet.<br>Browse vendors and heart the ones you love.
-        </div>
+        <div id="quotesList" style="display:flex;flex-direction:column;"></div>
       </div>
 
       <!-- Saved Requests (Drafts) -->
@@ -1257,19 +1256,6 @@
         </div>
       </div>
 
-      <!-- Completed Events -->
-      <div class="events-card">
-        <div class="card-header">
-          <div class="card-title">Completed Events</div>
-        </div>
-        <div id="completedEventsList">
-          <div class="empty-state">
-            <span>🎉</span>
-            Your completed events will appear here.
-          </div>
-        </div>
-      </div>
-
       <!-- Messages -->
       <div class="events-card">
         <div class="card-header">
@@ -1278,6 +1264,19 @@
         <div class="empty-state">
           <span>💬</span>
           Messaging coming soon.
+        </div>
+      </div>
+
+      <!-- Favorites -->
+      <div class="events-card">
+        <div class="card-header">
+          <div class="card-title">Favorites</div>
+          <a href="browsevendors.html" class="card-link">Browse More</a>
+        </div>
+        <div id="favoritesList" style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.75rem;"></div>
+        <div id="favoritesEmpty" class="empty-state" style="display:none;">
+          <span>♡</span>
+          No favorites yet.<br>Browse vendors and heart the ones you love.
         </div>
       </div>
 
@@ -1318,18 +1317,6 @@
         </div>
       </div>
 
-      <!-- Quotes Received -->
-      <div class="events-card" id="quotesCard" style="display:none;">
-        <div class="card-header">
-          <div class="card-title" style="display:flex;align-items:center;gap:0.5rem;">
-            Quotes Received
-            <span id="quotesBadge" style="display:none;background:var(--gold);color:var(--dark);font-size:0.6rem;font-weight:700;min-width:18px;height:18px;border-radius:999px;align-items:center;justify-content:center;padding:0 0.35rem;"></span>
-          </div>
-          <a href="#" class="card-link" onclick="loadPendingQuotes(); return false;">Refresh</a>
-        </div>
-        <div id="quotesList" style="display:flex;flex-direction:column;"></div>
-      </div>
-
       <!-- Upcoming Events -->
       <div class="events-card">
         <div class="card-header">
@@ -1339,6 +1326,19 @@
           <div class="empty-state">
             <span>🗓</span>
             Confirmed bookings will appear here.
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Events -->
+      <div class="events-card">
+        <div class="card-header">
+          <div class="card-title">Completed Events</div>
+        </div>
+        <div id="completedEventsList">
+          <div class="empty-state">
+            <span>🎉</span>
+            Your completed events will appear here.
           </div>
         </div>
       </div>
