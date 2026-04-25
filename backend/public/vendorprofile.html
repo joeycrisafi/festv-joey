@@ -1765,15 +1765,37 @@
         }).join('');
         document.getElementById('rvServicesList').innerHTML = svcHtml;
 
-        // Estimate total from numeric prices
-        var total = 0;
+        // Pricing breakdown
+        var subtotal = 0;
+        var hasPerPerson = false;
         _selectedServices.forEach(function(s) {
+          if (s.price && s.price.toLowerCase().indexOf('/pp') !== -1) { hasPerPerson = true; return; }
           var m = s.price && s.price.match(/\$([\d,]+)/);
-          if (m) total += parseInt(m[1].replace(/,/g, ''));
+          if (m) subtotal += parseInt(m[1].replace(/,/g, ''), 10);
         });
-        document.getElementById('rvEstimate').textContent = total > 0
-          ? 'Estimated starting from $' + total.toLocaleString()
-          : 'Contact vendor for pricing';
+
+        var estimateEl = document.getElementById('rvEstimate');
+        if (subtotal > 0 || hasPerPerson) {
+          var tax     = Math.round(subtotal * 0.15);
+          var deposit = Math.round((subtotal + tax) * 0.10);
+          var fmt = function(n) { return '$' + n.toLocaleString(); };
+          var ppNote = hasPerPerson ? '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.5rem;">* Per-person items not included — final total may vary</div>' : '';
+          estimateEl.innerHTML = ppNote
+            + '<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;">'
+            +   '<span style="color:var(--charcoal);">Subtotal (est.)</span><span style="color:var(--dark);font-weight:600;">' + fmt(subtotal) + '</span>'
+            + '</div>'
+            + '<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;">'
+            +   '<span style="color:var(--charcoal);">Taxes (15%)</span><span style="color:var(--dark);font-weight:600;">' + fmt(tax) + '</span>'
+            + '</div>'
+            + '<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:2px solid var(--border);font-size:0.82rem;">'
+            +   '<span style="color:var(--dark);font-weight:700;">Est. Total</span><span style="color:var(--dark);font-weight:700;">' + fmt(subtotal + tax) + '</span>'
+            + '</div>'
+            + '<div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:0.82rem;">'
+            +   '<span style="color:var(--gold-dark);font-weight:700;">Deposit Due (10%)</span><span style="color:var(--gold-dark);font-weight:700;">' + fmt(deposit) + '</span>'
+            + '</div>';
+        } else {
+          estimateEl.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;">Pricing provided by vendor upon quote</div>';
+        }
 
         // Swap steps
         document.getElementById('srStep1').style.display = 'none';
