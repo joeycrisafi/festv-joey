@@ -305,23 +305,29 @@ export const submitEventRequest = asyncHandler(async (req: AuthenticatedRequest,
   });
 
   // Notify the targeted vendor if one was specified
+  // Wrapped in try/catch so a missing enum value never fails the submit
   if (eventRequest.targetedProviderProfileId) {
-    const targetedProvider = await prisma.providerProfile.findUnique({
-      where: { id: eventRequest.targetedProviderProfileId },
-      select: { userId: true, businessName: true },
-    });
-    if (targetedProvider) {
-      const plannerName = [updatedRequest.client.firstName, updatedRequest.client.lastName]
-        .filter(Boolean).join(' ') || 'A planner';
-      await prisma.notification.create({
-        data: {
-          userId: targetedProvider.userId,
-          type: 'NEW_REQUEST',
-          title: 'New Event Request',
-          message: `${plannerName} sent you a request for "${updatedRequest.title}". Review and respond on your dashboard.`,
-          data: { eventRequestId: id, plannerName },
-        },
+    try {
+      const targetedProvider = await prisma.providerProfile.findUnique({
+        where: { id: eventRequest.targetedProviderProfileId },
+        select: { userId: true, businessName: true },
       });
+      if (targetedProvider) {
+        const plannerName = [updatedRequest.client.firstName, updatedRequest.client.lastName]
+          .filter(Boolean).join(' ') || 'A planner';
+        await prisma.notification.create({
+          data: {
+            userId: targetedProvider.userId,
+            type: 'NEW_REQUEST' as any,
+            title: 'New Event Request',
+            message: `${plannerName} sent you a request for "${updatedRequest.title}". Review and respond on your dashboard.`,
+            data: { eventRequestId: id, plannerName },
+          },
+        });
+      }
+    } catch (notifErr) {
+      // Non-fatal — request is already submitted; log and continue
+      console.error('Failed to send NEW_REQUEST notification:', notifErr);
     }
   }
 
