@@ -1844,19 +1844,27 @@
       btn.disabled = true;
       btn.textContent = 'Saving…';
 
-      // If an existing draft was passed in, update it (PATCH) instead of creating a new one
+      // If an existing draft was passed in, only PATCH the vendor-specific fields —
+      // event details are already on the draft and don't need to be re-sent.
       var existingDraftId = new URLSearchParams(window.location.search).get('draftId');
       var fetchUrl    = existingDraftId ? '/api/v1/event-requests/' + existingDraftId : '/api/v1/event-requests';
       var fetchMethod = existingDraftId ? 'PATCH' : 'POST';
+      var body        = existingDraftId
+        ? { targetedProviderProfileId: payload.targetedProviderProfileId, description: payload.description, servicesWanted: payload.servicesWanted }
+        : payload;
 
       fetch(fetchUrl, {
         method: fetchMethod,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(body)
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (!data.success && !data.data) throw new Error(data.message || 'Could not save request.');
+        if (!data.success && !data.data) {
+          var msg = data.error || data.message || 'Could not save request.';
+          if (data.details && data.details.length) msg += ' (' + data.details.map(function(d){ return (d.field||'') + ': ' + d.message; }).join('; ') + ')';
+          throw new Error(msg);
+        }
         btn.disabled = false;
         btn.textContent = 'Saved ✓';
         btn.style.color = '#3A8A55';
