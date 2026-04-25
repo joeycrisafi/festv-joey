@@ -1342,27 +1342,27 @@
     let activeCatFilter = 'all';
 
     const vendorData = {
-      venue: [
+      RESTO_VENUE: [
         { id: null, name: "The Rosewood Estate", location: "Toronto, ON", rating: 4.9, reviews: 186, price: "From $3,200", img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80", featured: true },
         { id: null, name: "The Skyline Loft", location: "Toronto, ON", rating: 4.7, reviews: 112, price: "From $1,800", img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&q=80", featured: false },
         { id: null, name: "Maison Blanche Hall", location: "Toronto, ON", rating: 4.8, reviews: 94, price: "From $2,500", img: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80", featured: false },
       ],
-      caterer: [
+      CATERER: [
         { id: null, name: "Harvest & Co.", location: "Toronto, ON", rating: 4.9, reviews: 143, price: "From $45/pp", img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80", featured: true },
         { id: null, name: "The Seasonal Table", location: "Toronto, ON", rating: 4.6, reviews: 88, price: "From $35/pp", img: "https://images.unsplash.com/photo-1555244162-803834f70033?w=600&q=80", featured: false },
         { id: null, name: "Luxe Bites Catering", location: "Toronto, ON", rating: 4.8, reviews: 120, price: "From $55/pp", img: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80", featured: false },
       ],
-      dj: [
+      ENTERTAINMENT: [
         { id: null, name: "DJ Maelo", location: "Toronto, ON", rating: 5.0, reviews: 77, price: "From $900", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80", featured: true },
         { id: null, name: "Vibe Soundworks", location: "Toronto, ON", rating: 4.7, reviews: 54, price: "From $700", img: "https://images.unsplash.com/photo-1571266028243-d220c6a8c252?w=600&q=80", featured: false },
         { id: null, name: "Neon Nights DJ Co.", location: "Toronto, ON", rating: 4.8, reviews: 63, price: "From $850", img: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80", featured: false },
       ],
-      photographer: [
+      PHOTO_VIDEO: [
         { id: null, name: "Lucent Photo Studio", location: "Toronto, ON", rating: 4.9, reviews: 201, price: "From $2,200", img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80", featured: true },
         { id: null, name: "Golden Hour Co.", location: "Toronto, ON", rating: 4.8, reviews: 139, price: "From $1,800", img: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&q=80", featured: false },
         { id: null, name: "Frame & Light", location: "Toronto, ON", rating: 4.7, reviews: 95, price: "From $1,500", img: "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=600&q=80", featured: false },
       ],
-      bar: [
+      FLORIST_DECOR: [
         { id: null, name: "The Craft Bar Co.", location: "Toronto, ON", rating: 4.9, reviews: 108, price: "From $18/pp", img: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80", featured: true },
         { id: null, name: "Pour & Clink", location: "Toronto, ON", rating: 4.7, reviews: 82, price: "From $14/pp", img: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", featured: false },
         { id: null, name: "Sip Society Events", location: "Toronto, ON", rating: 4.8, reviews: 67, price: "From $20/pp", img: "https://images.unsplash.com/photo-1543668189-8df3b1af7fa2?w=600&q=80", featured: false },
@@ -1370,11 +1370,11 @@
     };
 
     const categoryMeta = {
-      venue:        { label: "Venues",        icon: "🏛" },
-      caterer:      { label: "Caterers",      icon: "🍽" },
-      dj:           { label: "DJs",           icon: "🎧" },
-      photographer: { label: "Photographers", icon: "📷" },
-      bar:          { label: "Bar Services",  icon: "🍸" },
+      RESTO_VENUE:   { label: "Restaurant / Venue", icon: "🍽" },
+      CATERER:       { label: "Caterers",           icon: "🥂" },
+      ENTERTAINMENT: { label: "Entertainment",      icon: "🎧" },
+      PHOTO_VIDEO:   { label: "Photo & Video",      icon: "📸" },
+      FLORIST_DECOR: { label: "Florist & Decor",    icon: "💐" },
     };
 
     function starHTML(rating) {
@@ -1481,9 +1481,9 @@
       });
     }
 
-    /* ── PROVIDER TYPE MAP ── */
-    const providerTypeToCategory = { RESTO_VENUE: 'venue', CATERER: 'caterer', ENTERTAINMENT: 'dj', PHOTO_VIDEO: 'photographer', FLORIST_DECOR: 'venue' };
-    const categoryToProviderType = { venue: 'RESTO_VENUE', caterer: 'CATERER', dj: 'ENTERTAINMENT', photographer: 'PHOTO_VIDEO', bar: 'FLORIST_DECOR' };
+    /* ── PROVIDER TYPE MAP ── (keys now match enums directly) */
+    const providerTypeToCategory = { RESTO_VENUE: 'RESTO_VENUE', CATERER: 'CATERER', ENTERTAINMENT: 'ENTERTAINMENT', PHOTO_VIDEO: 'PHOTO_VIDEO', FLORIST_DECOR: 'FLORIST_DECOR' };
+    const categoryToProviderType = { RESTO_VENUE: 'RESTO_VENUE', CATERER: 'CATERER', ENTERTAINMENT: 'ENTERTAINMENT', PHOTO_VIDEO: 'PHOTO_VIDEO', FLORIST_DECOR: 'FLORIST_DECOR' };
 
     /* ── FETCH REAL VENDORS ── */
     function fetchRealVendors(cats) {
@@ -1795,11 +1795,11 @@
 
     /* ── VENDOR PROFILE MODAL ── */
     const defaultServices = {
-      dj:           [{ name: 'Full Reception Coverage', price: 'From $900' }, { name: 'Ceremony + Reception', price: 'From $1,200' }, { name: 'Cocktail Hour Only', price: 'From $400' }, { name: 'Custom Package', price: 'Contact for pricing' }],
-      photographer: [{ name: 'Full Day Coverage', price: 'From $2,200' }, { name: 'Half Day (6 hrs)', price: 'From $1,400' }, { name: 'Ceremony Only', price: 'From $900' }, { name: 'Engagement Session', price: 'From $650' }],
-      venue:        [{ name: 'Full Venue Rental', price: 'From $3,200' }, { name: 'Ceremony Only', price: 'From $1,400' }, { name: 'Reception Only', price: 'From $2,200' }, { name: 'Outdoor Space', price: 'From $1,000' }],
-      caterer:      [{ name: 'Full Service Catering', price: 'From $55/pp' }, { name: 'Buffet Style', price: 'From $40/pp' }, { name: 'Cocktail Hour + Appetizers', price: 'From $25/pp' }, { name: 'Dessert Service', price: 'From $18/pp' }],
-      bar:          [{ name: 'Full Open Bar (5 hrs)', price: 'From $20/pp' }, { name: 'Beer & Wine Only', price: 'From $14/pp' }, { name: 'Signature Cocktail Bar', price: 'From $18/pp' }, { name: 'Non-Alcoholic Service', price: 'From $10/pp' }],
+      ENTERTAINMENT: [{ name: 'Full Reception Coverage', price: 'From $900' }, { name: 'Ceremony + Reception', price: 'From $1,200' }, { name: 'Cocktail Hour Only', price: 'From $400' }, { name: 'Custom Package', price: 'Contact for pricing' }],
+      PHOTO_VIDEO:   [{ name: 'Full Day Coverage', price: 'From $2,200' }, { name: 'Half Day (6 hrs)', price: 'From $1,400' }, { name: 'Ceremony Only', price: 'From $900' }, { name: 'Engagement Session', price: 'From $650' }],
+      RESTO_VENUE:   [{ name: 'Full Venue Rental', price: 'From $3,200' }, { name: 'Ceremony Only', price: 'From $1,400' }, { name: 'Reception Only', price: 'From $2,200' }, { name: 'Outdoor Space', price: 'From $1,000' }],
+      CATERER:       [{ name: 'Full Service Catering', price: 'From $55/pp' }, { name: 'Buffet Style', price: 'From $40/pp' }, { name: 'Cocktail Hour + Appetizers', price: 'From $25/pp' }, { name: 'Dessert Service', price: 'From $18/pp' }],
+      FLORIST_DECOR: [{ name: 'Full Open Bar (5 hrs)', price: 'From $20/pp' }, { name: 'Beer & Wine Only', price: 'From $14/pp' }, { name: 'Signature Cocktail Bar', price: 'From $18/pp' }, { name: 'Non-Alcoholic Service', price: 'From $10/pp' }],
     };
 
     let _vpVendor = null;

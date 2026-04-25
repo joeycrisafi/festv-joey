@@ -692,11 +692,11 @@
       <div class="filter-group">
         <span class="filter-label">Category</span>
         <div class="cat-pills">
-          <div class="cat-pill"><input type="checkbox" id="cat-venue" data-filter="category" value="Venue"><label for="cat-venue">🏛 Venue</label></div>
-          <div class="cat-pill"><input type="checkbox" id="cat-caterer" data-filter="category" value="Caterer"><label for="cat-caterer">🍽 Caterer</label></div>
-          <div class="cat-pill"><input type="checkbox" id="cat-dj" data-filter="category" value="DJ"><label for="cat-dj">🎧 DJ</label></div>
-          <div class="cat-pill"><input type="checkbox" id="cat-photographer" data-filter="category" value="Photographer"><label for="cat-photographer">📷 Photographer</label></div>
-          <div class="cat-pill"><input type="checkbox" id="cat-bar" data-filter="category" value="Bar"><label for="cat-bar">🍸 Bar</label></div>
+          <div class="cat-pill"><input type="checkbox" id="cat-resto-venue" data-filter="category" value="RESTO_VENUE"><label for="cat-resto-venue">🍽 Restaurant / Venue</label></div>
+          <div class="cat-pill"><input type="checkbox" id="cat-caterer" data-filter="category" value="CATERER"><label for="cat-caterer">🥂 Caterer</label></div>
+          <div class="cat-pill"><input type="checkbox" id="cat-entertainment" data-filter="category" value="ENTERTAINMENT"><label for="cat-entertainment">🎧 Entertainment</label></div>
+          <div class="cat-pill"><input type="checkbox" id="cat-photo-video" data-filter="category" value="PHOTO_VIDEO"><label for="cat-photo-video">📸 Photo & Video</label></div>
+          <div class="cat-pill"><input type="checkbox" id="cat-florist-decor" data-filter="category" value="FLORIST_DECOR"><label for="cat-florist-decor">💐 Florist & Decor</label></div>
         </div>
       </div>
 
@@ -976,13 +976,13 @@
 
     // Fetch real vendors from API — this is the only source of truth
     (function fetchRealVendors() {
-      const typeMap = { RESTO_VENUE:'Venue', CATERER:'Caterer', ENTERTAINMENT:'DJ', PHOTO_VIDEO:'Photographer', FLORIST_DECOR:'Venue' };
+      const typeMap = { RESTO_VENUE:'RESTO_VENUE', CATERER:'CATERER', ENTERTAINMENT:'ENTERTAINMENT', PHOTO_VIDEO:'PHOTO_VIDEO', FLORIST_DECOR:'FLORIST_DECOR' };
       const fallbackImgs = {
-        DJ:           'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
-        Photographer: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
-        Caterer:      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
-        Bar:          'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80',
-        Venue:        'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80',
+        ENTERTAINMENT: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80',
+        PHOTO_VIDEO:   'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80',
+        CATERER:       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80',
+        FLORIST_DECOR: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80',
+        RESTO_VENUE:   'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80',
       };
       fetch('/api/v1/providers/search')
         .then(r => r.json())
@@ -995,7 +995,7 @@
           }
           allVendors = data.data.map(p => {
             const firstType = p.primaryType || (p.providerTypes && p.providerTypes[0]);
-            const category  = typeMap[firstType] || 'Venue';
+            const category  = typeMap[firstType] || 'RESTO_VENUE';
             const priceNum  = p.minimumBudget || p.pricePerPerson || p.hourlyRate || 0;
             const priceLabel = p.pricePerPerson ? `From $${p.pricePerPerson}/pp`
                              : p.hourlyRate     ? `From $${p.hourlyRate}/hr`
@@ -1011,7 +1011,7 @@
               priceNum,
               priceLabel,
               priceRange: priceNum > 3000 ? 'luxury' : priceNum > 1500 ? 'premium' : priceNum > 500 ? 'mid' : 'budget',
-              img:        (p.user && (p.user.profileImage || p.user.avatarUrl)) || p.bannerUrl || fallbackImgs[category] || fallbackImgs.Venue,
+              img:        (p.user && (p.user.profileImage || p.user.avatarUrl)) || p.bannerUrl || fallbackImgs[category] || fallbackImgs.RESTO_VENUE,
               featured:   p.verificationStatus === 'VERIFIED',
               booked:     [],
             };
