@@ -951,6 +951,123 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ── PLANNER HERO ── */
+    .planner-hero {
+      position: relative;
+      height: 260px;
+      overflow: hidden;
+    }
+
+    .planner-hero-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.55);
+    }
+
+    .planner-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(26,23,20,0.88) 0%, rgba(26,23,20,0.2) 60%, transparent 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 2rem 2.5rem;
+      gap: 1.5rem;
+    }
+
+    .planner-hero-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E8E0D4, #D5C9BA);
+      border: 2.5px solid var(--gold-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      flex-shrink: 0;
+      margin-bottom: 0.15rem;
+      object-fit: cover;
+    }
+
+    .planner-hero-info { flex: 1; }
+
+    .planner-hero-label {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: rgba(58,138,85,0.85);
+      color: #fff;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+
+    .planner-hero-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .planner-hero-stats {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .planner-hero-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 0.28rem 0.75rem;
+      font-size: 0.72rem;
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .planner-hero-stat span { color: var(--gold-light); font-weight: 700; }
+
+    .planner-hero-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .btn-edit-hero {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.25rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 3px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--white);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+    .btn-edit-hero:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.55); }
+    .btn-edit-hero svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
     /* ── MOBILE RESPONSIVE ── */
     @media (max-width: 768px) {
       header {
@@ -1071,6 +1188,32 @@
       </button>
     </div>
   </header>
+
+  <!-- PLANNER HERO -->
+  <div class="planner-hero">
+    <img class="planner-hero-img" id="heroCoverImg"
+      src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1400&q=80" alt="Cover">
+    <div class="planner-hero-overlay">
+      <div id="heroAvatarWrap" class="planner-hero-avatar">J</div>
+      <div class="planner-hero-info">
+        <span class="planner-hero-label">Planner</span>
+        <div class="planner-hero-name" id="heroName">Loading…</div>
+        <div class="planner-hero-stats">
+          <div class="planner-hero-stat"><span id="heroEventCount">—</span> Events Planned</div>
+          <div class="planner-hero-stat" id="heroCityPill" style="display:none;">
+            <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="heroCity"></span>
+          </div>
+        </div>
+      </div>
+      <div class="planner-hero-actions">
+        <button class="btn-edit-hero" id="btnEditHero">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- DASHBOARD -->
   <div class="dashboard">
@@ -1308,6 +1451,45 @@
       if (!token) { window.location.href = 'signin.html'; return; }
 
       function safeEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+      // ── PLANNER HERO ──
+      fetch('/api/v1/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          var u = (res && res.data) ? res.data : res;
+          if (!u || !u.firstName) return;
+          var fullName = [u.firstName, u.lastName].filter(Boolean).join(' ');
+          var initial  = (u.firstName[0] || '?').toUpperCase();
+
+          document.getElementById('heroName').textContent = fullName;
+
+          var avatarEl = document.getElementById('heroAvatarWrap');
+          if (u.avatarUrl) {
+            var img = document.createElement('img');
+            img.src = u.avatarUrl;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+            avatarEl.textContent = '';
+            avatarEl.appendChild(img);
+          } else {
+            avatarEl.textContent = initial;
+          }
+
+          // Event count from requests
+          fetch('/api/v1/event-requests/my-requests', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r) { return r.json(); })
+            .then(function(er) {
+              var count = (er.data || []).filter(function(e) { return e.status !== 'DRAFT'; }).length;
+              document.getElementById('heroEventCount').textContent = count || '0';
+            }).catch(function() {});
+
+          // City
+          if (u.city || u.location) {
+            var city = u.city || u.location;
+            document.getElementById('heroCity').textContent = city;
+            document.getElementById('heroCityPill').style.display = '';
+          }
+        })
+        .catch(function() {});
 
       // ──────────────────────────────────────────────────────────────
       // FAVORITES
