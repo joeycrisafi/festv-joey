@@ -948,6 +948,14 @@
     </div>
   </div>
 
+  <!-- ABOUT + CONTACT INFO STRIP -->
+  <div id="vpInfoStrip" style="display:none;background:var(--white);border-bottom:1px solid var(--border);padding:0.85rem 2.5rem;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;align-items:flex-start;gap:2rem;flex-wrap:wrap;">
+      <div id="vpAboutText" style="flex:1;min-width:200px;font-size:0.78rem;color:var(--muted);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"></div>
+      <div id="vpContactPills" style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;flex-shrink:0;"></div>
+    </div>
+  </div>
+
   <!-- SEND REQUEST BANNER (shows when coming from an event) -->
   <div id="sendRequestBanner" style="display:none; background:var(--dark); padding:1.25rem 2.5rem; border-bottom:2px solid var(--gold);">
     <div style="max-width:900px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
@@ -1408,6 +1416,40 @@
                               : p.completedBookings >= 50  ? '50+ Events'
                               : p.completedBookings + ' Events';
         }
+
+        // About + Contact info strip
+        (function() {
+          var stripEl      = document.getElementById('vpInfoStrip');
+          var stripAbout   = document.getElementById('vpAboutText');
+          var stripContact = document.getElementById('vpContactPills');
+          var hasContent   = false;
+
+          if (p.businessDescription && stripAbout) {
+            stripAbout.textContent = p.businessDescription;
+            hasContent = true;
+          }
+
+          var locationS = (p.serviceAreas && p.serviceAreas.length) ? p.serviceAreas[0]
+            : (p.user && p.user.city) ? (p.user.city + (p.user.state ? ', ' + p.user.state : '')) : null;
+          var phoneS   = p.user && p.user.phoneNumber ? p.user.phoneNumber : null;
+          var emailS   = p.user && p.user.email ? p.user.email : null;
+          var websiteS = p.websiteUrl || null;
+
+          var pills = [];
+          if (locationS) pills.push('📍 ' + locationS);
+          if (phoneS)    pills.push('📞 ' + phoneS);
+          if (emailS)    pills.push('✉️ ' + emailS);
+          if (websiteS)  pills.push('🌐 ' + websiteS);
+
+          if (pills.length && stripContact) {
+            stripContact.innerHTML = pills.map(function(txt) {
+              return '<span style="font-size:0.72rem;color:var(--charcoal);background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:0.25rem 0.65rem;white-space:nowrap;">' + esc(txt) + '</span>';
+            }).join('');
+            hasContent = true;
+          }
+
+          if (hasContent && stripEl) stripEl.style.display = '';
+        })();
 
         // Rating pill in hero
         var ratingPill = document.querySelector('.rating-pill');
