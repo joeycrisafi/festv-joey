@@ -1506,51 +1506,91 @@
 
       var params = new URLSearchParams(window.location.search);
       var fromEvent = params.get('fromEvent');
+      var urlDraftId = params.get('draftId');
 
       // If no fromEvent in URL, check localStorage for an active pending event
-      // This handles navigation from planner dashboard where fromEvent isn't added
       if (!fromEvent) {
         var _pendingCheck = null;
         try { _pendingCheck = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
         if (_pendingCheck && _pendingCheck.name) {
-          fromEvent = '1'; // treat as if coming from an active event
+          fromEvent = '1';
         }
+      }
+
+      // If we have a draftId (coming from dashboard "Continue"), always treat as fromEvent
+      if (!fromEvent && urlDraftId) {
+        fromEvent = '1';
       }
 
       if (!fromEvent) {
         if (_viewerIsPlanner) {
-          // Planner without an active event — prompt them to create one
           var noEventCta = document.getElementById('noEventCta');
           if (noEventCta) noEventCta.style.display = 'block';
           var vendorIdParam = params.get('id');
           var ctaLink = document.getElementById('createEventCtaLink');
           if (ctaLink && vendorIdParam) {
-            // Include vendorName so profile can show it instantly on redirect back
             var vName = window._currentVendorName || document.getElementById('vp-name').textContent || '';
             ctaLink.href = 'createevent.html?returnTo=' + encodeURIComponent(vendorIdParam) + (vName ? '&vendorName=' + encodeURIComponent(vName) : '');
-            // Update link dynamically once API loads the name
             document.addEventListener('vendorNameLoaded', function(e) {
               ctaLink.href = 'createevent.html?returnTo=' + encodeURIComponent(vendorIdParam) + '&vendorName=' + encodeURIComponent(e.detail);
             });
           }
         } else {
-          // Guest / not logged in — prompt to sign in
           var signInCta = document.getElementById('signInCta');
           if (signInCta) signInCta.style.display = 'block';
         }
         return;
       }
 
+      // Show banner + section; hide the redundant hero "Request Service" button
+      function showSendSection(ev) {
+        document.getElementById('sendRequestBanner').style.display = 'block';
+        document.getElementById('sendRequestSection').style.display = 'block';
+        document.getElementById('srEventName').textContent = ev.name || 'Your Event';
+        var heroReqBtn = document.getElementById('btnRequestHero');
+        if (heroReqBtn) heroReqBtn.style.display = 'none';
+      }
+
       var ev = null;
       try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
-      if (!ev || !ev.name) return;
 
-      // Show banner + section; hide the redundant hero "Request Service" button
-      document.getElementById('sendRequestBanner').style.display = 'block';
-      document.getElementById('sendRequestSection').style.display = 'block';
-      document.getElementById('srEventName').textContent = ev.name;
-      var heroReqBtn = document.getElementById('btnRequestHero');
-      if (heroReqBtn) heroReqBtn.style.display = 'none';
+      if (ev && ev.name) {
+        showSendSection(ev);
+      } else if (urlDraftId) {
+        // No localStorage data — load the event from the draft API
+        var _token = localStorage.getItem('accessToken');
+        fetch('/api/v1/event-requests/' + urlDraftId, {
+          headers: { 'Authorization': 'Bearer ' + (_token || '') }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          var d = res.data || res;
+          if (!d || !d.id) return;
+          // Build a pendingEvent-compatible object from the draft
+          ev = {
+            name:        d.title || 'My Event',
+            date:        d.eventDate ? d.eventDate.split('T')[0] : '',
+            startTime:   d.eventStartTime || '',
+            endTime:     d.eventEndTime || '',
+            venueCity:   d.venueCity || '',
+            venueState:  d.venueState || '',
+            venueAddress:d.venueAddress || '',
+            venueZip:    d.venueZipCode || '',
+            budgetMin:   d.budgetMin || 0,
+            budgetMax:   d.budgetMax || 0,
+            guests:      d.guestCount || '',
+            type:        d.eventType || 'OTHER',
+            selectedCats:d.servicesWanted || [],
+            requests:    []
+          };
+          localStorage.setItem('pendingEvent', JSON.stringify(ev));
+          showSendSection(ev);
+        })
+        .catch(function() {});
+        return; // showSendSection will be called asynchronously above
+      } else {
+        return; // no event data at all
+      }
 
       // Pre-fill vendor name from URL param so success screen always has it
       var urlVendorName = params.get('vendorName');
