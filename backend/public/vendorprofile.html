@@ -211,6 +211,7 @@
     }
     .btn-save-hero:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); }
     .btn-save-hero.saved { background: rgba(196,160,106,0.2); border-color: var(--gold); color: var(--gold-light); }
+    .btn-save-hero.saved svg path { fill: var(--gold); stroke: var(--gold); }
 
     .btn-message-hero {
       background: transparent;
@@ -919,7 +920,7 @@
         </div>
       </div>
       <div class="hero-cta" id="heroCta">
-        <button class="btn-request-hero">Request Service</button>
+        <button class="btn-request-hero" id="btnRequestHero">Request Service</button>
         <button class="btn-save-hero" id="btnSaveVendor" onclick="toggleSaveVendor()" style="display:none;">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           <span id="btnSaveLabel">Favorite</span>
@@ -1544,10 +1545,12 @@
       try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
       if (!ev || !ev.name) return;
 
-      // Show banner + section
+      // Show banner + section; hide the redundant hero "Request Service" button
       document.getElementById('sendRequestBanner').style.display = 'block';
       document.getElementById('sendRequestSection').style.display = 'block';
       document.getElementById('srEventName').textContent = ev.name;
+      var heroReqBtn = document.getElementById('btnRequestHero');
+      if (heroReqBtn) heroReqBtn.style.display = 'none';
 
       // Pre-fill vendor name from URL param so success screen always has it
       var urlVendorName = params.get('vendorName');
