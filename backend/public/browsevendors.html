@@ -1028,13 +1028,50 @@
 
     /* ── PLANNING BANNER ── */
     (function() {
-      var ev = null;
-      try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
-      if (ev && ev.name) {
+      var urlDraftId = new URLSearchParams(window.location.search).get('draftId');
+
+      function showBanner(ev) {
+        if (!ev || !ev.name) return;
         var banner = document.getElementById('planningBanner');
         banner.style.display = 'flex';
-        document.getElementById('planningEventName').textContent = ev.name + (ev.date ? ' · ' + new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '');
+        var dateStr = '';
+        if (ev.date) {
+          var rawDate = ev.date.split('T')[0] + 'T00:00:00';
+          dateStr = ' · ' + new Date(rawDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+        }
+        document.getElementById('planningEventName').textContent = ev.name + dateStr;
         updateVendorCount();
+      }
+
+      if (urlDraftId) {
+        // draftId present → always fetch from API (database is source of truth)
+        var token = localStorage.getItem('accessToken');
+        fetch('/api/v1/event-requests/' + urlDraftId, {
+          headers: { 'Authorization': 'Bearer ' + (token || '') }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          var d = res.data || res;
+          if (!d || !d.id) return;
+          var ev = {
+            name: d.title || 'My Event',
+            date: d.eventDate ? d.eventDate.split('T')[0] : ''
+          };
+          // Write back to localStorage as a cache
+          try {
+            var cached = JSON.parse(localStorage.getItem('pendingEvent')) || {};
+            cached.name = ev.name;
+            cached.date = ev.date;
+            localStorage.setItem('pendingEvent', JSON.stringify(cached));
+          } catch(e) {}
+          showBanner(ev);
+        })
+        .catch(function() {});
+      } else {
+        // No draftId → use localStorage (fresh planning flow)
+        var ev = null;
+        try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
+        showBanner(ev);
       }
     })();
 

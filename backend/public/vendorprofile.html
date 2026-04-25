@@ -1552,12 +1552,9 @@
       }
 
       var ev = null;
-      try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
 
-      if (ev && ev.name) {
-        showSendSection(ev);
-      } else if (urlDraftId) {
-        // No localStorage data — load the event from the draft API
+      if (urlDraftId) {
+        // draftId present → always load from API (database is source of truth)
         var _token = localStorage.getItem('accessToken');
         fetch('/api/v1/event-requests/' + urlDraftId, {
           headers: { 'Authorization': 'Bearer ' + (_token || '') }
@@ -1583,13 +1580,20 @@
             selectedCats:d.servicesWanted || [],
             requests:    []
           };
+          // Write to localStorage as a cache, but API was the primary source
           localStorage.setItem('pendingEvent', JSON.stringify(ev));
           showSendSection(ev);
         })
         .catch(function() {});
         return; // showSendSection will be called asynchronously above
       } else {
-        return; // no event data at all
+        // No draftId → use localStorage (fresh planning flow)
+        try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
+        if (ev && ev.name) {
+          showSendSection(ev);
+        } else {
+          return; // no event data at all
+        }
       }
 
       // Pre-fill vendor name from URL param so success screen always has it
