@@ -1302,8 +1302,13 @@
         selectedCats: [], requests: [], createdAt: new Date().toISOString()
       }));
 
-      fetch('/api/v1/event-requests', {
-        method: 'POST',
+      // If editing an existing draft, PUT to update it instead of creating a new one
+      var editId = window._editingDraftId || new URLSearchParams(window.location.search).get('draftId');
+      var saveUrl    = editId ? '/api/v1/event-requests/' + editId : '/api/v1/event-requests';
+      var saveMethod = editId ? 'PUT' : 'POST';
+
+      fetch(saveUrl, {
+        method: saveMethod,
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify(payload)
       })

@@ -1848,7 +1848,7 @@
       // event details are already on the draft and don't need to be re-sent.
       var existingDraftId = new URLSearchParams(window.location.search).get('draftId');
       var fetchUrl    = existingDraftId ? '/api/v1/event-requests/' + existingDraftId : '/api/v1/event-requests';
-      var fetchMethod = existingDraftId ? 'PATCH' : 'POST';
+      var fetchMethod = existingDraftId ? 'PUT' : 'POST';
       var body        = existingDraftId
         ? { targetedProviderProfileId: payload.targetedProviderProfileId, description: payload.description, servicesWanted: payload.servicesWanted }
         : payload;
