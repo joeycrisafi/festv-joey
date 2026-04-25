@@ -12,9 +12,15 @@ Build Vendors, get to the point where we can book an event completely via etrans
 
  bigger:
 	-[ ] 0auth google/fb sign-in options
-	-[ ] pdf reader
+	-[x] pdf reader (Jess AI PDF import — live in vendor setup)
 	-[ ] stripe integration, e-transfer auto request for security?
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
+	-[ ] wire vendor portfolio uploads to Cloudinary
+	-[ ] connect friends/guestlist page to API
+	-[ ] wire admin dashboard to admin routes
+	-[ ] build menu item isAvailable toggle in vendor dashboard
+	-[ ] make menu items selectable in planner request flow
+	-[ ] mobile responsiveness pass on all pages
 
 
 ## Completed
@@ -31,6 +37,26 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] Fix route ordering: /available/for-providers shadowed by /:id wildcard
 	-[x] Fix providerProfile.findUnique({ userId }) → findFirst across all controllers
 	-[x] AlessB added as Admin on GitHub org repo
+	-[x] Draft pricing restore — vendor price map + retry loop (fixes race condition on vendorprofile)
+	-[x] Safari bfcache fix — pageshow listener + Pragma/Expires headers site-wide
+	-[x] UTC date bug fixed — dates showing one day behind in US timezones (fixed in 5 locations)
+	-[x] plannerquote.html — giant green button bug fixed (SVG sizing)
+	-[x] plannerquote.html — pricing breakdown added (subtotal → 15% tax → est. total → deposit card)
+	-[x] plannerquote.html — button updated to "Book Vendor & Pay Deposit" with deposit amount
+	-[x] Deposit calculation fixed in backend — 10% of (total + 15% tax) instead of 25% of total
+	-[x] Planner dashboard layout reorganized — Left: Quotes, Saved Requests, Messages, Favorites / Right: Quick Actions, Pending, Upcoming, Completed
+	-[x] Vendor dashboard layout reorganized — Left: Booked Events, Incoming, Analytics / Right: Messages, Manage, Services, Pricing, Portfolio
+	-[x] Vendor dashboard — About + Contact info strip added below hero banner
+	-[x] Vendor dashboard — Booked Events card wired to API, shows 3 with "Show more"
+	-[x] Vendor dashboard — booking detail modal with planner info, event grid, quote breakdown
+	-[x] Vendor dashboard — status labels, deposit display, and planner name all fixed
+	-[x] Vendor dashboard — Messages card added
+	-[x] Vendor dashboard — Portfolio card added (placeholder photos, ready for Cloudinary)
+	-[x] Vendor profile page — About + Contact info strip added (same as vendor dashboard)
+	-[x] Vendor types standardized to 5 backend enums everywhere: RESTO_VENUE, CATERER, ENTERTAINMENT, PHOTO_VIDEO, FLORIST_DECOR
+	-[x] accounttype.html, browsevendors.html, createevent.html — all updated to correct enums
+	-[x] vendorsetup.html — Save Package now closes form + scrolls list into view after saving
+	-[x] vendorsetup.html — Publish uses Promise.all so a failed service POST doesn't block menu items
 
 
 ## Decisions log
@@ -42,3 +68,4 @@ Build Vendors, get to the point where we can book an event completely via etrans
 ## Known risks / open questions
 	- Vendor search currently returns ALL providers (not VERIFIED only) — flip before launch
 	- No Cloudinary yet — vendor profile images use avatarUrl from DB or Unsplash fallbacks
+	- Stripe not connected — deposit flow UI is built but payment not wired yet
