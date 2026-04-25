@@ -1585,7 +1585,7 @@
           showSendSection(ev);
         })
         .catch(function() {});
-        return; // showSendSection will be called asynchronously above
+        // falls through — service setup code below doesn't need ev at definition time
       } else {
         // No draftId → use localStorage (fresh planning flow)
         try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
