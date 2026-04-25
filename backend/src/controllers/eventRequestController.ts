@@ -11,8 +11,10 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
   
   // Validate event date is in the future
   const eventDate = new Date(data.eventDate);
-  if (eventDate <= new Date()) {
-    throw new AppError('Event date must be in the future', 400);
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  if (eventDate < startOfToday) {
+    throw new AppError('Event date must be today or in the future', 400);
   }
   
   // Build create data
