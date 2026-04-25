@@ -1011,14 +1011,19 @@
         providerType: selectedTypes[0] || 'RESTO_VENUE',
       });
 
-      // Reset form
+      // Reset form fields
       document.getElementById('svc-name').value  = '';
       document.getElementById('svc-desc').value  = '';
       document.getElementById('svc-price').value = '';
+      document.getElementById('svc-priceType').value = 'FLAT_RATE';
       pendingFeatures = [];
       renderFeatureTags();
 
+      // Hide form and scroll services list into view
+      document.getElementById('addServiceForm').style.display = 'none';
       renderServicesList();
+      var sl = document.getElementById('servicesList');
+      if (sl) sl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
     function renderServicesList() {
@@ -1034,6 +1039,11 @@
           (tags ? '<div class="service-item-tags">' + tags + '</div>' : '') +
           '</div>';
       }).join('');
+      // If services exist, show count + "Add another" hint
+      if (pendingServices.length > 0) {
+        html += '<div style="font-size:0.72rem;color:var(--muted);padding:0.5rem 0 0.25rem;text-align:right;">' +
+          pendingServices.length + ' package' + (pendingServices.length > 1 ? 's' : '') + ' added — click <strong>+ Add Manually</strong> above to add more</div>';
+      }
       document.getElementById('servicesList').innerHTML = html;
     }
 
@@ -1062,7 +1072,11 @@
       document.getElementById('mi-dietary').value  = '';
       document.getElementById('mi-desc').value     = '';
 
+      // Hide form and scroll menu list into view
+      document.getElementById('addMenuForm').style.display = 'none';
       renderMenuList();
+      var ml = document.getElementById('menuList');
+      if (ml) ml.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
     function renderMenuList() {
@@ -1091,24 +1105,42 @@
       clearError('err-2');
       var btn = this;
       btn.classList.add('loading');
-      var chain = Promise.resolve();
-      pendingServices.forEach(function(svc) {
-        chain = chain.then(function() {
-          return authFetch('/providers/services', { method: 'POST', body: JSON.stringify(svc) });
+
+      var svcPromises = pendingServices.map(function(svc) {
+        return authFetch('/providers/services', { method: 'POST', body: JSON.stringify(svc) })
+          .then(function(data) {
+            if (!data.success && !data.id) {
+              console.warn('[FESTV] Service save failed:', data.error || data.message, svc.name);
+            }
+            return data;
+          })
+          .catch(function(err) {
+            console.error('[FESTV] Service save error:', err, svc.name);
+          });
+      });
+
+      var menuPromises = pendingMenuItems.map(function(item) {
+        return authFetch('/providers/menu-items', { method: 'POST', body: JSON.stringify(item) })
+          .then(function(data) {
+            if (!data.success && !data.id) {
+              console.warn('[FESTV] Menu item save failed:', data.error || data.message, item.name);
+            }
+            return data;
+          })
+          .catch(function(err) {
+            console.error('[FESTV] Menu item save error:', err, item.name);
+          });
+      });
+
+      Promise.all(svcPromises.concat(menuPromises))
+        .then(function() {
+          btn.classList.remove('loading');
+          goToStep(3);
+        })
+        .catch(function() {
+          btn.classList.remove('loading');
+          goToStep(3);
         });
-      });
-      pendingMenuItems.forEach(function(item) {
-        chain = chain.then(function() {
-          return authFetch('/providers/menu-items', { method: 'POST', body: JSON.stringify(item) });
-        });
-      });
-      chain.then(function() {
-        btn.classList.remove('loading');
-        goToStep(3);
-      }).catch(function() {
-        btn.classList.remove('loading');
-        goToStep(3); // still proceed even if some fail
-      });
     });
     document.getElementById('btn2skip').addEventListener('click', function() { goToStep(3); });
 
