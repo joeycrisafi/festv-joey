@@ -662,8 +662,6 @@
     <span id="planningBannerText">📋 Planning: <strong id="planningEventName"></strong></span>
     <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
       <span id="planningVendorCount" style="opacity:0.7;font-size:0.7rem;"></span>
-      <span id="saveStatusLabel" style="font-size:0.68rem;opacity:0.6;display:none;">✓ Saved to account</span>
-      <button id="btnSaveDraft" onclick="saveDraftToAccount()" style="padding:0.4rem 1rem;background:rgba(196,160,106,0.18);color:var(--gold-light);border:1px solid rgba(196,160,106,0.35);border-radius:6px;font-family:'Montserrat',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Save Request</button>
       <a href="plannerdashboard.html" style="color:var(--gold); text-decoration:underline; font-size:0.72rem;">Dashboard</a>
     </div>
   </div>
@@ -1037,65 +1035,8 @@
         banner.style.display = 'flex';
         document.getElementById('planningEventName').textContent = ev.name + (ev.date ? ' · ' + new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '');
         updateVendorCount();
-        // If already saved to DB, show the status label instead of button
-        if (ev.draftRequestId) {
-          document.getElementById('btnSaveDraft').style.display = 'none';
-          document.getElementById('saveStatusLabel').style.display = '';
-        }
       }
     })();
-
-    /* ── SAVE DRAFT TO ACCOUNT ── */
-    window.saveDraftToAccount = function() {
-      var ev = null;
-      try { ev = JSON.parse(localStorage.getItem('pendingEvent')); } catch(e) {}
-      if (!ev || !ev.name) { showToast('No event in progress.'); return; }
-      var token = localStorage.getItem('accessToken');
-      if (!token) { window.location.href = 'signin.html'; return; }
-
-      var btn = document.getElementById('btnSaveDraft');
-      btn.disabled = true; btn.textContent = 'Saving…';
-
-      var validTypes = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
-      var cats = (ev.selectedCats || []).map(function(c) { return validTypes.indexOf(c) !== -1 ? c : 'RESTO_VENUE'; });
-
-      var payload = {
-        title:          ev.name || 'My Event',
-        eventType:      ev.type || 'OTHER',
-        guestCount:     parseInt(ev.guests) || 1,
-        budgetMin:      parseFloat(ev.budgetMin) || 0,
-        budgetMax:      parseFloat(ev.budgetMax || ev.budgetMin) || 100,
-        eventDate:      ev.date || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-        eventStartTime: ev.startTime || '18:00',
-        eventEndTime:   ev.endTime || '23:00',
-        venueAddress:   ev.venueAddress || 'TBD',
-        venueCity:      ev.venueCity || 'TBD',
-        venueState:     ev.venueState || 'TBD',
-        venueZipCode:   ev.venueZip || '00000',
-        servicesWanted: cats.length ? cats : undefined,
-        description:    'Draft — saved from browse vendors page.'
-      };
-
-      fetch('/api/v1/event-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(payload)
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (!data.success && !data.data) throw new Error(data.error || data.message || 'Failed');
-        var requestId = data.data && data.data.id;
-        ev.draftRequestId = requestId;
-        localStorage.setItem('pendingEvent', JSON.stringify(ev));
-        btn.style.display = 'none';
-        document.getElementById('saveStatusLabel').style.display = '';
-        showToast('✓ Event saved to your account');
-      })
-      .catch(function(err) {
-        btn.disabled = false; btn.textContent = 'Save Request';
-        showToast('Could not save: ' + (err.message || 'Please try again.'));
-      });
-    };
 
     function updateVendorCount() {
       var ev = null;
