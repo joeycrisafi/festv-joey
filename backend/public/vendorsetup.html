@@ -566,46 +566,6 @@
             <textarea class="form-textarea" id="s1-description" placeholder="Describe your services, style, experience, and what makes you stand out..."></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Starting Price <span class="req">*</span></label>
-              <input class="form-input" id="s1-minBudget" type="number" placeholder="500" min="0">
-              <span class="field-hint">Minimum budget you accept</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Max Budget</label>
-              <input class="form-input" id="s1-maxBudget" type="number" placeholder="5000" min="0">
-              <span class="field-hint">Leave blank if open-ended</span>
-            </div>
-          </div>
-
-          <!-- Hourly pricing (DJs, photographers etc.) -->
-          <div id="hourlySection">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Hourly Rate</label>
-                <input class="form-input" id="s1-hourlyRate" type="number" placeholder="250" min="0">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Minimum Hours</label>
-                <input class="form-input" id="s1-minHours" type="number" placeholder="4" min="1">
-              </div>
-            </div>
-          </div>
-
-          <!-- Per-person pricing (caterers, bartenders) -->
-          <div id="perpersonSection" style="display:none;">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Price Per Person</label>
-                <input class="form-input" id="s1-pricePerPerson" type="number" placeholder="45" min="0">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Min Guests</label>
-                <input class="form-input" id="s1-minGuests" type="number" placeholder="30" min="1">
-              </div>
-            </div>
-          </div>
 
           <button class="btn-primary" id="btn1">
             <div class="spinner"></div>
@@ -841,13 +801,6 @@
         // Business name & description
         if (p.businessName)        document.getElementById('s1-businessName').value = p.businessName;
         if (p.businessDescription) document.getElementById('s1-description').value  = p.businessDescription;
-        if (p.minimumBudget)       document.getElementById('s1-minBudget').value     = p.minimumBudget;
-        if (p.maximumBudget)       document.getElementById('s1-maxBudget').value     = p.maximumBudget;
-        if (p.pricePerPerson)      document.getElementById('s1-pricePerPerson').value = p.pricePerPerson;
-        if (p.minGuestCount)       document.getElementById('s1-minGuests').value     = p.minGuestCount;
-        if (p.hourlyRate)          document.getElementById('s1-hourlyRate').value    = p.hourlyRate;
-        if (p.minimumHours)        document.getElementById('s1-minHours').value      = p.minimumHours;
-
         // Location from user object
         if (p.user && p.user.city)    document.getElementById('s1-city').value     = p.user.city;
         if (p.user && p.user.state)   document.getElementById('s1-province').value = p.user.state;
@@ -860,11 +813,6 @@
           var pill = document.querySelector('.type-pill[data-type="' + t + '"]');
           if (pill) pill.classList.add('selected');
         });
-
-        // Show/hide pricing sections based on type
-        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
-        document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
-        document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
 
         // Update menu section label based on type
         var isFoodOrFloral = selectedTypes.some(function (t) { return ['CATERER','RESTO_VENUE','FLORIST_DECOR'].indexOf(t) !== -1; });
@@ -887,11 +835,6 @@
           selectedTypes.splice(idx, 1);
           pill.classList.remove('selected');
         }
-        // Show/hide pricing sections
-        var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
-        document.getElementById('perpersonSection').style.display = isFoodVendor ? '' : 'none';
-        document.getElementById('hourlySection').style.display    = isFoodVendor ? 'none' : '';
-
         // Update menu section label
         var isFoodOrFloral = selectedTypes.some(function (t) { return ['CATERER','RESTO_VENUE','FLORIST_DECOR'].indexOf(t) !== -1; });
         document.getElementById('menuSectionLabel').textContent = isFoodOrFloral ? 'Menu Items' : 'Equipment & Gear';
@@ -905,7 +848,6 @@
       var btn   = this;
       var bName = document.getElementById('s1-businessName').value.trim();
       var bDesc = document.getElementById('s1-description').value.trim();
-      var minB  = parseFloat(document.getElementById('s1-minBudget').value) || 0;
 
       if (!bName)             { showError('err-1', 'Business name is required.'); return; }
       if (!bDesc)             { showError('err-1', 'Please describe your business.'); return; }
@@ -916,22 +858,7 @@
         businessDescription: bDesc,
         providerTypes:       selectedTypes,
         primaryType:         selectedTypes[0],
-        minimumBudget:       minB || undefined,
-        maximumBudget:       parseFloat(document.getElementById('s1-maxBudget').value) || undefined,
       };
-
-      var isFoodVendor = selectedTypes.some(function (t) { return t === 'CATERER' || t === 'RESTO_VENUE'; });
-      if (isFoodVendor) {
-        var ppp = parseFloat(document.getElementById('s1-pricePerPerson').value);
-        var mg  = parseInt(document.getElementById('s1-minGuests').value);
-        if (ppp) payload.pricePerPerson = ppp;
-        if (mg)  payload.minGuestCount  = mg;
-      } else {
-        var hr = parseFloat(document.getElementById('s1-hourlyRate').value);
-        var mh = parseInt(document.getElementById('s1-minHours').value);
-        if (hr) payload.hourlyRate   = hr;
-        if (mh) payload.minimumHours = mh;
-      }
 
       var city     = document.getElementById('s1-city').value.trim();
       var province = document.getElementById('s1-province').value.trim();
