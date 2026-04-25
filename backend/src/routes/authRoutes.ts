@@ -12,6 +12,10 @@ router.post('/refresh-token', asyncHandler(authController.refreshToken));
 router.post('/forgot-password', asyncHandler(authController.forgotPassword));
 router.post('/reset-password', asyncHandler(authController.resetPassword));
 
+// Dev-only: gated by ENABLE_TEST_ACCOUNTS=true on the backend.
+// 404s when disabled so it looks non-existent in prod.
+router.post('/seed-test-accounts', asyncHandler(authController.seedTestAccountsHandler));
+
 // Protected routes
 router.post('/logout', authenticate, asyncHandler(authController.logout));
 router.get('/me', authenticate, asyncHandler(authController.getMe));

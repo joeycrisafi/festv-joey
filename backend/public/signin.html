@@ -490,6 +490,13 @@
         Don't have an account? <a href="accounttype.html">Sign Up</a>
       </p>
 
+      <!-- Dev-only: Test accounts picker (revealed only when backend has
+           ENABLE_TEST_ACCOUNTS=true; hidden in prod where the seed
+           endpoint 404s). -->
+      <div class="demo-hint" id="testAccountsBlock" style="display:none;">
+        <div class="demo-hint-title">Dev · Quick Sign-In</div>
+        <div id="demoRows"></div>
+      </div>
 
     </div>
   </main>
@@ -585,6 +592,38 @@
         'vendor@festv.co':  { pw: 'Demo1234' },
         'dj@festv.co':      { pw: 'Demo1234' }
       };
+
+      // ── Fetch + populate test accounts (dev only — gated by
+      // ENABLE_TEST_ACCOUNTS on the backend; 404s in prod).
+      fetch('/api/v1/auth/seed-test-accounts', { method: 'POST' })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (data) {
+          if (!data || !data.data || !data.data.accounts) return;
+          var rows = document.getElementById('demoRows');
+          var block = document.getElementById('testAccountsBlock');
+          data.data.accounts.forEach(function (acc) {
+            var row = document.createElement('div');
+            row.className = 'demo-row';
+            row.setAttribute('data-email', acc.email);
+            row.setAttribute('data-pw', acc.password);
+            row.title = acc.email;
+            row.innerHTML =
+              '<span class="demo-role">' + acc.emoji + ' Sign in as test ' + acc.label + '</span>' +
+              '<span class="demo-use">Fill</span>';
+            row.addEventListener('click', function () {
+              emailInput.value = acc.email;
+              passwordInput.value = acc.password;
+              errorMsg.classList.remove('show');
+              emailInput.classList.remove('error');
+              passwordInput.classList.remove('error');
+            });
+            rows.appendChild(row);
+          });
+          if (data.data.accounts.length > 0) {
+            block.style.display = 'block';
+          }
+        })
+        .catch(function () { /* silent — dev-only */ });
 
       // Password toggle
       eyeBtn.addEventListener('click', function () {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ChefHat } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import TestAccountsPicker from '../components/TestAccountsPicker';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -132,6 +133,13 @@ export default function Login() {
             </p>
           </div>
         </div>
+
+        <TestAccountsPicker
+          onSelect={(e, p) => {
+            setEmail(e);
+            setPassword(p);
+          }}
+        />
       </div>
     </div>
   );

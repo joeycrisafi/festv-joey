@@ -6,8 +6,9 @@ import prisma from '../config/database.js';
 import { config } from '../config/index.js';
 import { AuthenticatedRequest, TokenPayload, AuthTokens } from '../types/index.js';
 import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/validators.js';
-import { asyncHandler, AppError, ConflictError, UnauthorizedError } from '../middleware/errorHandler.js';
+import { asyncHandler, AppError, ConflictError, UnauthorizedError, NotFoundError } from '../middleware/errorHandler.js';
 import { sendPasswordResetEmail } from '../services/verification.js';
+import { seedTestAccounts, TEST_ACCOUNTS } from '../seedTestAccounts.js';
 
 // Generate JWT tokens
 const generateTokens = (payload: TokenPayload): AuthTokens => {
@@ -589,3 +590,33 @@ export const resetPassword = asyncHandler(async (req: AuthenticatedRequest, res:
     message: 'Password reset successfully. Please log in with your new password.',
   });
 });
+
+// Seed test accounts (dev only). Gated by ENABLE_TEST_ACCOUNTS=true.
+// Creates/refreshes the fixed set of test users and returns their credentials
+// so the frontend TestAccountsPicker can autofill the login form.
+export const seedTestAccountsHandler = asyncHandler(
+  async (_req: AuthenticatedRequest, res: Response) => {
+    if (process.env.ENABLE_TEST_ACCOUNTS !== 'true') {
+      // Return a 404 so the route looks non-existent when the feature is off.
+      throw new NotFoundError('Route');
+    }
+
+    const results = await seedTestAccounts(prisma);
+
+    res.json({
+      success: true,
+      data: {
+        accounts: TEST_ACCOUNTS.map((a) => ({
+          email: a.email,
+          password: a.password,
+          firstName: a.firstName,
+          lastName: a.lastName,
+          role: a.role,
+          label: a.label,
+          emoji: a.emoji,
+        })),
+        results,
+      },
+    });
+  }
+);
