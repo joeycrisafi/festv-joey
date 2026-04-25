@@ -56,7 +56,7 @@
     .pricing-total { display: flex; justify-content: space-between; padding: 0.9rem 0 0.25rem; margin-top: 0.25rem; }
     .pricing-total span:first-child { font-size: 1rem; font-weight: 700; color: var(--dark); font-family: 'Cormorant Garamond', serif; letter-spacing: 0.03em; }
     .pricing-total span:last-child { font-size: 1.1rem; font-weight: 700; color: var(--dark); font-family: 'Cormorant Garamond', serif; }
-    .pricing-deposit { margin-top: 1rem; background: rgba(196,160,106,0.07); border: 1px solid rgba(196,160,106,0.2); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.73rem; color: var(--charcoal); line-height: 1.6; }
+    .pricing-deposit { margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: rgba(196,160,106,0.08); border: 1px solid rgba(196,160,106,0.25); border-radius: 8px; }
 
     /* Validity notice */
     .validity-notice { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; background: rgba(196,160,106,0.07); border: 1px solid rgba(196,160,106,0.22); border-radius: 6px; font-size: 0.74rem; color: var(--charcoal); margin-bottom: 1.25rem; }
@@ -323,7 +323,7 @@
       gridHtml += '<div class="req-cell"><div class="req-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="req-label">Event Date</div><div class="req-value">' + esc(dateStr) + '</div>' + (timeStr ? '<div class="req-note">' + esc(timeStr) + '</div>' : '') + '</div></div>';
       gridHtml += '<div class="req-cell"><div class="req-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="req-label">Guests</div><div class="req-value">' + (eventReq.guestCount ? eventReq.guestCount + ' Guests' : '—') + '</div></div></div>';
       gridHtml += '<div class="req-cell"><div class="req-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="req-label">Event Type</div><div class="req-value">' + esc(eventType) + '</div>' + (venue ? '<div class="req-note">' + esc(venue) + '</div>' : '') + '</div></div>';
-      gridHtml += '<div class="req-cell"><div class="req-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="req-label">Quote Total</div><div class="req-value">' + fmt(q.totalAmount) + '</div>' + (q.depositRequired > 0 ? '<div class="req-note">Deposit: ' + fmt(q.depositRequired) + '</div>' : '') + '</div></div>';
+      gridHtml += '<div class="req-cell"><div class="req-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="req-label">Quote Total</div><div class="req-value">' + fmt(q.totalAmount) + '</div></div></div>';
       document.getElementById('eventGrid').innerHTML = gridHtml;
 
       // Quote items as pills
@@ -334,27 +334,31 @@
       }).join('');
       document.getElementById('quotePills').innerHTML = pillsHtml || '<span style="font-size:0.78rem;color:var(--muted);">No line items specified</span>';
 
-      // Pricing summary
+      // Pricing summary — subtotal from line items, then 15% tax, est. total, 10% deposit card
       var pricingHtml = '';
+      var subtotal = 0;
       items.forEach(function(item) {
         var price = item.totalPrice || (item.quantity * item.unitPrice) || item.unitPrice || 0;
-        var note  = item.quantity && item.quantity > 1 ? ' (Qty ' + item.quantity + ' × ' + fmt(item.unitPrice) + ')' : '';
-        pricingHtml += '<div class="pricing-row"><span>' + esc(item.name) + '<span style="color:var(--muted);font-size:0.78rem;">' + note + '</span></span><span>' + fmt(price) + '</span></div>';
+        subtotal += parseFloat(price) || 0;
+        var note  = item.quantity && item.quantity > 1 ? ' <span style="color:var(--muted);font-size:0.78rem;">(Qty ' + item.quantity + ' × ' + fmt(item.unitPrice) + ')</span>' : '';
+        pricingHtml += '<div class="pricing-row"><span>' + esc(item.name) + note + '</span><span>' + fmt(price) + '</span></div>';
       });
-      if (q.taxAmount > 0) {
-        pricingHtml += '<div class="pricing-row"><span>Subtotal</span><span>' + fmt(q.subtotal) + '</span></div>';
-        pricingHtml += '<div class="pricing-row"><span>Tax (' + (q.taxRate||0) + '%)</span><span>' + fmt2(q.taxAmount) + '</span></div>';
-      }
-      if (q.serviceFee > 0) pricingHtml += '<div class="pricing-row"><span>Service Fee</span><span>' + fmt(q.serviceFee) + '</span></div>';
-      if (q.gratuity > 0)   pricingHtml += '<div class="pricing-row"><span>Gratuity</span><span>' + fmt(q.gratuity) + '</span></div>';
-      if (q.discount > 0)   pricingHtml += '<div class="pricing-row"><span>Discount</span><span>−' + fmt(q.discount) + '</span></div>';
-      pricingHtml += '<div class="pricing-total"><span>Total</span><span>' + fmt(q.totalAmount) + '</span></div>';
+      // Use quote total as subtotal base if no items (vendor may have set total directly)
+      if (!subtotal && q.totalAmount) subtotal = parseFloat(q.totalAmount) || 0;
+      var tax     = Math.round(subtotal * 0.15);
+      var total   = subtotal + tax;
+      var deposit = Math.round(total * 0.10);
+      pricingHtml += '<div class="pricing-row"><span style="color:var(--charcoal);">Subtotal (est.)</span><span style="color:var(--dark);font-weight:600;">' + fmt(subtotal) + '</span></div>';
+      pricingHtml += '<div class="pricing-row"><span style="color:var(--charcoal);">Taxes (15%)</span><span style="color:var(--dark);font-weight:600;">' + fmt(tax) + '</span></div>';
+      pricingHtml += '<div class="pricing-total"><span>Est. Total</span><span>' + fmt(total) + '</span></div>';
       document.getElementById('pricingRows').innerHTML = pricingHtml;
 
-      if (q.depositRequired > 0) {
-        document.getElementById('depositNote').textContent = 'Deposit required on booking: ' + fmt(q.depositRequired) + '. Balance due before event.';
-        document.getElementById('depositNote').style.display = '';
-      }
+      // Gold deposit card
+      document.getElementById('depositNote').innerHTML =
+        '<div><div style="font-size:0.72rem;font-weight:700;color:var(--gold-dark);">Deposit to Confirm</div>'
+        + '<div style="font-size:0.65rem;color:var(--muted);">10% of total · due at booking</div></div>'
+        + '<span style="font-size:1rem;font-weight:700;color:var(--gold-dark);font-family:\'Cormorant Garamond\',serif;">' + fmt(deposit) + '</span>';
+      document.getElementById('depositNote').style.display = '';
 
       // Vendor message
       if (q.message) {
