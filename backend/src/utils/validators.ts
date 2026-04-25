@@ -117,6 +117,7 @@ const eventRequestBaseSchema = z.object({
   needsCleanup: z.boolean().optional(),
   needsSetup: z.boolean().optional(),
   servicesWanted: z.array(z.nativeEnum(ProviderType)).optional(),
+  targetedProviderProfileId: z.string().optional(),
 });
 
 export const createEventRequestSchema = eventRequestBaseSchema.refine(data => data.budgetMax >= data.budgetMin, {

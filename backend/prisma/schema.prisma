@@ -457,7 +457,8 @@ model EventRequest {
   venueState          String?
   venueZipCode        String?
   venueNotes          String?             @db.Text
-  venueProviderId     String?             // Set when a RESTO_VENUE booking is confirmed for this event
+  venueProviderId           String?             // Set when a RESTO_VENUE booking is confirmed for this event
+  targetedProviderProfileId String?             // Set when planner sends directly to a specific vendor
   
   // Optional preferences
   cuisineTypes        CuisineType[]
@@ -803,6 +804,7 @@ model Message {
 // ============================================
 
 enum NotificationType {
+  NEW_REQUEST
   NEW_QUOTE
   QUOTE_ACCEPTED
   QUOTE_REJECTED

@@ -1725,6 +1725,8 @@
         var rawType = window._currentVendorType || 'RESTO_VENUE';
         var vendorType = validTypes.indexOf(rawType) !== -1 ? rawType : 'RESTO_VENUE';
 
+        var vendorProfileId = new URLSearchParams(window.location.search).get('id');
+
         var payload = {
           title:          ev.name,
           eventType:      ev.type || 'OTHER',
@@ -1739,7 +1741,8 @@
           venueState:     ev.venueState || undefined,
           venueZipCode:   ev.venueZip || undefined,
           servicesWanted: [vendorType],
-          description:    (service.value ? 'Service: ' + service.value + '. ' : '') + notes
+          description:    (service.value ? 'Service: ' + service.value + '. ' : '') + notes,
+          targetedProviderProfileId: vendorProfileId || undefined
         };
 
         fetch('/api/v1/event-requests', {

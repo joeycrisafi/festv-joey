@@ -41,6 +41,7 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
     needsCleanup: data.needsCleanup,
     needsSetup: data.needsSetup,
     servicesWanted: data.servicesWanted || [],
+    targetedProviderProfileId: data.targetedProviderProfileId || null,
     status: 'DRAFT',
   };
   
@@ -300,9 +301,28 @@ export const submitEventRequest = asyncHandler(async (req: AuthenticatedRequest,
       },
     },
   });
-  
-  // TODO: Notify matching providers
-  
+
+  // Notify the targeted vendor if one was specified
+  if (eventRequest.targetedProviderProfileId) {
+    const targetedProvider = await prisma.providerProfile.findUnique({
+      where: { id: eventRequest.targetedProviderProfileId },
+      select: { userId: true, businessName: true },
+    });
+    if (targetedProvider) {
+      const plannerName = [updatedRequest.client.firstName, updatedRequest.client.lastName]
+        .filter(Boolean).join(' ') || 'A planner';
+      await prisma.notification.create({
+        data: {
+          userId: targetedProvider.userId,
+          type: 'NEW_REQUEST',
+          title: 'New Event Request',
+          message: `${plannerName} sent you a request for "${updatedRequest.title}". Review and respond on your dashboard.`,
+          data: { eventRequestId: id, plannerName },
+        },
+      });
+    }
+  }
+
   res.json({
     success: true,
     data: updatedRequest,
