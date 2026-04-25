@@ -1040,6 +1040,7 @@
       </div>
 
       <button type="submit" class="btn-submit">Browse Vendors →</button>
+      <button type="button" id="btnSaveEventDraft" style="width:100%;margin-top:0.75rem;padding:0.9rem;background:transparent;color:var(--charcoal);border:1.5px solid rgba(0,0,0,0.15);border-radius:10px;font-family:'Montserrat',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:border-color 0.2s,color 0.2s;">Save as Draft</button>
 
     </form>
   </div>
@@ -1207,6 +1208,75 @@
       }
     });
 
+
+    /* ── SAVE AS DRAFT ── */
+    document.getElementById('btnSaveEventDraft').addEventListener('click', function() {
+      var token = localStorage.getItem('accessToken');
+      if (!token) { window.location.href = 'signin.html'; return; }
+
+      var name     = document.getElementById('eventName').value.trim();
+      var date     = document.getElementById('eventDate').value;
+      var guests   = document.getElementById('guestCount').value;
+      var budgetMin = document.getElementById('budgetMin').value;
+      var budgetMax = document.getElementById('budgetMax').value;
+
+      if (!name) { document.getElementById('eventName').focus(); return; }
+      if (!date) { document.getElementById('eventDate').focus(); return; }
+      if (!guests) { document.getElementById('guestCount').focus(); return; }
+
+      var btn = document.getElementById('btnSaveEventDraft');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      var payload = {
+        title:          name,
+        eventType:      document.getElementById('eventType').value || 'OTHER',
+        guestCount:     parseInt(guests) || 1,
+        budgetMin:      parseFloat(budgetMin) || 0,
+        budgetMax:      parseFloat(budgetMax || budgetMin) || 100,
+        eventDate:      date,
+        eventStartTime: document.getElementById('startTime').value || '18:00',
+        eventEndTime:   document.getElementById('endTime').value || '23:00',
+        venueCity:      document.getElementById('venueCity') ? document.getElementById('venueCity').value.trim() : undefined,
+        venueState:     document.getElementById('venueState') ? document.getElementById('venueState').value.trim() : undefined,
+        venueAddress:   document.getElementById('venueAddress') ? document.getElementById('venueAddress').value.trim() : undefined,
+        venueZipCode:   document.getElementById('venueZip') ? document.getElementById('venueZip').value.trim() : undefined,
+      };
+
+      // Also save to localStorage so browsevendors banner loads if they continue
+      localStorage.setItem('pendingEvent', JSON.stringify({
+        name: payload.title, date: payload.eventDate,
+        startTime: payload.eventStartTime, endTime: payload.eventEndTime,
+        venueCity: payload.venueCity || '', venueState: payload.venueState || '',
+        venueAddress: payload.venueAddress || '', venueZip: payload.venueZipCode || '',
+        budgetMin: payload.budgetMin, budgetMax: payload.budgetMax,
+        guests: payload.guestCount, type: payload.eventType,
+        selectedCats: [], requests: [], createdAt: new Date().toISOString()
+      }));
+
+      fetch('/api/v1/event-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(payload)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.success && !data.data) throw new Error(data.message || 'Could not save draft.');
+        btn.textContent = 'Saved ✓';
+        btn.style.color = '#3A8A55';
+        btn.style.borderColor = 'rgba(58,138,85,0.4)';
+        setTimeout(function() {
+          window.location.href = 'plannerdashboard.html';
+        }, 1200);
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Save as Draft';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        alert(err.message || 'Could not save. Please try again.');
+      });
+    });
 
     /* ── old step 2/3 state (unused) ── */
     let eventState = {};
