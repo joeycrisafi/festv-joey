@@ -1592,16 +1592,24 @@
             if (notesEl) notesEl.value = savedNotes;
           }
 
-          // If a service was previously saved, restore it and jump to step 2
-          var savedSvcName = '';
+          // If services were previously saved, restore them and jump to step 2
+          var savedSvcNames = [];
           if (d.description) {
-            var _m = d.description.match(/^Service:\s*([^.]+)/i);
-            if (_m) savedSvcName = _m[1].trim();
+            // New format: "Services: Name1, Name2. Notes"
+            var _mMulti = d.description.match(/^Services:\s*([^.]+)\./i);
+            if (_mMulti) {
+              savedSvcNames = _mMulti[1].split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+            } else {
+              // Legacy format: "Service: Name. Notes"
+              var _mSingle = d.description.match(/^Service:\s*([^.]+)/i);
+              if (_mSingle) savedSvcNames = [_mSingle[1].trim()];
+            }
           }
-          if (savedSvcName) {
-            // Give _buildSrServices a moment to render services, then select + advance
+          if (savedSvcNames.length) {
             setTimeout(function() {
-              if (window.selectService) window.selectService(savedSvcName, '');
+              savedSvcNames.forEach(function(name) {
+                if (window.selectService) window.selectService(name, '');
+              });
               setTimeout(function() {
                 var reviewBtn = document.getElementById('btnReviewRequest');
                 if (reviewBtn) reviewBtn.click();
@@ -1640,8 +1648,9 @@
       };
 
 
-      // Selected services array
+      // Selected services array — exposed globally so Save for Later can read it
       var _selectedServices = [];
+      window._draftSelectedServices = _selectedServices;
 
       // Inject + Select buttons into every .service-row that doesn't have one yet
       function injectSelectButtons() {
@@ -1885,9 +1894,12 @@
         return;
       }
 
-      var service = document.querySelector('input[name="serviceOption"]:checked') || document.querySelector('.service-option.selected') || { value: '' };
+      // Read services from _selectedServices (the actual source), not the non-existent radio
+      var selectedSvcs = window._draftSelectedServices || [];
       var notesEl = document.getElementById('srNotes') || document.getElementById('additionalNotes');
       var notes = notesEl ? notesEl.value.trim() : '';
+      // Encode as "Services: Name1, Name2. Notes" so we can restore on Continue
+      var svcPrefix = selectedSvcs.length ? 'Services: ' + selectedSvcs.map(function(s){ return s.name; }).join(', ') + '. ' : '';
 
       var validTypes = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
       var rawType = window._currentVendorType || 'RESTO_VENUE';
@@ -1908,7 +1920,7 @@
         venueState:     ev.venueState || undefined,
         venueZipCode:   ev.venueZip || undefined,
         servicesWanted: [vendorType],
-        description:    (service.value ? 'Service: ' + service.value + '. ' : '') + notes,
+        description:    svcPrefix + notes,
         targetedProviderProfileId: vendorProfileId || undefined
       };
 
