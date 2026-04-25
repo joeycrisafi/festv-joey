@@ -578,29 +578,25 @@
           <div class="sec-divider-line"></div>
         </div>
         <div class="vendor-grid">
-          <div class="vendor-card" id="vcard-dj" data-vendor="dj">
-            <span class="vendor-icon">🎧</span>
-            <div class="vendor-name">DJ</div>
+          <div class="vendor-card" id="vcard-RESTO_VENUE" data-vendor="RESTO_VENUE">
+            <span class="vendor-icon">🍽️</span>
+            <div class="vendor-name">Restaurant / Venue</div>
           </div>
-          <div class="vendor-card" id="vcard-photographer" data-vendor="photographer">
-            <span class="vendor-icon">📸</span>
-            <div class="vendor-name">Photographer</div>
-          </div>
-          <div class="vendor-card" id="vcard-caterer" data-vendor="caterer">
+          <div class="vendor-card" id="vcard-CATERER" data-vendor="CATERER">
             <span class="vendor-icon">🥂</span>
             <div class="vendor-name">Caterer</div>
           </div>
-          <div class="vendor-card" id="vcard-restaurant" data-vendor="restaurant">
-            <span class="vendor-icon">🍽️</span>
-            <div class="vendor-name">Restaurant</div>
+          <div class="vendor-card" id="vcard-ENTERTAINMENT" data-vendor="ENTERTAINMENT">
+            <span class="vendor-icon">🎧</span>
+            <div class="vendor-name">Entertainment</div>
           </div>
-          <div class="vendor-card" id="vcard-bartender" data-vendor="bartender">
-            <span class="vendor-icon">🍸</span>
-            <div class="vendor-name">Bartender</div>
+          <div class="vendor-card" id="vcard-PHOTO_VIDEO" data-vendor="PHOTO_VIDEO">
+            <span class="vendor-icon">📸</span>
+            <div class="vendor-name">Photo & Video</div>
           </div>
-          <div class="vendor-card" id="vcard-venue" data-vendor="venue">
-            <span class="vendor-icon">🏛️</span>
-            <div class="vendor-name">Venue</div>
+          <div class="vendor-card" id="vcard-FLORIST_DECOR" data-vendor="FLORIST_DECOR">
+            <span class="vendor-icon">💐</span>
+            <div class="vendor-name">Florist & Decor</div>
           </div>
         </div>
       </div>
@@ -816,8 +812,9 @@
       var successSub         = document.getElementById('successSub');
 
       var vendorLabels = {
-        dj: 'DJ', photographer: 'Photographer', caterer: 'Caterer',
-        restaurant: 'Restaurant', bartender: 'Bartender', venue: 'Venue'
+        RESTO_VENUE: 'Restaurant / Venue', CATERER: 'Caterer',
+        ENTERTAINMENT: 'Entertainment', PHOTO_VIDEO: 'Photo & Video',
+        FLORIST_DECOR: 'Florist & Decor'
       };
 
       function scrollTo(el) {
@@ -854,8 +851,8 @@
         document.getElementById('vcard-' + vendor).classList.add('selected');
         vendorFormLabel.textContent = vendorLabels[vendor] + ' Details';
 
-        // Show proof of ownership only for venue, restaurant, caterer
-        var needsProof = vendor === 'venue' || vendor === 'restaurant' || vendor === 'caterer';
+        // Show proof of ownership only for restaurant/venue and caterer
+        var needsProof = vendor === 'RESTO_VENUE' || vendor === 'CATERER';
         document.getElementById('proofGroup').classList.toggle('open', needsProof);
 
         vendorFormSection.classList.add('open');
