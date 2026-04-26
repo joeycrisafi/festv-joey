@@ -2180,27 +2180,51 @@
       var specialPatch = collectSpecialFields();
       var p0 = authFetch('/providers/profile', { method:'PUT', body:JSON.stringify(specialPatch) }).catch(function(){});
 
-      var svcPromises = s2Services.filter(function(c){return c.name.trim();}).map(function(card) {
-        return authFetch('/providers/services', { method:'POST', body:JSON.stringify({
-          name:card.name.trim(), description:card.description.trim()||card.name.trim(),
-          priceType:card.priceType, basePrice:card.basePrice||0, features:card.features,
-          providerType:primaryType||'RESTO_VENUE'
-        })}).catch(function(e){console.warn('[FESTV] svc error',e);});
-      });
+      // Delete-then-recreate: fetch existing services + menu items, delete all, then POST fresh.
+      // This prevents duplicates when the vendor goes back and re-submits Step 2.
+      var cardsToSave   = s2Services.filter(function(c){return c.name.trim();});
+      var menuToSave    = s2MenuItems.filter(function(m){return m.name.trim();});
 
-      var menuPromises = s2MenuItems.filter(function(m){return m.name.trim();}).map(function(item) {
-        return authFetch('/providers/menu-items', { method:'POST', body:JSON.stringify({
-          name:item.name.trim(), category:item.category, price:item.price||0,
-          description:item.description||undefined, dietaryInfo:item.dietaryTags
-        })}).catch(function(e){console.warn('[FESTV] menu error',e);});
-      });
+      Promise.all([
+        authFetch('/providers/services').catch(function(){ return { services: [] }; }),
+        authFetch('/providers/menu-items').catch(function(){ return { menuItems: [] }; })
+      ]).then(function(existing) {
+        var existingSvcs  = (existing[0] && existing[0].services)  || [];
+        var existingMenus = (existing[1] && existing[1].menuItems) || [];
 
-      Promise.all([p0].concat(svcPromises).concat(menuPromises))
-        .then(function() { btn.classList.remove('loading'); goToStep(3); })
-        .catch(function(err) {
-          btn.classList.remove('loading');
-          showError('err-2',(err&&err.message)?err.message:'Something went wrong. Please try again.');
+        var deletePromises = []
+          .concat(existingSvcs.map(function(s) {
+            return authFetch('/providers/services/' + s.id, { method:'DELETE' }).catch(function(){});
+          }))
+          .concat(existingMenus.map(function(m) {
+            return authFetch('/providers/menu-items/' + m.id, { method:'DELETE' }).catch(function(){});
+          }));
+
+        return Promise.all(deletePromises);
+      }).then(function() {
+        var svcPromises = cardsToSave.map(function(card) {
+          return authFetch('/providers/services', { method:'POST', body:JSON.stringify({
+            name:card.name.trim(), description:card.description.trim()||card.name.trim(),
+            priceType:card.priceType, basePrice:card.basePrice||0, features:card.features,
+            providerType:primaryType||'RESTO_VENUE'
+          })}).catch(function(e){console.warn('[FESTV] svc error',e);});
         });
+
+        var menuPromises = menuToSave.map(function(item) {
+          return authFetch('/providers/menu-items', { method:'POST', body:JSON.stringify({
+            name:item.name.trim(), category:item.category, price:item.price||0,
+            description:item.description||undefined, dietaryInfo:item.dietaryTags
+          })}).catch(function(e){console.warn('[FESTV] menu error',e);});
+        });
+
+        return Promise.all([p0].concat(svcPromises).concat(menuPromises));
+      }).then(function() {
+        btn.classList.remove('loading');
+        goToStep(3);
+      }).catch(function(err) {
+        btn.classList.remove('loading');
+        showError('err-2',(err&&err.message)?err.message:'Something went wrong. Please try again.');
+      });
     });
     document.getElementById('btn2skip').addEventListener('click', function() { goToStep(3); });
 
