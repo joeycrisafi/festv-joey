@@ -1405,12 +1405,15 @@
     // ── One-time prefill from accounttype.html registration ──
     function applyRegistrationPrefill() {
       try {
+        // Email lives in localStorage.user regardless of whether a prefill entry exists
+        var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (storedUser.email && !document.getElementById('s1-email').value)
+          setVal('s1-email', storedUser.email);
+
         var raw = localStorage.getItem('vendorSetupPrefill');
-        if (!raw) return;
+        if (!raw) { validateStep1(); return; }
         var pre = JSON.parse(raw);
         localStorage.removeItem('vendorSetupPrefill');
-        if (pre.businessName && !document.getElementById('s1-businessName').value)
-          setVal('s1-businessName', pre.businessName);
         if (pre.phone && !document.getElementById('s1-phone').value)
           setVal('s1-phone', pre.phone);
         if (pre.city && !document.getElementById('s1-city').value)

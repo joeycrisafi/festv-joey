@@ -963,10 +963,9 @@
             }
             // Save one-time prefill so vendorsetup.html Step 1 can skip re-entering this info
             localStorage.setItem('vendorSetupPrefill', JSON.stringify({
-              businessName: contactName,
-              phone:        phone,
-              city:         document.getElementById('vendorCity').value.trim(),
-              vendorType:   selectedVendor
+              phone:      phone,
+              city:       document.getElementById('vendorCity').value.trim(),
+              vendorType: selectedVendor
             }));
             successTitle.textContent = 'Application Submitted';
             successSub.textContent   = 'Thanks for signing up as a ' + label + '. Our team will review your details and reach out within 1–2 business days.';
