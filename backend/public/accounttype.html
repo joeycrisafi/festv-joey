@@ -292,37 +292,12 @@
     .field-hint { font-size: 0.67rem; color: var(--muted); line-height: 1.5; margin-top: 0.2rem; }
 
     /* ── REVIEW NOTE ── */
-    .review-note {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-      background: rgba(196,160,106,0.07);
-      border: 1px solid rgba(196,160,106,0.25);
-      border-radius: 10px;
-      padding: 1rem 1.1rem;
-      margin-top: 1.5rem;
-    }
-    .review-note-icon {
-      font-size: 1rem;
-      flex-shrink: 0;
-      margin-top: 0.05rem;
-    }
-    .review-note-text {
-      font-size: 0.72rem;
-      color: var(--charcoal);
-      line-height: 1.6;
-    }
-    .review-note-text strong {
-      font-weight: 600;
-      color: var(--dark);
-    }
-
     /* ── SUBMIT BUTTON ── */
     .btn-submit {
       width: 100%;
       padding: 1rem 2rem;
-      background: var(--dark);
-      color: var(--white);
+      background: var(--gold);
+      color: var(--dark);
       border: none;
       border-radius: 10px;
       font-family: 'Montserrat', sans-serif;
@@ -338,7 +313,7 @@
       gap: 0.55rem;
       margin-top: 1.5rem;
     }
-    .btn-submit:hover { background: var(--charcoal); transform: translateY(-1px); }
+    .btn-submit:hover { background: var(--gold-dark); transform: translateY(-1px); }
     .btn-submit:active { transform: translateY(0); }
     .btn-submit svg { transition: transform 0.2s; }
     .btn-submit:hover svg { transform: translateX(3px); }
@@ -627,16 +602,8 @@
           </div>
 
 
-          <!-- Review note -->
-          <div class="review-note">
-            <span class="review-note-icon">🕐</span>
-            <p class="review-note-text">
-              <strong>Your account will be reviewed by the FESTV team</strong> before you can access your vendor profile. We'll verify your details and notify you by email once approved — usually within 1–2 business days.
-            </p>
-          </div>
-
           <button class="btn-submit" id="btnVendor">
-            Submit for Review
+            Create Account
             <svg width="14" height="14" fill="none" viewBox="0 0 14 14">
               <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
