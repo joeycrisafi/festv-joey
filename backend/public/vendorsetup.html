@@ -1368,8 +1368,6 @@
     // ── Auth helper ──
     function authFetch(url, opts) {
       opts = opts || {};
-      // A bare GET to /providers/profile has no dedicated route — always use /me
-      if (url === '/providers/profile' && !opts.method) url = '/providers/profile/me';
       opts.headers = Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, opts.headers || {});
       return fetch(API + url, opts).then(function (r) {
         return r.text().then(function(text) {
