@@ -1402,11 +1402,35 @@
       document.getElementById(id).classList.remove('show');
     }
 
+    // ── One-time prefill from accounttype.html registration ──
+    function applyRegistrationPrefill() {
+      try {
+        var raw = localStorage.getItem('vendorSetupPrefill');
+        if (!raw) return;
+        var pre = JSON.parse(raw);
+        localStorage.removeItem('vendorSetupPrefill');
+        if (pre.businessName && !document.getElementById('s1-businessName').value)
+          setVal('s1-businessName', pre.businessName);
+        if (pre.phone && !document.getElementById('s1-phone').value)
+          setVal('s1-phone', pre.phone);
+        if (pre.city && !document.getElementById('s1-city').value)
+          setVal('s1-city', pre.city);
+        if (pre.vendorType && !primaryType) {
+          var card = document.querySelector('.type-card[data-type="' + pre.vendorType + '"]');
+          if (card) card.click(); // triggers existing handler: sets primaryType, re-renders chips, calls validateStep1
+        }
+        validateStep1();
+      } catch (e) {}
+    }
+
     // ── Pre-fill if vendor already has a profile ──
     authFetch('/providers/profile/me')
       .then(function (data) {
         var p = data.data || data;
-        if (!p || !p.id) return;
+        if (!p || !p.id) {
+          applyRegistrationPrefill();
+          return;
+        }
         existingProfile  = p;
         createdProfileId = p.id;
 
@@ -1480,7 +1504,7 @@
         updateMenuSectionLabels();
         validateStep1();
       })
-      .catch(function () {}); // no profile yet — that's fine
+      .catch(function () { applyRegistrationPrefill(); }); // no profile yet — that's fine
 
     // ── Vendor type cards (primary — pick exactly one) ──
     document.querySelectorAll('.type-card').forEach(function (card) {
