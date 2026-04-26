@@ -453,7 +453,7 @@
     /* ── BUTTONS ── */
     .btn-primary {
       width: 100%; padding: 0.95rem 2rem;
-      background: var(--dark); color: var(--white);
+      background: var(--gold); color: var(--dark);
       border: none; border-radius: 10px;
       font-family: 'Montserrat', sans-serif;
       font-size: 0.75rem; font-weight: 700;
@@ -464,7 +464,7 @@
       justify-content: center; gap: 0.55rem;
       margin-top: 1.5rem;
     }
-    .btn-primary:hover { background: var(--charcoal); transform: translateY(-1px); }
+    .btn-primary:hover { background: var(--gold-dark); transform: translateY(-1px); }
     .btn-primary:active { transform: none; }
     .btn-primary:disabled { opacity: 0.6; pointer-events: none; }
     .btn-primary svg { transition: transform 0.2s; }
@@ -1368,6 +1368,8 @@
     // ── Auth helper ──
     function authFetch(url, opts) {
       opts = opts || {};
+      // A bare GET to /providers/profile has no dedicated route — always use /me
+      if (url === '/providers/profile' && !opts.method) url = '/providers/profile/me';
       opts.headers = Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, opts.headers || {});
       return fetch(API + url, opts).then(function (r) {
         return r.text().then(function(text) {
