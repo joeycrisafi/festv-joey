@@ -564,7 +564,119 @@
       .card { padding: 1.25rem; }
     }
 
-    /* ── PDF ZONE ── */
+    /* ── PDF BANNER (step 2) ── */
+    .pdf-banner {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+      background: rgba(196,160,106,0.05);
+      border: 1px solid rgba(196,160,106,0.22);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .pdf-banner-content {
+      display: flex; align-items: flex-start; gap: 0.75rem; flex: 1; min-width: 200px;
+    }
+    .pdf-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .pdf-banner-title {
+      font-size: 0.78rem; font-weight: 700; color: var(--dark); margin-bottom: 0.2rem;
+    }
+    .pdf-banner-sub { font-size: 0.7rem; color: var(--muted); line-height: 1.5; }
+    .btn-pdf-outline {
+      padding: 0.5rem 1.1rem;
+      background: none;
+      border: 1.5px solid var(--gold);
+      border-radius: 8px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gold-dark); cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-pdf-outline:hover { background: rgba(196,160,106,0.08); border-color: var(--gold-dark); }
+
+    /* ── RADIO TOGGLE GROUP (Indoor/Outdoor/Both etc.) ── */
+    .radio-toggle-group { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .radio-toggle-btn {
+      padding: 0.35rem 0.8rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--muted); cursor: pointer; background: none;
+      font-family: 'Montserrat', sans-serif;
+      transition: all 0.2s; user-select: none;
+    }
+    .radio-toggle-btn:hover { border-color: var(--gold-light); color: var(--charcoal); }
+    .radio-toggle-btn.selected { border-color: var(--gold); background: rgba(196,160,106,0.08); color: var(--gold-dark); }
+
+    /* ── SERVICE CARDS ── */
+    .svc-card {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 0.65rem;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .svc-card:focus-within { border-color: rgba(196,160,106,0.4); }
+    .svc-card-summary {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.8rem 1rem; cursor: pointer;
+      background: var(--white);
+    }
+    .svc-card-summary:hover { background: rgba(0,0,0,0.01); }
+    .svc-summary-left { display: flex; align-items: center; gap: 0.6rem; }
+    .svc-summary-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0;
+    }
+    .svc-summary-name {
+      font-size: 0.82rem; font-weight: 600; color: var(--dark);
+    }
+    .svc-summary-price {
+      font-size: 0.75rem; color: var(--muted); margin-left: 0.5rem;
+    }
+    .svc-summary-actions { display: flex; align-items: center; gap: 0.4rem; }
+    .svc-icon-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 0.78rem; color: var(--muted); padding: 0.2rem;
+      line-height: 1; transition: color 0.2s;
+    }
+    .svc-icon-btn:hover { color: var(--dark); }
+    .svc-icon-btn.del:hover { color: var(--red); }
+    .svc-card-body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+    .svc-card-body .form-group:first-child { margin-top: 0.85rem; }
+
+    /* ── SUGGESTION CHIPS AREA ── */
+    .suggestion-area {
+      margin-bottom: 1rem;
+    }
+    .suggestion-divider {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      margin: 0.65rem 0 0.45rem;
+    }
+
+    /* ── ADD OUTLINE BUTTON ── */
+    .btn-add-outline {
+      width: 100%; padding: 0.7rem;
+      background: none;
+      border: 1.5px dashed rgba(196,160,106,0.35);
+      border-radius: 10px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gold-dark); cursor: pointer;
+      transition: all 0.2s; margin-bottom: 0.75rem;
+    }
+    .btn-add-outline:hover {
+      background: rgba(196,160,106,0.06);
+      border-color: var(--gold);
+    }
+
+    /* ── PDF ZONE (step 2 legacy — keeping for drag-drop ── */
     .pdf-zone {
       border: 2px dashed rgba(196,160,106,0.35);
       border-radius: 14px;
@@ -869,134 +981,56 @@
         </div>
       </div>
 
-      <!-- ── STEP 2: SERVICES & MENU ── -->
+      <!-- ── STEP 2: SERVICES & PRICING ── -->
       <div class="step-panel" id="panel-2">
         <div class="panel-heading">
           <div class="panel-label">Step 2 of 2</div>
-          <h1 class="panel-title">Services &amp; Menu</h1>
-          <p class="panel-sub">Add your packages and menu items. Upload your PDF for instant setup.</p>
+          <h1 class="panel-title">Services &amp; Pricing</h1>
+          <p class="panel-sub">Add your packages so planners know exactly what you offer.</p>
         </div>
         <div class="card">
 
-          <!-- PDF Import Zone -->
-          <div class="pdf-zone" id="pdfZone">
-            <div class="pdf-zone-icon">📄</div>
-            <div class="pdf-zone-title">Upload Your Menu or Services PDF</div>
-            <div class="pdf-zone-sub">Claude reads your PDF and pre-fills your services and menu items. Takes about 10 seconds.</div>
+          <!-- PDF Import Banner -->
+          <div class="pdf-banner" id="pdfBanner">
+            <div class="pdf-banner-content">
+              <div class="pdf-banner-icon">📄</div>
+              <div>
+                <div class="pdf-banner-title">Import your pricing sheet</div>
+                <div class="pdf-banner-sub">Have a services menu or pricing sheet? Import it as a PDF and we'll fill this in for you.</div>
+              </div>
+            </div>
             <input type="file" id="pdfFileInput" accept=".pdf" style="display:none">
-            <button class="btn-pdf-upload" id="btnPickPdf" type="button">Choose PDF</button>
-            <div class="pdf-zone-skip"><a href="#" id="skipPdfLink">Skip — I'll add manually</a></div>
-
-            <!-- Upload in progress state (hidden by default) -->
-            <div id="pdfLoading" style="display:none">
-              <div class="pdf-spinner"></div>
-              <div class="pdf-loading-text">Reading your PDF with Claude AI...</div>
+            <button class="btn-pdf-outline" id="btnPickPdf" type="button">Upload PDF</button>
+            <div id="pdfLoading" style="display:none; width:100%; text-align:center; padding:0.4rem 0;">
+              <div class="pdf-spinner" style="width:20px;height:20px;margin:0 auto 0.35rem;"></div>
+              <div style="font-size:0.7rem;color:var(--muted);">Reading your PDF with Claude AI...</div>
             </div>
-
-            <!-- Success state (hidden by default) -->
-            <div id="pdfSuccess" style="display:none">
-              <div class="pdf-success-icon">✓</div>
-              <div class="pdf-success-text" id="pdfSuccessText">Extracted X items — review and edit below</div>
+            <div id="pdfSuccess" style="display:none; width:100%; font-size:0.72rem; color:var(--green); font-weight:600; padding:0.3rem 0;">
+              ✓ <span id="pdfSuccessText"></span>
             </div>
-
-            <!-- Error state (hidden by default) -->
-            <div id="pdfError" class="error-msg" style="margin-top:1rem;"></div>
+            <div id="pdfError" class="error-msg" style="width:100%; margin:0.5rem 0 0;"></div>
           </div>
+
+          <!-- Special Fields — rendered by JS based on vendor type -->
+          <div id="specialFieldsContainer"></div>
 
           <!-- Services Section -->
-          <div class="section-divider">
-            <div class="section-label">Service Packages</div>
-            <button class="btn-section-add" id="btnShowAddService" type="button">+ Add Manually</button>
-          </div>
-          <div class="services-list" id="servicesList"></div>
+          <div class="form-section-heading">Services &amp; Packages</div>
+          <div class="field-hint" style="margin-bottom:0.85rem;">At least one service is required to publish. Click a suggestion or add manually.</div>
+          <div class="suggestion-area" id="suggestionChipsArea"></div>
+          <div id="serviceCardsArea"></div>
+          <button class="btn-add-outline" id="btnAddServiceCard" type="button">+ Add a service</button>
 
-          <!-- Add service form (initially hidden) -->
-          <div class="add-service-form" id="addServiceForm" style="display:none">
-            <div class="add-service-title">+ Add a Service Package</div>
-
-            <div class="form-group">
-              <label class="form-label">Package Name <span class="req">*</span></label>
-              <input class="form-input" id="svc-name" type="text" placeholder="e.g. Wedding Package, 4-Hour Set, Full Coverage">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Description <span class="req">*</span></label>
-              <textarea class="form-textarea" id="svc-desc" placeholder="What's included in this package? Be specific — planners use this to decide."></textarea>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Price Type <span class="req">*</span></label>
-                <select class="form-select" id="svc-priceType">
-                  <option value="FLAT_RATE">Flat Rate</option>
-                  <option value="PER_PERSON">Per Person</option>
-                  <option value="PER_HOUR">Per Hour</option>
-                  <option value="CUSTOM">Custom / Quote</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Price ($) <span class="req">*</span></label>
-                <input class="form-input" id="svc-price" type="number" placeholder="1500" min="0">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">What's Included (add features)</label>
-              <div class="features-input-row">
-                <input class="form-input" id="svc-featureInput" type="text" placeholder="e.g. Sound system, Lighting rig, MC...">
-                <button class="btn-add-tag" type="button" id="btnAddFeature">Add</button>
-              </div>
-              <div class="features-tags" id="featureTagsDisplay"></div>
-            </div>
-
-            <button class="btn-add-service" type="button" id="btnSaveService">Save Package</button>
+          <!-- Menu Section — shown only if RESTO_VENUE or CATERER -->
+          <div id="menuSectionWrap" style="display:none;">
+            <div class="form-section-heading">Menu Items</div>
+            <div class="field-hint" style="margin-bottom:0.85rem;">Optional — add your menu items for planners to browse.</div>
+            <div id="menuCardsArea"></div>
+            <button class="btn-add-outline" id="btnAddMenuCard" type="button">+ Add a menu item</button>
           </div>
 
-          <!-- Menu / Equipment Section -->
-          <div class="section-divider" id="menuSection">
-            <div class="section-label" id="menuSectionLabel">Menu Items</div>
-            <button class="btn-section-add" id="btnShowAddMenu" type="button">+ Add Manually</button>
-          </div>
-          <div class="menu-list" id="menuList"></div>
-
-          <!-- Add menu item form (initially hidden) -->
-          <div class="add-service-form" id="addMenuForm" style="display:none">
-            <div class="add-service-title" id="addMenuTitle">+ Add a Menu Item</div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Item Name <span class="req">*</span></label>
-                <input class="form-input" id="mi-name" type="text" placeholder="e.g. Arancini Saffron Pea">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Category <span class="req">*</span></label>
-                <input class="form-input" id="mi-category" type="text" placeholder="e.g. Canapés, Starter, Main, Bar">
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Price ($)</label>
-                <input class="form-input" id="mi-price" type="number" placeholder="0" min="0" step="0.01">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Dietary Info</label>
-                <input class="form-input" id="mi-dietary" type="text" placeholder="e.g. Vegetarian, Gluten-Free">
-                <span class="field-hint">Comma separated</span>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">Description</label>
-              <input class="form-input" id="mi-desc" type="text" placeholder="Brief description...">
-            </div>
-
-            <button class="btn-add-service" type="button" id="btnSaveMenuItem" style="margin-top:1rem; margin-bottom:0;">Save Item</button>
-          </div>
-
-          <!-- Publish button -->
           <div id="err-2" class="error-msg"></div>
-          <button class="btn-primary" id="btn2">
+          <button class="btn-primary" id="btn2" disabled>
             <div class="spinner"></div>
             <span class="btn-text">Publish Profile</span>
             <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1379,179 +1413,611 @@
       });
     });
 
-    // ── Features (for service form) ──
-    document.getElementById('btnAddFeature').addEventListener('click', addFeature);
-    document.getElementById('svc-featureInput').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); addFeature(); }
-    });
-
-    function addFeature() {
-      var val = document.getElementById('svc-featureInput').value.trim();
-      if (!val) return;
-      pendingFeatures.push(val);
-      document.getElementById('svc-featureInput').value = '';
-      renderFeatureTags();
-    }
-    function removeFeature(i) {
-      pendingFeatures.splice(i, 1);
-      renderFeatureTags();
-    }
-    function renderFeatureTags() {
-      var html = pendingFeatures.map(function (f, i) {
-        return '<div class="feature-tag">' + escHtml(f) + '<button type="button" onclick="removeFeatureTag(' + i + ')">×</button></div>';
-      }).join('');
-      document.getElementById('featureTagsDisplay').innerHTML = html;
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // ── Save Service Package ──
-    document.getElementById('btnSaveService').addEventListener('click', function () {
-      var name  = document.getElementById('svc-name').value.trim();
-      var desc  = document.getElementById('svc-desc').value.trim();
-      var pType = document.getElementById('svc-priceType').value;
-      var price = parseFloat(document.getElementById('svc-price').value);
+    // ══════════════════════════════════════════
+    // STEP 2 — Services & Pricing
+    // ══════════════════════════════════════════
 
-      if (!name || !desc) { showError('err-2', 'Please fill in the package name and description.'); return; }
-      if (!price && pType !== 'CUSTOM') { showError('err-2', 'Please enter a price.'); return; }
-      clearError('err-2');
+    var _cardIdSeq   = 0;
+    var s2Services   = [];
+    var s2MenuItems  = [];
+    var sfValues     = {};
 
-      pendingServices.push({
-        name:        name,
-        description: desc,
-        priceType:   pType,
-        basePrice:   price || 0,
-        features:    pendingFeatures.slice(),
-        providerType: primaryType || 'RESTO_VENUE',
+    var PRICE_TYPES = {
+      RESTO_VENUE:  [
+        { label: 'Per Person',  value: 'PER_PERSON' },
+        { label: 'Flat Rate',   value: 'FLAT_RATE' },
+        { label: 'Per Hour',    value: 'PER_HOUR' },
+        { label: 'Custom',      value: 'CUSTOM' },
+      ],
+      CATERER: [
+        { label: 'Per Person',  value: 'PER_PERSON' },
+        { label: 'Flat Rate',   value: 'FLAT_RATE' },
+        { label: 'Custom',      value: 'CUSTOM' },
+      ],
+      ENTERTAINMENT: [
+        { label: 'Per Hour',    value: 'PER_HOUR' },
+        { label: 'Flat Rate',   value: 'FLAT_RATE' },
+        { label: 'Custom',      value: 'CUSTOM' },
+      ],
+      PHOTO_VIDEO: [
+        { label: 'Per Hour',    value: 'PER_HOUR' },
+        { label: 'Flat Rate',   value: 'FLAT_RATE' },
+        { label: 'Custom',      value: 'CUSTOM' },
+      ],
+      FLORIST_DECOR: [
+        { label: 'Flat Rate',   value: 'FLAT_RATE' },
+        { label: 'Per Unit',    value: 'CUSTOM' },
+        { label: 'Per Table',   value: 'CUSTOM' },
+        { label: 'Custom',      value: 'CUSTOM' },
+      ],
+    };
+
+    var SUGGESTIONS = {
+      RESTO_VENUE: [
+        { name: 'Private dining room rental', value: 'FLAT_RATE' },
+        { name: 'Full venue buyout',           value: 'FLAT_RATE' },
+        { name: 'Cocktail hour package',       value: 'PER_PERSON' },
+        { name: 'Seated dinner package',       value: 'PER_PERSON' },
+        { name: 'Buffet package',              value: 'PER_PERSON' },
+        { name: 'Brunch / lunch package',      value: 'PER_PERSON' },
+        { name: 'Flat rate venue fee',         value: 'FLAT_RATE' },
+        { name: 'Valet',                       value: 'FLAT_RATE' },
+        { name: 'Raw bar',                     value: 'PER_PERSON' },
+        { name: 'Meat carving station',        value: 'FLAT_RATE' },
+        { name: 'Fish station',                value: 'FLAT_RATE' },
+        { name: 'Salad station',               value: 'FLAT_RATE' },
+        { name: 'Pasta station',               value: 'FLAT_RATE' },
+        { name: 'Custom station',              value: 'FLAT_RATE', custom: true },
+      ],
+      CATERER: [
+        { name: 'Plated dinner',               value: 'PER_PERSON' },
+        { name: 'Buffet',                      value: 'PER_PERSON' },
+        { name: 'Cocktail / appetizer package',value: 'PER_PERSON' },
+        { name: 'Grazing table / charcuterie', value: 'FLAT_RATE' },
+        { name: 'Dessert table',               value: 'FLAT_RATE' },
+        { name: 'Cake cutting service',        value: 'FLAT_RATE' },
+        { name: 'Staff — servers',             value: 'PER_HOUR' },
+        { name: 'Staff — bartenders',          value: 'PER_HOUR' },
+        { name: 'Raw bar',                     value: 'PER_PERSON' },
+        { name: 'Meat carving station',        value: 'FLAT_RATE' },
+        { name: 'Custom station',              value: 'FLAT_RATE', custom: true },
+      ],
+      ENTERTAINMENT: [
+        { name: 'DJ set',                      value: 'PER_HOUR' },
+        { name: 'Live band',                   value: 'FLAT_RATE' },
+        { name: 'MC / emcee',                  value: 'FLAT_RATE' },
+        { name: 'Photo booth rental',          value: 'FLAT_RATE' },
+        { name: 'Lighting package',            value: 'FLAT_RATE' },
+        { name: 'Sound system rental',         value: 'FLAT_RATE' },
+        { name: 'Performer',                   value: 'FLAT_RATE' },
+        { name: 'Kids entertainment',          value: 'FLAT_RATE' },
+        { name: 'Custom',                      value: 'FLAT_RATE', custom: true },
+      ],
+      PHOTO_VIDEO: [
+        { name: 'Photography',                 value: 'FLAT_RATE' },
+        { name: 'Videography',                 value: 'FLAT_RATE' },
+        { name: 'Photo + video bundle',        value: 'FLAT_RATE' },
+        { name: 'Same-day edit',               value: 'FLAT_RATE' },
+        { name: 'Photo booth',                 value: 'FLAT_RATE' },
+        { name: 'Drone footage',               value: 'FLAT_RATE' },
+        { name: 'Second shooter add-on',       value: 'FLAT_RATE' },
+        { name: 'Album / print package',       value: 'FLAT_RATE' },
+      ],
+      FLORIST_DECOR: [
+        { name: 'Bridal bouquet',              value: 'FLAT_RATE' },
+        { name: 'Centerpieces',                value: 'CUSTOM' },
+        { name: 'Ceremony arch / backdrop',    value: 'FLAT_RATE' },
+        { name: 'Full venue floral install',   value: 'CUSTOM' },
+        { name: 'Cocktail hour arrangements',  value: 'FLAT_RATE' },
+        { name: 'Bud vases',                   value: 'CUSTOM' },
+        { name: 'Candle / lighting decor',     value: 'FLAT_RATE' },
+        { name: 'Signage / stationery',        value: 'FLAT_RATE' },
+      ],
+    };
+
+    var DIETARY_OPTS = ['Vegan', 'Vegetarian', 'Halal', 'Kosher', 'Gluten-Free', 'Nut-Free'];
+
+    function getMergedPriceTypes() {
+      var allTypes = primaryType ? [primaryType].concat(secondaryTypes) : ['RESTO_VENUE'];
+      var seen = {}, result = [];
+      allTypes.forEach(function(t) {
+        (PRICE_TYPES[t] || []).forEach(function(pt) {
+          if (!seen[pt.label]) { seen[pt.label] = true; result.push(pt); }
+        });
       });
+      return result;
+    }
 
-      // Reset form fields
-      document.getElementById('svc-name').value  = '';
-      document.getElementById('svc-desc').value  = '';
-      document.getElementById('svc-price').value = '';
-      document.getElementById('svc-priceType').value = 'FLAT_RATE';
-      pendingFeatures = [];
-      renderFeatureTags();
+    function typeLabel(t) {
+      return { RESTO_VENUE: 'Restaurant / Venue', CATERER: 'Caterer', ENTERTAINMENT: 'Entertainment', PHOTO_VIDEO: 'Photo & Video', FLORIST_DECOR: 'Florist & Decor' }[t] || t;
+    }
 
-      // Hide form and scroll services list into view
-      document.getElementById('addServiceForm').style.display = 'none';
-      renderServicesList();
-      var sl = document.getElementById('servicesList');
-      if (sl) sl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
+    function initStep2() {
+      renderSpecialFields();
+      renderSuggestionChips();
+      renderServiceCards();
+      renderMenuCards();
+      var allTypes = primaryType ? [primaryType].concat(secondaryTypes) : [];
+      var needsMenu = allTypes.some(function(t) { return t === 'RESTO_VENUE' || t === 'CATERER'; });
+      document.getElementById('menuSectionWrap').style.display = needsMenu ? '' : 'none';
+      validateStep2();
+    }
 
-    function renderServicesList() {
-      var html = pendingServices.map(function (s, i) {
-        var priceLabel = s.priceType === 'CUSTOM' ? 'Custom Quote' :
-                         s.priceType === 'PER_HOUR' ? '$' + s.basePrice + '/hr' :
-                         s.priceType === 'PER_PERSON' ? '$' + s.basePrice + '/pp' :
-                         '$' + s.basePrice.toLocaleString();
-        var tags = s.features.map(function (f) { return '<span class="service-tag">' + escHtml(f) + '</span>'; }).join('');
-        return '<div class="service-item"><button class="btn-remove" onclick="removeSvc(' + i + ')">✕</button>' +
-          '<div class="service-item-header"><div class="service-item-name">' + escHtml(s.name) + '</div><div class="service-item-price">' + priceLabel + '</div></div>' +
-          (s.description ? '<div class="service-item-desc">' + escHtml(s.description) + '</div>' : '') +
-          (tags ? '<div class="service-item-tags">' + tags + '</div>' : '') +
-          '</div>';
-      }).join('');
-      // If services exist, show count + "Add another" hint
-      if (pendingServices.length > 0) {
-        html += '<div style="font-size:0.72rem;color:var(--muted);padding:0.5rem 0 0.25rem;text-align:right;">' +
-          pendingServices.length + ' package' + (pendingServices.length > 1 ? 's' : '') + ' added — click <strong>+ Add Manually</strong> above to add more</div>';
+    function validateStep2() {
+      document.getElementById('btn2').disabled = (s2Services.length === 0);
+    }
+
+    // ── Special Fields ──
+    function renderSpecialFields() {
+      var container = document.getElementById('specialFieldsContainer');
+      var allTypes  = primaryType ? [primaryType].concat(secondaryTypes) : [];
+      var html = '';
+      allTypes.forEach(function(type, idx) { html += buildSpecialFieldsHTML(type, idx === 0); });
+      container.innerHTML = html;
+      bindSpecialFieldEvents(container);
+    }
+
+    function buildSpecialFieldsHTML(type, isPrimary) {
+      var heading = isPrimary ? typeLabel(type) + ' Details' : 'As a ' + typeLabel(type);
+      var h = '<div class="form-section-heading">' + escHtml(heading) + '</div>';
+
+      if (type === 'RESTO_VENUE') {
+        h += '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Seated Capacity</label>' +
+          '<input class="form-input sf-input" id="sf-seatedCapacity" type="number" min="0" placeholder="150"></div>' +
+          '<div class="form-group"><label class="form-label">Standing Capacity</label>' +
+          '<input class="form-input sf-input" id="sf-standingCapacity" type="number" min="0" placeholder="250"></div></div>' +
+          '<div class="form-group"><label class="form-label">Cuisine Type</label>' +
+          '<input class="form-input sf-input" id="sf-venueCuisine" type="text" placeholder="e.g. French, Italian, Pan-Asian"></div>' +
+          '<div class="form-group"><label class="form-label">Venue Type</label>' +
+          '<div class="radio-toggle-group" data-sfkey="venueIndoorOutdoor">' +
+          buildRadioBtns(['Indoor','Outdoor','Both'],['INDOOR','OUTDOOR','BOTH']) + '</div></div>' +
+          '<div class="toggle-row" style="border-top:none;padding-top:0;">' +
+          '<span class="toggle-label">AV / tech available</span>' +
+          '<label class="toggle-switch"><input type="checkbox" class="sf-check" data-sfkey="avTechAvailable"><span class="slider"></span></label></div>' +
+          '<div class="form-group"><label class="form-label">Dietary Options</label>' +
+          '<div class="chip-group" id="sf-chips-dietaryOptions-RESTO">' + buildSfChips(DIETARY_OPTS, 'dietaryOptions-RESTO') + '</div></div>';
       }
-      document.getElementById('servicesList').innerHTML = html;
+
+      if (type === 'CATERER') {
+        h += '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Min Guest Count</label>' +
+          '<input class="form-input sf-input" id="sf-minGuestCount" type="number" min="1" placeholder="20"></div>' +
+          '<div class="form-group"><label class="form-label">Max Guest Count</label>' +
+          '<input class="form-input sf-input" id="sf-maxGuestCount" type="number" min="1" placeholder="500"></div></div>' +
+          '<div class="form-group" style="display:flex;gap:1.5rem;flex-wrap:wrap;">' +
+          buildCheckToggle('sf-equipmentRentalAvailable','equipmentRentalAvailable','Equipment rental available') +
+          buildCheckToggle('sf-caterSetupIncluded','caterSetupIncluded','Setup / teardown included') + '</div>' +
+          '<div class="form-group"><label class="form-label">Dietary Options</label>' +
+          '<div class="chip-group" id="sf-chips-dietaryOptions-CATER">' + buildSfChips(DIETARY_OPTS, 'dietaryOptions-CATER') + '</div></div>';
+      }
+
+      if (type === 'ENTERTAINMENT') {
+        h += '<div class="form-group"><label class="form-label">Genre / Style</label>' +
+          '<div class="chip-group" id="sf-chips-genreTags">' +
+          buildSfChips(['Top 40','Hip Hop','Jazz','Classical','Latin','R&B','Electronic','Rock','Country'], 'genreTags') + '</div>' +
+          '<div id="sf-genreTags-customWrap" style="display:none;margin-top:0.55rem;">' +
+          '<input class="form-input sf-input" id="sf-genreTags-custom" type="text" placeholder="Custom genre..."></div></div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Setup Time (minutes)</label>' +
+          '<input class="form-input sf-input" id="sf-setupTimeMinutes" type="number" min="0" placeholder="60"></div>' +
+          '<div class="form-group"><label class="form-label">Overtime Rate ($/hr)</label>' +
+          '<input class="form-input sf-input" id="sf-overtimeRatePerHour" type="number" min="0" placeholder="150"></div></div>' +
+          '<div class="form-group"><label class="form-label">Minimum Hours Required</label>' +
+          '<input class="form-input sf-input" id="sf-minimumHours" type="number" min="1" placeholder="2"></div>' +
+          '<div class="form-group" style="display:flex;gap:1.5rem;">' +
+          buildCheckToggle('sf-equipmentIncluded','equipmentIncluded','Equipment / sound system included') + '</div>';
+      }
+
+      if (type === 'PHOTO_VIDEO') {
+        h += '<div class="form-group"><label class="form-label">Style</label>' +
+          '<div class="chip-group" id="sf-chips-styleTags">' +
+          buildSfChips(['Editorial','Candid','Documentary','Fine Art','Dark & Moody','Light & Airy'], 'styleTags') + '</div>' +
+          '<div id="sf-styleTags-customWrap" style="display:none;margin-top:0.55rem;">' +
+          '<input class="form-input sf-input" id="sf-styleTags-custom" type="text" placeholder="Custom style..."></div></div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Delivery Timeline (days)</label>' +
+          '<input class="form-input sf-input" id="sf-deliveryTimelineDays" type="number" min="1" placeholder="30"></div>' +
+          '<div class="form-group"><label class="form-label">Edited Photos Included</label>' +
+          '<input class="form-input sf-input" id="sf-editedPhotosCount" type="number" min="0" placeholder="300"></div></div>' +
+          '<div class="form-group"><label class="form-label">Travel Fee Policy</label>' +
+          '<div class="radio-toggle-group" data-sfkey="travelFeePolicy">' +
+          buildRadioBtns(['Included','Charged per km','Quoted separately'],['INCLUDED','PER_KM','QUOTED']) + '</div></div>' +
+          '<div class="form-group" style="display:flex;gap:1.5rem;">' +
+          buildCheckToggle('sf-rawFilesIncluded','rawFilesIncluded','RAW files included') + '</div>';
+      }
+
+      if (type === 'FLORIST_DECOR') {
+        h += '<div class="form-group"><label class="form-label">Style</label>' +
+          '<div class="chip-group" id="sf-chips-floristStyleTags">' +
+          buildSfChips(['Romantic','Modern','Rustic','Minimalist','Tropical','Bohemian'], 'floristStyleTags') + '</div>' +
+          '<div id="sf-floristStyleTags-customWrap" style="display:none;margin-top:0.55rem;">' +
+          '<input class="form-input sf-input" id="sf-floristStyleTags-custom" type="text" placeholder="Custom style..."></div></div>' +
+          '<div class="form-group" style="display:flex;flex-wrap:wrap;gap:1.5rem;">' +
+          buildCheckToggle('sf-seasonalCustomFloral','seasonalCustomFloral','Seasonal / custom florals available') +
+          buildCheckToggle('sf-floristSetupIncluded','floristSetupIncluded','Setup / breakdown included') +
+          buildCheckToggle('sf-rentalItemsAvailable','rentalItemsAvailable','Rental items available') + '</div>';
+      }
+
+      return h;
     }
 
-    // ── Save Menu Item ──
-    document.getElementById('btnSaveMenuItem').addEventListener('click', function () {
-      var name     = document.getElementById('mi-name').value.trim();
-      var category = document.getElementById('mi-category').value.trim();
-      var price    = parseFloat(document.getElementById('mi-price').value) || 0;
-      var dietary  = document.getElementById('mi-dietary').value.trim();
-      var desc     = document.getElementById('mi-desc').value.trim();
-
-      if (!name || !category) { showError('err-2', 'Item name and category are required.'); return; }
-      clearError('err-2');
-
-      pendingMenuItems.push({
-        name:        name,
-        category:    category,
-        price:       price,
-        description: desc || undefined,
-        dietaryInfo: dietary ? dietary.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [],
-      });
-
-      document.getElementById('mi-name').value     = '';
-      document.getElementById('mi-category').value = '';
-      document.getElementById('mi-price').value    = '';
-      document.getElementById('mi-dietary').value  = '';
-      document.getElementById('mi-desc').value     = '';
-
-      // Hide form and scroll menu list into view
-      document.getElementById('addMenuForm').style.display = 'none';
-      renderMenuList();
-      var ml = document.getElementById('menuList');
-      if (ml) ml.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-
-    function renderMenuList() {
-      var html = pendingMenuItems.map(function (m, i) {
-        return '<div class="menu-item-row">' +
-          '<div class="menu-item-info"><div class="menu-item-name">' + escHtml(m.name) + '</div>' +
-          '<div class="menu-item-cat">' + escHtml(m.category) + (m.dietaryInfo && m.dietaryInfo.length ? ' · ' + m.dietaryInfo.join(', ') : '') + '</div></div>' +
-          (m.price ? '<div class="menu-item-price">$' + m.price.toFixed(2) + '</div>' : '') +
-          '<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.8rem;" onclick="removeMenuItem(' + i + ')">✕</button></div>';
+    function buildRadioBtns(labels, values) {
+      return labels.map(function(l, i) {
+        return '<button type="button" class="radio-toggle-btn" data-val="' + values[i] + '">' + escHtml(l) + '</button>';
       }).join('');
-      document.getElementById('menuList').innerHTML = html;
     }
 
-    // ── Section toggle buttons ──
-    document.getElementById('btnShowAddService').addEventListener('click', function() {
-      var f = document.getElementById('addServiceForm');
-      f.style.display = f.style.display === 'none' ? '' : 'none';
-    });
-    document.getElementById('btnShowAddMenu').addEventListener('click', function() {
-      var f = document.getElementById('addMenuForm');
-      f.style.display = f.style.display === 'none' ? '' : 'none';
+    function buildSfChips(opts, sfKey) {
+      return opts.map(function(o) {
+        return '<div class="chip" data-sfkey="' + sfKey + '" data-val="' + escHtml(o) + '">' + escHtml(o) + '</div>';
+      }).join('') + '<div class="chip" data-sfkey="' + sfKey + '" data-val="__custom__">Custom</div>';
+    }
+
+    function buildCheckToggle(id, sfKey, label) {
+      return '<div class="toggle-row" style="border-top:none;padding:0.25rem 0;flex:1;min-width:200px;">' +
+        '<span class="toggle-label">' + escHtml(label) + '</span>' +
+        '<label class="toggle-switch"><input type="checkbox" class="sf-check" id="' + id + '" data-sfkey="' + sfKey + '">' +
+        '<span class="slider"></span></label></div>';
+    }
+
+    function bindSpecialFieldEvents(container) {
+      container.querySelectorAll('.radio-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var group = btn.closest('.radio-toggle-group');
+          var sfKey = group.getAttribute('data-sfkey');
+          group.querySelectorAll('.radio-toggle-btn').forEach(function(b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          sfValues[sfKey] = btn.getAttribute('data-val');
+        });
+      });
+      container.querySelectorAll('.chip[data-sfkey]').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var sfKey = chip.getAttribute('data-sfkey');
+          var val   = chip.getAttribute('data-val');
+          if (val === '__custom__') {
+            chip.classList.toggle('selected');
+            var wrap = document.getElementById('sf-' + sfKey + '-customWrap');
+            if (wrap) wrap.style.display = chip.classList.contains('selected') ? '' : 'none';
+            return;
+          }
+          chip.classList.toggle('selected');
+          var group = chip.closest('.chip-group');
+          sfValues[sfKey] = [];
+          group.querySelectorAll('.chip.selected[data-sfkey="' + sfKey + '"]').forEach(function(c) {
+            if (c.getAttribute('data-val') !== '__custom__') sfValues[sfKey].push(c.getAttribute('data-val'));
+          });
+        });
+      });
+      container.querySelectorAll('.sf-input').forEach(function(input) {
+        input.addEventListener('input', function() { sfValues[input.id.replace('sf-', '')] = input.value; });
+      });
+      container.querySelectorAll('.sf-check').forEach(function(cb) {
+        cb.addEventListener('change', function() { sfValues[cb.getAttribute('data-sfkey')] = cb.checked; });
+      });
+    }
+
+    function collectSpecialFields() {
+      var patch = {};
+      var allTypes = primaryType ? [primaryType].concat(secondaryTypes) : [];
+      function getEl(id) { return document.getElementById(id); }
+      function numVal(id) { var el = getEl(id); return el ? parseInt(el.value, 10) : NaN; }
+      function floatVal(id) { var el = getEl(id); return el ? parseFloat(el.value) : NaN; }
+      function strVal(id) { var el = getEl(id); return el ? el.value.trim() : ''; }
+      function collectChips(groupId, customId) {
+        var result = [];
+        var grp = getEl(groupId);
+        if (grp) grp.querySelectorAll('.chip.selected').forEach(function(c) {
+          var v = c.getAttribute('data-val');
+          if (v && v !== '__custom__') result.push(v);
+        });
+        var ci = getEl(customId);
+        if (ci && ci.value.trim()) result.push(ci.value.trim());
+        return result;
+      }
+
+      if (allTypes.indexOf('RESTO_VENUE') !== -1) {
+        var sc = numVal('sf-seatedCapacity'), stc = numVal('sf-standingCapacity');
+        var vc = strVal('sf-venueCuisine');
+        if (!isNaN(sc))  patch.seatedCapacity   = sc;
+        if (!isNaN(stc)) patch.standingCapacity  = stc;
+        if (vc)          patch.venueCuisine      = vc;
+        if (sfValues.venueIndoorOutdoor) patch.venueIndoorOutdoor = sfValues.venueIndoorOutdoor;
+        if (sfValues.avTechAvailable)    patch.avTechAvailable    = true;
+      }
+
+      if (allTypes.indexOf('CATERER') !== -1) {
+        var mg = numVal('sf-minGuestCount'), xg = numVal('sf-maxGuestCount');
+        if (!isNaN(mg)) patch.minGuestCount = mg;
+        if (!isNaN(xg)) patch.maxGuestCount = xg;
+        if (sfValues.equipmentRentalAvailable) patch.equipmentRentalAvailable = true;
+        if (sfValues.caterSetupIncluded)       patch.caterSetupIncluded       = true;
+      }
+
+      // Merge dietary options from RESTO and CATER
+      if (allTypes.indexOf('RESTO_VENUE') !== -1 || allTypes.indexOf('CATERER') !== -1) {
+        var dR = sfValues['dietaryOptions-RESTO'] || [];
+        var dC = sfValues['dietaryOptions-CATER'] || [];
+        var merged = dR.concat(dC.filter(function(v) { return dR.indexOf(v) === -1; }));
+        if (merged.length) patch.dietaryOptions = merged;
+      }
+
+      if (allTypes.indexOf('ENTERTAINMENT') !== -1) {
+        var st = numVal('sf-setupTimeMinutes'), or2 = floatVal('sf-overtimeRatePerHour'), mh = numVal('sf-minimumHours');
+        if (!isNaN(st))  patch.setupTimeMinutes   = st;
+        if (!isNaN(or2)) patch.overtimeRatePerHour = or2;
+        if (!isNaN(mh))  patch.minimumHours        = mh;
+        if (sfValues.equipmentIncluded) patch.equipmentIncluded = true;
+        var gt = collectChips('sf-chips-genreTags', 'sf-genreTags-custom');
+        if (gt.length) patch.genreTags = gt;
+      }
+
+      if (allTypes.indexOf('PHOTO_VIDEO') !== -1) {
+        var dtl = numVal('sf-deliveryTimelineDays'), epc = numVal('sf-editedPhotosCount');
+        if (!isNaN(dtl)) patch.deliveryTimelineDays = dtl;
+        if (!isNaN(epc)) patch.editedPhotosCount    = epc;
+        if (sfValues.travelFeePolicy)  patch.travelFeePolicy  = sfValues.travelFeePolicy;
+        if (sfValues.rawFilesIncluded) patch.rawFilesIncluded = true;
+        var st2 = collectChips('sf-chips-styleTags', 'sf-styleTags-custom');
+        if (st2.length) patch.styleTags = st2;
+      }
+
+      if (allTypes.indexOf('FLORIST_DECOR') !== -1) {
+        if (sfValues.seasonalCustomFloral) patch.seasonalCustomFloral = true;
+        if (sfValues.floristSetupIncluded) patch.floristSetupIncluded = true;
+        if (sfValues.rentalItemsAvailable) patch.rentalItemsAvailable = true;
+        var fst = collectChips('sf-chips-floristStyleTags', 'sf-floristStyleTags-custom');
+        if (fst.length) patch.floristStyleTags = fst;
+      }
+
+      return patch;
+    }
+
+    // ── Suggestion Chips ──
+    function renderSuggestionChips() {
+      var container = document.getElementById('suggestionChipsArea');
+      var allTypes  = primaryType ? [primaryType].concat(secondaryTypes) : [];
+      var seenNames = {}, html = '';
+      allTypes.forEach(function(type, idx) {
+        var suggs    = SUGGESTIONS[type] || [];
+        var newSuggs = suggs.filter(function(s) { return !seenNames[s.name]; });
+        newSuggs.forEach(function(s) { seenNames[s.name] = true; });
+        if (!newSuggs.length) return;
+        if (idx > 0) html += '<div class="suggestion-divider">Also as ' + typeLabel(type) + '</div>';
+        html += '<div class="chip-group" style="margin-bottom:0.35rem;">';
+        newSuggs.forEach(function(s) {
+          html += '<div class="chip suggestion-chip" data-name="' + escHtml(s.name) + '" data-pricetype="' + s.value + '" data-custom="' + (s.custom ? '1' : '0') + '">' + escHtml(s.name) + '</div>';
+        });
+        html += '</div>';
+      });
+      container.innerHTML = '<div class="suggestion-area">' + html + '</div>';
+      container.querySelectorAll('.suggestion-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var name = chip.getAttribute('data-name');
+          var pt   = chip.getAttribute('data-pricetype') || 'FLAT_RATE';
+          var isCustom = chip.getAttribute('data-custom') === '1';
+          addServiceCard(isCustom ? '' : name, pt);
+        });
+      });
+    }
+
+    // ── Service Cards ──
+    function addServiceCard(name, priceType) {
+      s2Services.push({ _id: ++_cardIdSeq, name: name || '', priceType: priceType || 'FLAT_RATE', basePrice: 0, description: '', features: [], collapsed: false });
+      renderServiceCards();
+      var area = document.getElementById('serviceCardsArea');
+      if (area && area.lastElementChild) area.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderServiceCards() {
+      var priceTypes = getMergedPriceTypes();
+      document.getElementById('serviceCardsArea').innerHTML = s2Services.map(function(card) {
+        return card.collapsed && card.name ? renderCollapsedCard(card) : renderExpandedCard(card, priceTypes);
+      }).join('');
+      validateStep2();
+    }
+
+    function renderCollapsedCard(card) {
+      var priceLabel = card.basePrice > 0 ? ('$' + parseFloat(card.basePrice).toLocaleString()) : 'Custom / TBD';
+      return '<div class="svc-card" id="svc-card-' + card._id + '">' +
+        '<div class="svc-card-summary" onclick="s2ToggleCard(' + card._id + ')">' +
+        '<div class="svc-summary-left"><div class="svc-summary-dot"></div>' +
+        '<span class="svc-summary-name">' + escHtml(card.name) + '</span>' +
+        '<span class="svc-summary-price">' + escHtml(priceLabel) + '</span></div>' +
+        '<div class="svc-summary-actions">' +
+        '<button class="svc-icon-btn" type="button" onclick="event.stopPropagation();s2ToggleCard(' + card._id + ')">✏️</button>' +
+        '<button class="svc-icon-btn del" type="button" onclick="event.stopPropagation();s2RemoveCard(' + card._id + ')">✕</button>' +
+        '</div></div></div>';
+    }
+
+    function renderExpandedCard(card, priceTypes) {
+      var ptOptions = priceTypes.map(function(pt) {
+        return '<option value="' + pt.value + '"' + (pt.value === card.priceType ? ' selected' : '') + '>' + escHtml(pt.label) + '</option>';
+      }).join('');
+      var featuresHtml = card.features.map(function(f, fi) {
+        return '<div class="feature-tag">' + escHtml(f) + '<button type="button" onclick="s2RemoveFeature(' + card._id + ',' + fi + ')">×</button></div>';
+      }).join('');
+      return '<div class="svc-card" id="svc-card-' + card._id + '">' +
+        '<div class="svc-card-summary" style="cursor:default;justify-content:flex-end;padding:0.55rem 0.9rem 0;">' +
+        (card.name ? '<span style="flex:1;font-size:0.74rem;font-weight:600;color:var(--muted);">' + escHtml(card.name) + '</span>' : '<span style="flex:1;"></span>') +
+        '<button class="svc-icon-btn del" type="button" onclick="s2RemoveCard(' + card._id + ')">✕</button></div>' +
+        '<div class="svc-card-body">' +
+        '<div class="form-group"><label class="form-label">Service Name <span class="req">*</span></label>' +
+        '<input class="form-input" value="' + escHtml(card.name) + '" placeholder="e.g. Wedding Photography Package" oninput="s2UpdateCard(' + card._id + ',\'name\',this.value)"></div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label class="form-label">Price Type</label>' +
+        '<select class="form-select" onchange="s2UpdateCard(' + card._id + ',\'priceType\',this.value)">' + ptOptions + '</select></div>' +
+        '<div class="form-group"><label class="form-label">Price ($)</label>' +
+        '<input class="form-input" type="number" min="0" value="' + (card.basePrice || '') + '" placeholder="0" oninput="s2UpdateCard(' + card._id + ',\'basePrice\',parseFloat(this.value)||0)"></div></div>' +
+        '<div class="form-group"><label class="form-label">Description</label>' +
+        '<textarea class="form-textarea" rows="3" placeholder="What\'s included? Be specific — planners use this to decide." oninput="s2UpdateCard(' + card._id + ',\'description\',this.value)">' + escHtml(card.description) + '</textarea></div>' +
+        '<div class="form-group"><label class="form-label">Features / Inclusions</label>' +
+        '<div class="features-input-row">' +
+        '<input class="form-input" id="svc-feat-' + card._id + '" type="text" placeholder="e.g. 8 hours coverage..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();s2AddFeature(' + card._id + ')}">' +
+        '<button class="btn-add-tag" type="button" onclick="s2AddFeature(' + card._id + ')">Add</button></div>' +
+        '<div class="features-tags" id="svc-feat-list-' + card._id + '">' + featuresHtml + '</div></div>' +
+        '<button class="btn-add-service" type="button" onclick="s2SaveCard(' + card._id + ')" style="margin-bottom:0;">Save package</button>' +
+        '</div></div>';
+    }
+
+    window.s2ToggleCard  = function(id) { var c = s2Services.find(function(x){return x._id===id;}); if(c){c.collapsed=!c.collapsed;renderServiceCards();} };
+    window.s2RemoveCard  = function(id) { s2Services = s2Services.filter(function(x){return x._id!==id;}); renderServiceCards(); };
+    window.s2UpdateCard  = function(id,field,value) { var c=s2Services.find(function(x){return x._id===id;}); if(c){c[field]=value;} validateStep2(); };
+    window.s2AddFeature  = function(id) {
+      var input = document.getElementById('svc-feat-' + id);
+      if (!input || !input.value.trim()) return;
+      var c = s2Services.find(function(x){return x._id===id;});
+      if (c) { c.features.push(input.value.trim()); input.value='';
+        var list = document.getElementById('svc-feat-list-' + id);
+        if (list) list.innerHTML = c.features.map(function(f,fi){
+          return '<div class="feature-tag">'+escHtml(f)+'<button type="button" onclick="s2RemoveFeature('+id+','+fi+')">×</button></div>';
+        }).join('');
+      }
+    };
+    window.s2RemoveFeature = function(id,fi) { var c=s2Services.find(function(x){return x._id===id;}); if(c){c.features.splice(fi,1);renderServiceCards();} };
+    window.s2SaveCard = function(id) {
+      var c = s2Services.find(function(x){return x._id===id;});
+      if (!c || !c.name.trim()) { showError('err-2','Give this service a name before saving.'); return; }
+      clearError('err-2'); c.collapsed=true; renderServiceCards();
+    };
+
+    document.getElementById('btnAddServiceCard').addEventListener('click', function() { addServiceCard('','FLAT_RATE'); });
+
+    // ── Menu Cards ──
+    function renderMenuCards() {
+      document.getElementById('menuCardsArea').innerHTML = s2MenuItems.map(function(item) {
+        var dietHtml = DIETARY_OPTS.map(function(d) {
+          var sel = item.dietaryTags.indexOf(d) !== -1 ? ' selected' : '';
+          return '<div class="chip'+sel+'" onclick="s2ToggleMenuDiet('+item._id+',\''+d+'\')" style="font-size:0.65rem;padding:0.25rem 0.6rem;">'+d+'</div>';
+        }).join('');
+        return '<div class="svc-card" id="menu-card-'+item._id+'">' +
+          '<div class="svc-card-summary" style="cursor:default;justify-content:flex-end;padding:0.55rem 0.9rem 0;">' +
+          (item.name ? '<span style="flex:1;font-size:0.74rem;font-weight:600;color:var(--muted);">'+escHtml(item.name)+'</span>' : '<span style="flex:1;"></span>') +
+          '<button class="svc-icon-btn del" type="button" onclick="s2RemoveMenuItem('+item._id+')">✕</button></div>' +
+          '<div class="svc-card-body">' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Item Name <span class="req">*</span></label>' +
+          '<input class="form-input" value="'+escHtml(item.name)+'" placeholder="e.g. Arancini" oninput="s2UpdateMenuItem('+item._id+',\'name\',this.value)"></div>' +
+          '<div class="form-group"><label class="form-label">Category</label>' +
+          '<select class="form-select" onchange="s2UpdateMenuItem('+item._id+',\'category\',this.value)">' +
+          ['Starter','Main','Dessert','Drink','Other'].map(function(c){return '<option value="'+c+'"'+(item.category===c?' selected':'')+'>'+c+'</option>';}).join('') +
+          '</select></div></div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label class="form-label">Price ($)</label>' +
+          '<input class="form-input" type="number" min="0" step="0.01" value="'+(item.price||'')+'" placeholder="0.00" oninput="s2UpdateMenuItem('+item._id+',\'price\',parseFloat(this.value)||0)"></div>' +
+          '<div class="form-group"><label class="form-label">Description</label>' +
+          '<input class="form-input" value="'+escHtml(item.description)+'" placeholder="Brief description..." oninput="s2UpdateMenuItem('+item._id+',\'description\',this.value)"></div></div>' +
+          '<div class="form-group"><label class="form-label">Dietary Tags</label><div class="chip-group">'+dietHtml+'</div></div>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    window.s2RemoveMenuItem  = function(id) { s2MenuItems=s2MenuItems.filter(function(x){return x._id!==id;}); renderMenuCards(); };
+    window.s2UpdateMenuItem  = function(id,field,value) { var m=s2MenuItems.find(function(x){return x._id===id;}); if(m) m[field]=value; };
+    window.s2ToggleMenuDiet  = function(id,tag) {
+      var m = s2MenuItems.find(function(x){return x._id===id;});
+      if (!m) return;
+      var idx = m.dietaryTags.indexOf(tag);
+      if (idx===-1) m.dietaryTags.push(tag); else m.dietaryTags.splice(idx,1);
+      renderMenuCards();
+    };
+
+    document.getElementById('btnAddMenuCard').addEventListener('click', function() {
+      s2MenuItems.push({ _id:++_cardIdSeq, name:'', category:'Starter', price:0, dietaryTags:[], description:'' });
+      renderMenuCards();
     });
 
-    // ── STEP 2: Publish Profile (services + menu items) ──
+    // ── PDF Import ──
+    var pdfFileInput = document.getElementById('pdfFileInput');
+    var btnPickPdf   = document.getElementById('btnPickPdf');
+    var pdfLoading   = document.getElementById('pdfLoading');
+    var pdfSuccess   = document.getElementById('pdfSuccess');
+    var pdfError     = document.getElementById('pdfError');
+
+    btnPickPdf.addEventListener('click', function() { pdfFileInput.click(); });
+    pdfFileInput.addEventListener('change', function() {
+      if (pdfFileInput.files && pdfFileInput.files[0]) uploadPdf(pdfFileInput.files[0]);
+    });
+
+    function uploadPdf(file) {
+      if (!primaryType) { showError('err-2','Go back to Step 1 and select your vendor type first.'); return; }
+      pdfError.classList.remove('show');
+      btnPickPdf.style.display = 'none';
+      pdfLoading.style.display = ''; pdfSuccess.style.display = 'none';
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('vendorType', primaryType);
+      fetch(API + '/pdf-import', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:formData })
+        .then(function(r){return r.json();})
+        .then(function(data) {
+          pdfLoading.style.display='none'; btnPickPdf.style.display='';
+          if (!data.success) throw new Error(data.error || 'Extraction failed.');
+          var counts = normalizePdfData(data.data);
+          pdfSuccess.style.display='';
+          document.getElementById('pdfSuccessText').textContent = 'Extracted '+counts.services+' packages and '+counts.items+' items — review and edit below';
+        })
+        .catch(function(err) {
+          pdfLoading.style.display='none'; btnPickPdf.style.display='';
+          pdfError.textContent = (err&&err.message)||'Could not read PDF. Try again or add manually.';
+          pdfError.classList.add('show');
+        });
+    }
+
+    function normalizePdfData(d) {
+      var sc=0, ic=0;
+      var pkgs = d.packages||d.services||[];
+      pkgs.forEach(function(p){
+        s2Services.push({_id:++_cardIdSeq,name:p.name||'Package',description:p.description||(p.includes?p.includes.join(', '):''),priceType:p.pricePerPerson?'PER_PERSON':'FLAT_RATE',basePrice:p.flatPrice||p.pricePerPerson||0,features:p.includes||[],collapsed:true}); sc++;
+      });
+      if(d.barPackages) d.barPackages.forEach(function(bp){
+        s2Services.push({_id:++_cardIdSeq,name:bp.name||'Bar Package',description:bp.includes?bp.includes.join(', '):'',priceType:bp.pricePerPerson?'PER_PERSON':'FLAT_RATE',basePrice:bp.flatPrice||bp.pricePerPerson||0,features:bp.includes||[],collapsed:true}); sc++;
+      });
+      if(d.menuSections) d.menuSections.forEach(function(sec){
+        (sec.items||[]).forEach(function(item){
+          s2MenuItems.push({_id:++_cardIdSeq,name:item.name||'Item',category:sec.section||'Starter',price:item.price||0,description:item.description||'',dietaryTags:item.dietaryTags||[]}); ic++;
+        });
+      });
+      if(d.arrangements) d.arrangements.forEach(function(a){
+        s2MenuItems.push({_id:++_cardIdSeq,name:a.name||'Arrangement',category:'Other',price:a.pricePerUnit||a.flatPrice||0,description:a.description||'',dietaryTags:[]}); ic++;
+      });
+      renderServiceCards(); renderMenuCards();
+      return {services:sc, items:ic};
+    }
+
+    // ── STEP 2: Publish ──
     document.getElementById('btn2').addEventListener('click', function() {
       clearError('err-2');
+      if (s2Services.length === 0) { showError('err-2','Add at least one service package before publishing.'); return; }
       var btn = this;
       btn.classList.add('loading');
 
-      var svcPromises = pendingServices.map(function(svc) {
-        return authFetch('/providers/services', { method: 'POST', body: JSON.stringify(svc) })
-          .then(function(data) {
-            if (!data.success && !data.id) {
-              console.warn('[FESTV] Service save failed:', data.error || data.message, svc.name);
-            }
-            return data;
-          })
-          .catch(function(err) {
-            console.error('[FESTV] Service save error:', err, svc.name);
-          });
+      var specialPatch = collectSpecialFields();
+      var p0 = authFetch('/providers/profile', { method:'PUT', body:JSON.stringify(specialPatch) }).catch(function(){});
+
+      var svcPromises = s2Services.filter(function(c){return c.name.trim();}).map(function(card) {
+        return authFetch('/providers/services', { method:'POST', body:JSON.stringify({
+          name:card.name.trim(), description:card.description.trim()||card.name.trim(),
+          priceType:card.priceType, basePrice:card.basePrice||0, features:card.features,
+          providerType:primaryType||'RESTO_VENUE'
+        })}).catch(function(e){console.warn('[FESTV] svc error',e);});
       });
 
-      var menuPromises = pendingMenuItems.map(function(item) {
-        return authFetch('/providers/menu-items', { method: 'POST', body: JSON.stringify(item) })
-          .then(function(data) {
-            if (!data.success && !data.id) {
-              console.warn('[FESTV] Menu item save failed:', data.error || data.message, item.name);
-            }
-            return data;
-          })
-          .catch(function(err) {
-            console.error('[FESTV] Menu item save error:', err, item.name);
-          });
+      var menuPromises = s2MenuItems.filter(function(m){return m.name.trim();}).map(function(item) {
+        return authFetch('/providers/menu-items', { method:'POST', body:JSON.stringify({
+          name:item.name.trim(), category:item.category, price:item.price||0,
+          description:item.description||undefined, dietaryInfo:item.dietaryTags
+        })}).catch(function(e){console.warn('[FESTV] menu error',e);});
       });
 
-      Promise.all(svcPromises.concat(menuPromises))
-        .then(function() {
+      Promise.all([p0].concat(svcPromises).concat(menuPromises))
+        .then(function() { btn.classList.remove('loading'); goToStep(3); })
+        .catch(function(err) {
           btn.classList.remove('loading');
-          goToStep(3);
-        })
-        .catch(function() {
-          btn.classList.remove('loading');
-          goToStep(3);
+          showError('err-2',(err&&err.message)?err.message:'Something went wrong. Please try again.');
         });
     });
     document.getElementById('btn2skip').addEventListener('click', function() { goToStep(3); });
@@ -1561,193 +2027,10 @@
       window.location.href = 'vendordashboard.html';
     });
 
-    // ── PDF Import ──
-    var pdfFileInput = document.getElementById('pdfFileInput');
-    var btnPickPdf   = document.getElementById('btnPickPdf');
-    var skipPdfLink  = document.getElementById('skipPdfLink');
-    var pdfZone      = document.getElementById('pdfZone');
-    var pdfLoading   = document.getElementById('pdfLoading');
-    var pdfSuccess   = document.getElementById('pdfSuccess');
-    var pdfError     = document.getElementById('pdfError');
+    // ── goToStep hook: init step 2 when entering it ──
+    var _origGoToStep = goToStep;
+    goToStep = function(n) { _origGoToStep(n); if (n === 2) initStep2(); };
 
-    btnPickPdf.addEventListener('click', function() { pdfFileInput.click(); });
-    pdfFileInput.addEventListener('change', function() {
-      if (pdfFileInput.files && pdfFileInput.files[0]) {
-        uploadPdf(pdfFileInput.files[0]);
-      }
-    });
-
-    // Drag and drop
-    pdfZone.addEventListener('dragover', function(e) { e.preventDefault(); pdfZone.classList.add('drag-over'); });
-    pdfZone.addEventListener('dragleave', function() { pdfZone.classList.remove('drag-over'); });
-    pdfZone.addEventListener('drop', function(e) {
-      e.preventDefault(); pdfZone.classList.remove('drag-over');
-      var file = e.dataTransfer.files[0];
-      if (file && file.type === 'application/pdf') uploadPdf(file);
-      else { pdfError.textContent = 'Please drop a PDF file.'; pdfError.classList.add('show'); }
-    });
-
-    skipPdfLink.addEventListener('click', function(e) { e.preventDefault(); hidePdfZone(); });
-
-    function hidePdfZone() {
-      pdfZone.style.display = 'none';
-      document.getElementById('addServiceForm').style.display = '';
-      document.getElementById('addMenuForm').style.display = '';
-    }
-
-    function uploadPdf(file) {
-      if (!primaryType) {
-        pdfError.textContent = 'Please go back to Step 1 and select your vendor type first.';
-        pdfError.classList.add('show');
-        return;
-      }
-      pdfError.classList.remove('show');
-      // Show loading
-      btnPickPdf.style.display = 'none';
-      document.querySelector('.pdf-zone-skip').style.display = 'none';
-      pdfLoading.style.display = '';
-      pdfSuccess.style.display = 'none';
-
-      var formData = new FormData();
-      formData.append('file', file);
-      formData.append('vendorType', primaryType);
-
-      fetch(API + '/pdf-import', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: formData
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        pdfLoading.style.display = 'none';
-        if (!data.success) {
-          throw new Error(data.error || 'Extraction failed.');
-        }
-        var counts = normalizePdfData(data.data, data.vendorType);
-        pdfSuccess.style.display = '';
-        document.getElementById('pdfSuccessText').textContent =
-          'Extracted ' + counts.services + ' packages and ' + counts.items + ' items — review and edit below';
-        hidePdfZone();
-      })
-      .catch(function(err) {
-        pdfLoading.style.display = 'none';
-        btnPickPdf.style.display = '';
-        document.querySelector('.pdf-zone-skip').style.display = '';
-        pdfError.textContent = err.message || 'Could not read PDF. Try again or add manually.';
-        pdfError.classList.add('show');
-      });
-    }
-
-    // Normalize extracted JSON into pendingServices and pendingMenuItems
-    function normalizePdfData(d, vType) {
-      var svcCount = 0, itemCount = 0;
-
-      // Services / packages
-      var pkgs = d.packages || d.services || [];
-      pkgs.forEach(function(pkg) {
-        pendingServices.push({
-          name:        pkg.name || 'Package',
-          description: pkg.description || (pkg.includes ? pkg.includes.join(', ') : ''),
-          priceType:   pkg.pricePerPerson ? 'PER_PERSON' : 'FLAT_RATE',
-          basePrice:   pkg.flatPrice || pkg.pricePerPerson || 0,
-          features:    pkg.includes || [],
-          providerType: primaryType || 'RESTO_VENUE',
-        });
-        svcCount++;
-      });
-
-      // Menu items (caterer / resto)
-      if (d.menuSections) {
-        d.menuSections.forEach(function(section) {
-          (section.items || []).forEach(function(item) {
-            pendingMenuItems.push({
-              name:        item.name || 'Item',
-              category:    section.section || 'Menu',
-              price:       item.price || item.pricePerPerson || 0,
-              description: item.description || '',
-              dietaryInfo: item.dietaryTags || [],
-            });
-            itemCount++;
-          });
-        });
-      }
-
-      // Bar packages → services
-      if (d.barPackages) {
-        d.barPackages.forEach(function(bp) {
-          pendingServices.push({
-            name:        bp.name || 'Bar Package',
-            description: bp.includes ? bp.includes.join(', ') : '',
-            priceType:   bp.pricePerPerson ? 'PER_PERSON' : 'FLAT_RATE',
-            basePrice:   bp.flatPrice || bp.pricePerPerson || 0,
-            features:    bp.includes || [],
-            providerType: primaryType || 'RESTO_VENUE',
-          });
-          svcCount++;
-        });
-      }
-
-      // Arrangements (florist) → menu items
-      if (d.arrangements) {
-        d.arrangements.forEach(function(a) {
-          pendingMenuItems.push({
-            name:        a.name || 'Arrangement',
-            category:    'Arrangements',
-            price:       a.pricePerUnit || a.flatPrice || 0,
-            description: a.description || '',
-            dietaryInfo: [],
-          });
-          itemCount++;
-        });
-      }
-
-      // Add-ons → menu items
-      if (d.addOns) {
-        d.addOns.forEach(function(ao) {
-          pendingMenuItems.push({
-            name:        ao.name || 'Add-on',
-            category:    'Add-ons',
-            price:       ao.price || 0,
-            description: ao.unit ? 'Per ' + ao.unit : '',
-            dietaryInfo: [],
-          });
-          itemCount++;
-        });
-      }
-
-      // Equipment (entertainment)
-      if (d.equipmentIncluded && d.equipmentIncluded.length) {
-        d.equipmentIncluded.forEach(function(eq) {
-          pendingMenuItems.push({
-            name:        eq,
-            category:    'Equipment',
-            price:       0,
-            description: '',
-            dietaryInfo: [],
-          });
-          itemCount++;
-        });
-      }
-
-      renderServicesList();
-      renderMenuList();
-      return { services: svcCount, items: itemCount };
-    }
-
-    // ── Global helpers (called from inline onclick) ──
-    window.removeSvc = function (i) {
-      pendingServices.splice(i, 1);
-      renderServicesList();
-    };
-    window.removeFeatureTag = function (i) { removeFeature(i); };
-    window.removeMenuItem = function (i) {
-      pendingMenuItems.splice(i, 1);
-      renderMenuList();
-    };
-
-    function escHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
 
   })();
   </script>

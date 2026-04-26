@@ -70,6 +70,38 @@ export const createProviderProfileSchema = z.object({
   // Operating
   operatingDays: z.array(z.string()).optional(),
   leadTimeDays: z.number().int().min(0).optional(),
+
+  // ── Step 2 type-specific fields ──
+  // RESTO_VENUE
+  seatedCapacity:           z.number().int().min(0).optional(),
+  standingCapacity:         z.number().int().min(0).optional(),
+  venueCuisine:             z.string().max(200).optional(),
+  venueIndoorOutdoor:       z.enum(['INDOOR', 'OUTDOOR', 'BOTH']).optional(),
+  avTechAvailable:          z.boolean().optional(),
+  dietaryOptions:           z.array(z.string()).optional(),
+
+  // CATERER
+  equipmentRentalAvailable: z.boolean().optional(),
+  caterSetupIncluded:       z.boolean().optional(),
+
+  // ENTERTAINMENT
+  genreTags:                z.array(z.string()).optional(),
+  setupTimeMinutes:         z.number().int().min(0).optional(),
+  equipmentIncluded:        z.boolean().optional(),
+  overtimeRatePerHour:      z.number().min(0).optional(),
+
+  // PHOTO_VIDEO
+  styleTags:                z.array(z.string()).optional(),
+  deliveryTimelineDays:     z.number().int().min(0).optional(),
+  editedPhotosCount:        z.number().int().min(0).optional(),
+  travelFeePolicy:          z.enum(['INCLUDED', 'PER_KM', 'QUOTED']).optional(),
+  rawFilesIncluded:         z.boolean().optional(),
+
+  // FLORIST_DECOR
+  floristStyleTags:         z.array(z.string()).optional(),
+  seasonalCustomFloral:     z.boolean().optional(),
+  floristSetupIncluded:     z.boolean().optional(),
+  rentalItemsAvailable:     z.boolean().optional(),
 });
 
 export const updateProviderProfileSchema = createProviderProfileSchema.partial();

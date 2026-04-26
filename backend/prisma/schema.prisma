@@ -176,6 +176,39 @@ model ProviderProfile {
   minGuestCount       Int                 @default(10)
   maxGuestCount       Int                 @default(500)
   
+  // ── Step 2 type-specific fields ──
+
+  // RESTO_VENUE
+  seatedCapacity           Int?
+  standingCapacity         Int?
+  venueCuisine             String?             // free-text cuisine description
+  venueIndoorOutdoor       String?             // "INDOOR" | "OUTDOOR" | "BOTH"
+  avTechAvailable          Boolean             @default(false)
+  dietaryOptions           String[]            @default([])
+
+  // CATERER (minGuestCount / maxGuestCount already above)
+  equipmentRentalAvailable Boolean             @default(false)
+  caterSetupIncluded       Boolean             @default(false)
+
+  // ENTERTAINMENT (minimumHours already above)
+  genreTags                String[]            @default([])
+  setupTimeMinutes         Int?
+  equipmentIncluded        Boolean             @default(false)
+  overtimeRatePerHour      Float?
+
+  // PHOTO_VIDEO
+  styleTags                String[]            @default([])
+  deliveryTimelineDays     Int?
+  editedPhotosCount        Int?
+  travelFeePolicy          String?             // "INCLUDED" | "PER_KM" | "QUOTED"
+  rawFilesIncluded         Boolean             @default(false)
+
+  // FLORIST_DECOR
+  floristStyleTags         String[]            @default([])
+  seasonalCustomFloral     Boolean             @default(false)
+  floristSetupIncluded     Boolean             @default(false)
+  rentalItemsAvailable     Boolean             @default(false)
+
   // Operating hours
   operatingDays       String[]            @default(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
   leadTimeDays        Int                 @default(7) // minimum notice required
