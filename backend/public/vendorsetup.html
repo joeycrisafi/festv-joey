@@ -844,6 +844,44 @@
       max-width: 380px; margin: 0 auto 2.5rem; line-height: 1.7;
     }
 
+    /* ── VERIFICATION DOCUMENTS (step 3) ── */
+    .vdoc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 600px) { .vdoc-grid { grid-template-columns: 1fr; } }
+    .vdoc-item label.form-label { margin-bottom: 0.35rem; display: block; }
+    .vdoc-zone {
+      border: 2px dashed rgba(196,160,106,0.4);
+      border-radius: 10px;
+      padding: 1.1rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: rgba(196,160,106,0.02);
+      position: relative;
+    }
+    .vdoc-zone:hover { border-color: var(--gold); background: rgba(196,160,106,0.06); }
+    .vdoc-zone.has-file { border-color: var(--green); background: rgba(58,138,85,0.04); }
+    .vdoc-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .vdoc-icon { font-size: 1.35rem; display: block; margin-bottom: 0.3rem; pointer-events: none; }
+    .vdoc-title { font-size: 0.72rem; font-weight: 600; color: var(--charcoal); margin-bottom: 0.15rem; pointer-events: none; }
+    .vdoc-sub { font-size: 0.63rem; color: var(--muted); line-height: 1.45; pointer-events: none; }
+    .vdoc-filename { display: none; font-size: 0.7rem; font-weight: 600; color: var(--green); margin-top: 0.3rem; pointer-events: none; }
+    .vdoc-zone.has-file .vdoc-filename { display: block; }
+    .vdoc-zone.has-file .vdoc-default  { display: none; }
+    .vdoc-privacy-note {
+      font-size: 0.67rem; color: var(--muted);
+      text-align: center; margin-top: 0.1rem; margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .vdoc-privacy-note svg { vertical-align: middle; margin-right: 0.3rem; }
+
   </style>
 </head>
 <body>
@@ -1195,6 +1233,68 @@
               </div>
               <div class="review-card-body" id="s3-menuBody"></div>
             </div>
+
+            <!-- Verification Documents -->
+            <div class="form-section-heading" style="margin-top:1.5rem;">Verification Documents</div>
+            <div class="vdoc-grid">
+
+              <div class="vdoc-item">
+                <label class="form-label">Business License / Registration <span class="req">*</span></label>
+                <div class="vdoc-zone" id="vdoc-zone-bizlicense">
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="s3HandleDoc(this,'vdoc-zone-bizlicense','vdoc-name-bizlicense')">
+                  <div class="vdoc-default">
+                    <span class="vdoc-icon">📄</span>
+                    <div class="vdoc-title">Upload document</div>
+                    <p class="vdoc-sub">PDF, JPG or PNG · Max 10 MB</p>
+                  </div>
+                  <div class="vdoc-filename" id="vdoc-name-bizlicense"></div>
+                </div>
+              </div>
+
+              <div class="vdoc-item">
+                <label class="form-label">Government-Issued ID <span class="req">*</span></label>
+                <div class="vdoc-zone" id="vdoc-zone-govid">
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="s3HandleDoc(this,'vdoc-zone-govid','vdoc-name-govid')">
+                  <div class="vdoc-default">
+                    <span class="vdoc-icon">🪪</span>
+                    <div class="vdoc-title">Upload document</div>
+                    <p class="vdoc-sub">PDF, JPG or PNG · Max 10 MB</p>
+                  </div>
+                  <div class="vdoc-filename" id="vdoc-name-govid"></div>
+                </div>
+              </div>
+
+              <div class="vdoc-item">
+                <label class="form-label">Proof of Address <span style="font-size:0.65rem;color:var(--muted);font-weight:500;">(optional)</span></label>
+                <div class="vdoc-zone" id="vdoc-zone-address">
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="s3HandleDoc(this,'vdoc-zone-address','vdoc-name-address')">
+                  <div class="vdoc-default">
+                    <span class="vdoc-icon">🏠</span>
+                    <div class="vdoc-title">Upload document</div>
+                    <p class="vdoc-sub">PDF, JPG or PNG · Max 10 MB</p>
+                  </div>
+                  <div class="vdoc-filename" id="vdoc-name-address"></div>
+                </div>
+              </div>
+
+              <div class="vdoc-item">
+                <label class="form-label">Insurance Certificate <span style="font-size:0.65rem;color:var(--muted);font-weight:500;">(optional)</span></label>
+                <div class="vdoc-zone" id="vdoc-zone-insurance">
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="s3HandleDoc(this,'vdoc-zone-insurance','vdoc-name-insurance')">
+                  <div class="vdoc-default">
+                    <span class="vdoc-icon">🛡️</span>
+                    <div class="vdoc-title">Upload document</div>
+                    <p class="vdoc-sub">PDF, JPG or PNG · Max 10 MB</p>
+                  </div>
+                  <div class="vdoc-filename" id="vdoc-name-insurance"></div>
+                </div>
+              </div>
+
+            </div>
+            <p class="vdoc-privacy-note">
+              <svg width="11" height="11" fill="none" viewBox="0 0 11 11"><path d="M5.5 1a2 2 0 0 1 2 2v1H3.5V3a2 2 0 0 1 2-2zM2.5 4.5h6a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-6A.5.5 0 0 1 2 9V5a.5.5 0 0 1 .5-.5z" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round"/></svg>
+              Your documents are kept private and used only for verification purposes.
+            </p>
 
             <div id="err-3" class="error-msg"></div>
             <button class="btn-primary" id="btn3">
@@ -2425,6 +2525,22 @@
         window.onpopstate = function() { history.pushState(null, '', window.location.href); };
       }, 500);
     });
+
+    // ── Step 3: Verification document upload handler ──
+    window.s3HandleDoc = function(input, zoneId, nameId) {
+      var zone = document.getElementById(zoneId);
+      var nameEl = document.getElementById(nameId);
+      if (!input.files || !input.files[0]) return;
+      var file = input.files[0];
+      if (file.size > 10 * 1024 * 1024) {
+        input.value = '';
+        showError('err-3', 'File "' + file.name + '" exceeds 10 MB. Please choose a smaller file.');
+        return;
+      }
+      zone.classList.add('has-file');
+      nameEl.textContent = '✓ ' + file.name;
+      clearError('err-3');
+    };
 
     // ── goToStep hook: init step 2 and 3 when entering them ──
     var _origGoToStep = goToStep;
