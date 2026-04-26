@@ -1049,7 +1049,10 @@
           <div class="form-group">
             <label class="form-label">About <span class="req">*</span></label>
             <textarea class="form-textarea" id="s1-description" rows="5" placeholder="Tell planners what makes your business unique, your experience, and what they can expect when working with you."></textarea>
-            <div class="field-hint">Minimum 50 characters. This appears on your public profile.</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem;">
+              <div class="field-hint" style="margin-top:0;">This appears on your public profile.</div>
+              <div id="descCounter" style="font-size:0.7rem; font-family:'Montserrat',sans-serif; color:var(--red); font-weight:600; transition:color 0.2s;">0 / 50</div>
+            </div>
           </div>
 
           <!-- 5. LANGUAGES -->
@@ -1545,6 +1548,15 @@
         validateStep1();
       });
     });
+
+    // ── Description char counter ──
+    function updateDescCounter() {
+      var len = (document.getElementById('s1-description').value || '').length;
+      var counter = document.getElementById('descCounter');
+      counter.textContent = len + ' / 50';
+      counter.style.color = len >= 50 ? 'var(--green)' : 'var(--red)';
+    }
+    document.getElementById('s1-description').addEventListener('input', updateDescCounter);
 
     // ── Tagline char counter ──
     function updateTaglineCounter() {
