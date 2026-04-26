@@ -2405,8 +2405,9 @@
     goToStep = function(n) { _origGoToStep(n); if (n === 2) initStep2(); if (n === 3) initStep3(); };
 
     // ── Dev shortcut: ?step=2 or ?step=3 jumps directly to that step ──
+    var _devHost = ['localhost', '127.0.0.1', 'festv-dev-test.onrender.com'].indexOf(window.location.hostname) !== -1;
     var _stepParam = parseInt(new URLSearchParams(window.location.search).get('step'), 10);
-    if (_stepParam === 2 || _stepParam === 3) { goToStep(_stepParam); }
+    if (_devHost && (_stepParam === 2 || _stepParam === 3)) { goToStep(_stepParam); }
 
   })();
   </script>
