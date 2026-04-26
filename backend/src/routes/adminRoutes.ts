@@ -6,20 +6,33 @@ import { eventNotifier, ALL_MODELS } from '../services/eventNotifier.js';
 
 const router = Router();
 
-// Email-based admin gate (matches ADMIN_EMAILS env var)
+// Email-based admin gate (matches ADMIN_EMAILS env var).
+// ALSO allows test accounts (test-*@festv.app) so test users get DEV access
+// to the Planner / Database admin pages without being real admins.
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);
 
+const TEST_EMAIL_PATTERN = /^test-.*@festv\.app$/i;
+
+export function isDevAccess(email: string | undefined | null): boolean {
+  if (!email) return false;
+  const lower = email.toLowerCase();
+  if (TEST_EMAIL_PATTERN.test(lower)) return true;
+  return ADMIN_EMAILS.includes(lower);
+}
+
+export function isRealAdmin(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 function requireAdminEmail(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user?.email) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
-  if (ADMIN_EMAILS.length === 0) {
-    return res.status(403).json({ success: false, error: 'No admin emails configured' });
-  }
-  if (!ADMIN_EMAILS.includes(req.user.email.toLowerCase())) {
+  if (!isDevAccess(req.user.email)) {
     return res.status(403).json({ success: false, error: 'Insufficient permissions' });
   }
   next();

@@ -19,6 +19,7 @@ router.post('/seed-test-accounts', asyncHandler(authController.seedTestAccountsH
 // Protected routes
 router.post('/logout', authenticate, asyncHandler(authController.logout));
 router.get('/me', authenticate, asyncHandler(authController.getMe));
+router.get('/dev-access', authenticate, asyncHandler(authController.getDevAccessHandler));
 router.put('/change-password', authenticate, asyncHandler(authController.changePassword));
 router.post('/add-role', authenticate, asyncHandler(authController.addRole));
 router.post('/switch-role', authenticate, asyncHandler(authController.switchRole));

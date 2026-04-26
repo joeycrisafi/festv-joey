@@ -9,6 +9,7 @@ import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/valida
 import { asyncHandler, AppError, ConflictError, UnauthorizedError, NotFoundError } from '../middleware/errorHandler.js';
 import { sendPasswordResetEmail } from '../services/verification.js';
 import { seedTestAccounts, TEST_ACCOUNTS } from '../seedTestAccounts.js';
+import { isDevAccess, isRealAdmin } from '../routes/adminRoutes.js';
 
 // Generate JWT tokens
 const generateTokens = (payload: TokenPayload): AuthTokens => {
@@ -590,6 +591,24 @@ export const resetPassword = asyncHandler(async (req: AuthenticatedRequest, res:
     message: 'Password reset successfully. Please log in with your new password.',
   });
 });
+
+// Lightweight check: does this user have access to the DEV section
+// (Planner + Database admin pages)? True for ADMIN_EMAILS and any test
+// account (test-*@festv.app). Used by the dropdown menu to decide whether
+// to render the DEV links.
+export const getDevAccessHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const email = req.user?.email || '';
+    res.json({
+      success: true,
+      data: {
+        canAccessDev: isDevAccess(email),
+        isAdmin: isRealAdmin(email),
+        email,
+      },
+    });
+  }
+);
 
 // Seed test accounts (dev only). Gated by ENABLE_TEST_ACCOUNTS=true.
 // Creates/refreshes the fixed set of test users and returns their credentials

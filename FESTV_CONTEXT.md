@@ -114,6 +114,8 @@ All pages are in `/backend/public/`. They use vanilla JS with `fetch()` calls to
 | `friends.html` | Friends/guestlist page (placeholder, not wired to API) |
 | `vendorapproval.html` | Vendor receives and reviews a quote request |
 | `*approval.html` (5 more) | Vendor-type-specific approval pages (bartender, caterer, DJ, photographer, venue) |
+| `planner.html` | **DEV-only.** Monte Carlo simulator (24mo financial projections). Sliders for growth/revenue/personnel params, fan charts (users / rev+cost / profit), summary cards. Auth-gated via `/auth/dev-access`. |
+| `database.html` | **DEV-only.** Two tabs: Schema (interactive ERD of all 24 Prisma models, click a node to highlight relationships) + Event Feed (live DB events from `/admin/events`, filterable by model, auto-refresh 15s). Auth-gated. |
 
 ---
 
@@ -134,6 +136,9 @@ All pages are in `/backend/public/`. They use vanilla JS with `fetch()` calls to
 | `/jess` | jessController | Jess AI chat + PDF import via Claude API |
 | `/pdf-import` | pdfImportController | Upload vendor PDF → Claude extracts services/menu |
 | `/admin` | adminController | Admin-only operations |
+| `/admin/events`, `/admin/events/stats` | adminRoutes | Live DB event feed for `database.html`. Gated by `requireAdminEmail` (which now ALSO accepts test users). |
+| `/auth/dev-access` | authController | Returns `{ canAccessDev, isAdmin, email }`. Used by `profile-menu.js` to decide whether to render the DEV section. |
+| `/auth/seed-test-accounts` | authController | Dev-only. Gated by `ENABLE_TEST_ACCOUNTS=true`. Creates/refreshes the 5 test accounts and returns plaintext credentials so `signin.html`'s picker can autofill. 404s in prod. |
 | `/verification` | verificationController | Email/phone verification codes |
 
 ---
@@ -213,6 +218,13 @@ Token is set at page load — not refreshed mid-session in most pages. If a call
 - `PROVIDER` — vendors
 - `ADMIN` — full access
 
+**Dev access (Planner + Database admin pages):**
+Backend helper `isDevAccess(email)` in `routes/adminRoutes.ts` returns `true` for:
+1. Any email in `ADMIN_EMAILS` env var (comma-separated)
+2. Any email matching `/^test-.*@festv\.app$/i` (the seeded test accounts)
+
+The `requireAdminEmail` middleware uses this for `/admin/*` routes. The frontend dropdown calls `GET /api/v1/auth/dev-access` to know whether to render the DEV section. Test users get DEV access automatically — they're for internal testing only and never see real customers.
+
 ---
 
 ## Data & State Management
@@ -230,7 +242,7 @@ Token is set at page load — not refreshed mid-session in most pages. If a call
 | File | Purpose |
 |------|---------|
 | `jess-widget.js` | Floating Jess AI chat button (bottom-right). Included on every page via `<script src="/jess-widget.js">`. Calls `/api/v1/jess/chat`. Has full inline CSS. |
-| `profile-menu.js` | Top-right profile dropdown. Shows user name, role, sign out. Reads from localStorage. |
+| `profile-menu.js` | Top-right profile dropdown. Shows user name, role, sign out. Reads from localStorage. **Now also fetches `/api/v1/auth/dev-access` and adds a DEV section (Planner + Database links) for admin emails and test users.** |
 | `auth-chip.js` | Small auth utility helpers |
 
 ---
@@ -262,14 +274,21 @@ Token is set at page load — not refreshed mid-session in most pages. If a call
 - Favorites (saved vendors, API-backed)
 - Deposit calculation and display
 - About + Contact strip on vendor profile and dashboard
+- **Test-account picker on `signin.html`** — 5 dev accounts (planner, photographer, caterer, bartender, DJ), shared password `Test1234!`. Click to autofill. Gated server-side by `ENABLE_TEST_ACCOUNTS=true` (set on Render dev), so picker is invisible in prod.
+- **Test accounts have full ProviderProfiles** — services, portfolio photos (picsum.photos with stable seeds), menu items (caterer + bartender), 3 pricing tiers (caterer), cuisine/theme links. User row is refreshed on every seed run; profile + children created once and preserved.
+- **DEV section in profile dropdown** — admin emails + test users get "Planner" + "Database" links between Account Settings and Sign Out.
+- **`planner.html`** — Monte Carlo simulator with parameter sliders, 3 fan charts, 4 summary cards. Chart.js via CDN. Mobile-responsive.
+- **`database.html`** — Schema ERD (24 nodes, click to highlight relationships) + live Event Feed tab (filter by model, 15s auto-refresh).
 
 ### 🟡 Placeholder / Partial
 - **Messages** — card UI exists on both dashboards, not wired to real conversations
 - **Analytics** — card placeholder on vendor dashboard, no real data
-- **Portfolio** — card UI exists with placeholder Unsplash images, Cloudinary not set up
+- **Portfolio** — card UI exists with placeholder Unsplash images, Cloudinary not set up. Provider test accounts have seeded portfolio photos (picsum URLs). Upload buttons on `vendordashboard.html` are stubbed with `alert('coming soon')`.
 - **Friends/Guestlist** — page exists, not wired to API
-- **Admin dashboard** — page exists, not fully wired to admin routes
+- **Admin dashboard** — `admindashboard.html` exists but not fully wired. The DEV `database.html` page covers schema + event feed; full admin UI (provider verification, user mgmt) is still pending.
 - **Stripe / payments** — deposit UI is built, actual payment not connected
+- **`planner.html` ported tabs** — Monte Carlo only. Growth Strategy / Cost Model / Architecture / Roadmap tabs from the original `caterease/Planner.tsx` are NOT yet ported.
+- **`database.html` ported tabs** — Schema + Event Feed only. Provider graph (bubble chart by capacity), Client flow graph, and Settings tab (watched models toggle, env-vars table) from `caterease/EventDashboard.tsx` are NOT yet ported.
 
 ### ❌ Not started
 - Cloudinary image uploads
@@ -278,6 +297,23 @@ Token is set at page load — not refreshed mid-session in most pages. If a call
 - OAuth (Google/Facebook sign-in)
 - Mobile responsiveness pass
 - `isAvailable` toggle for menu items
+
+---
+
+## Required Env Vars
+
+Backend (`/backend/.env` or Render dashboard):
+
+| Variable | Purpose | Notes |
+|---|---|---|
+| `DATABASE_URL` | Postgres connection | Auto-set by Render via blueprint |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET` | JWT signing | Auto-generated by Render |
+| `CORS_ORIGIN` | Allowed frontend origins | Currently `*`; tighten before scaling |
+| `RESEND_API_KEY` | Email delivery | For verification emails, password reset |
+| `ANTHROPIC_API_KEY` | Jess + PDF import | Claude API |
+| `ADMIN_EMAILS` | Comma-separated emails | Real admins (full `/admin/*` access). Test users `test-*@festv.app` get DEV access automatically without being listed here. |
+| `ENABLE_TEST_ACCOUNTS` | `true` to enable seed endpoint + signin picker | Dev only. NEVER set to `true` in prod. |
+| `ADMIN_NOTIFICATION_EMAIL`, `DISCORD_WEBHOOK_URL` | Optional event alerting | Used by `eventNotifier` service |
 
 ---
 
@@ -291,3 +327,6 @@ Token is set at page load — not refreshed mid-session in most pages. If a call
 6. **`requireProvider` middleware** — checks role is `PROVIDER` or `ADMIN`. New vendor accounts need a provider profile created via `POST /providers/profile` before services can be saved.
 7. **Git workflow** — always commit to `dev`, then merge to `main`, push both. Both branches should stay in sync.
 8. **Render auto-deploys** from `main` branch.
+9. **DEV pages auth-gating** — `planner.html` and `database.html` both call `GET /api/v1/auth/dev-access` on load. If `canAccessDev: false`, they show a "Dev access required" panel. Don't assume the page failed if you see this — it means your email isn't in `ADMIN_EMAILS` and isn't a `test-*@festv.app` test account.
+10. **Test-account seeder is idempotent at two levels** — the `User` row is refreshed on every seed run (password + status), but the `ProviderProfile` and all its children (services, portfolio, menu items, pricing tiers, cuisine/theme links) are created ONCE and skipped on subsequent runs. This means manual edits to a test profile persist; only the auth state is force-reset. If you need to reset a test profile entirely, delete its `ProviderProfile` row in the DB and re-run the seeder.
+11. **Two roadmap files** — `roadMap.txt` is the northstar (what's next + what's done). `FESTV_CONTEXT.md` (this file) is the structural quick-start. After every meaningful change, BOTH should be updated: roadMap gets a checkmark or new bullet; this file gets section-level edits where the change affects the architecture, routes, pages, env vars, or workflow.

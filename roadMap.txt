@@ -63,6 +63,12 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] accounttype.html, browsevendors.html, createevent.html — all updated to correct enums
 	-[x] vendorsetup.html — Save Package now closes form + scrolls list into view after saving
 	-[x] vendorsetup.html — Publish uses Promise.all so a failed service POST doesn't block menu items
+	-[x] DEV section in profile dropdown — admin emails (ADMIN_EMAILS) + test users (test-*@festv.app) see "Planner" + "Database" links
+	-[x] Backend admin gate extended — isDevAccess() helper, GET /api/v1/auth/dev-access endpoint, requireAdminEmail now allows test users for the DEV pages
+	-[x] planner.html ported from caterease/Planner.tsx — Monte Carlo simulator with parameter sliders, fan charts (users / revenue+costs / profit), summary cards, mobile-responsive (Chart.js via CDN)
+	-[x] database.html ported from caterease/EventDashboard.tsx — Schema tab (interactive ERD with 24 nodes + clickable relationship highlighting) + Event Feed tab (filter by model, live refresh every 15s, stats cards)
+	-[ ] full database.html port — still missing: Provider graph tab (bubble graph by capacity), Client flow graph tab, Settings tab (watched models toggle, env vars table). Schema + Event Feed are the most-used parts; rest can be added on demand
+	-[ ] full planner.html port — still missing: Growth Strategy tab (profit-first vs growth-first vs hybrid), Cost Model tab (stacked bar + tier cards), Architecture tab, Roadmap timeline tab. Monte Carlo is the core tool; other tabs are reference material
 	-[x] Test-account picker on signin.html — 5 dev accounts (🎉 planner, 📷 photographer, 🍽️ caterer, 🍸 bartender, 🎧 DJ), shared password Test1234!, autofills email + password on click
 	-[x] Backend seeder seedTestAccounts.ts — idempotent, refreshes password + ACTIVE status on every run
 	-[x] POST /api/v1/auth/seed-test-accounts endpoint — gated by ENABLE_TEST_ACCOUNTS=true; returns 404 in prod

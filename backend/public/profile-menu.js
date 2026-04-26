@@ -95,6 +95,21 @@
 
     '.pm-item.pm-signout { color: #B84040; }',
     '.pm-item.pm-signout:hover { background: #fff5f5; color: #B84040; }',
+
+    '.pm-section-label {',
+    '  font-size: 0.58rem;',
+    '  font-weight: 700;',
+    '  letter-spacing: 0.16em;',
+    '  text-transform: uppercase;',
+    '  color: #C4A06A;',
+    '  padding: 0.55rem 1.1rem 0.3rem;',
+    '}',
+
+    '.pm-item.pm-dev {',
+    '  color: #1A1714;',
+    '  background: rgba(196,160,106,0.06);',
+    '}',
+    '.pm-item.pm-dev:hover { background: rgba(196,160,106,0.16); color: #1A1714; }',
   ].join('\n');
   document.head.appendChild(style);
 
@@ -124,6 +139,8 @@
     signin:    '<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
     signup:    '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
     signout:   '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    chart:     '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+    database:  '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>',
   };
 
   function makeItem(icon, label, onClick, extraClass) {
@@ -210,6 +227,32 @@
 
     // Sign out
     itemsEl.appendChild(makeItem('signout', 'Sign Out', signOut, 'pm-signout'));
+
+    // ── DEV section (admin emails + test users) ──
+    // Hidden by default; shown only after /auth/dev-access returns canAccessDev=true.
+    // Inserted just BEFORE the divider that precedes Sign Out.
+    var devToken = localStorage.getItem('accessToken');
+    if (devToken) {
+      fetch('/api/v1/auth/dev-access', {
+        headers: { 'Authorization': 'Bearer ' + devToken }
+      })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.data || !data.data.canAccessDev) return;
+        var children = Array.prototype.slice.call(itemsEl.children);
+        // Last item is Sign Out, second-to-last is the divider before it.
+        var preSignoutDivider = children[children.length - 2];
+        if (!preSignoutDivider) return;
+        var devLabel = document.createElement('div');
+        devLabel.className = 'pm-section-label';
+        devLabel.textContent = 'Dev';
+        itemsEl.insertBefore(devLabel,                                 preSignoutDivider);
+        itemsEl.insertBefore(makeLinkItem('chart',    'Planner',  'planner.html',  'pm-dev'), preSignoutDivider);
+        itemsEl.insertBefore(makeLinkItem('database', 'Database', 'database.html', 'pm-dev'), preSignoutDivider);
+        itemsEl.insertBefore(divider(),                                preSignoutDivider);
+      })
+      .catch(function () { /* silent — dev access just won't show */ });
+    }
   }
 
   // ── Mount on profile button ────────────────────────────────────────────────

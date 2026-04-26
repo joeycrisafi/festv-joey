@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FESTV — Planner (Dev)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C4A06A;
+      --gold-light: #D9BF8C;
+      --gold-dark: #9C7A45;
+      --bg: #F5F3EF;
+      --white: #FFFFFF;
+      --dark: #1A1714;
+      --charcoal: #3A3530;
+      --muted: #7A7068;
+      --border: rgba(0,0,0,0.09);
+      --green: #3A8A55;
+      --red: #B84040;
+      --blue: #3B6FB8;
+      --purple: #6B4FA0;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 600;
+      letter-spacing: 0.35em;
+      color: var(--dark);
+      text-decoration: none;
+    }
+    .logo .v { color: var(--gold); }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .back-link {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--gold-dark); }
+
+    /* ── PAGE TITLE ── */
+    .page-title-bar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 0.75rem;
+    }
+    .eyebrow {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+    }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.3rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.4rem;
+    }
+    .page-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    /* ── LAYOUT ── */
+    .body-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.75rem;
+      align-items: start;
+    }
+
+    /* ── PARAMS PANEL ── */
+    .params-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.4rem;
+      position: sticky;
+      top: 90px;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+    }
+    .panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 0.2rem;
+    }
+    .panel-sub {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .group-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 1rem 0 0.45rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .gl-growth   { color: var(--red); }
+    .gl-events   { color: var(--blue); }
+    .gl-revenue  { color: var(--green); }
+    .gl-personnel{ color: #d4a047; }
+
+    .slider-row {
+      margin-bottom: 0.75rem;
+    }
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      margin-bottom: 0.2rem;
+      color: var(--charcoal);
+    }
+    .slider-val {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--gold-dark);
+      font-size: 0.74rem;
+    }
+    input[type=range] {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 999px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: grab;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: grab;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1.1rem;
+    }
+    .btn-run {
+      flex: 1;
+      padding: 0.7rem 0.5rem;
+      background: var(--dark);
+      color: var(--gold-light);
+      border: none;
+      border-radius: 8px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-run:hover { background: var(--charcoal); }
+    .btn-run:disabled { background: #ccc; color: #888; cursor: wait; }
+    .btn-reset {
+      padding: 0.7rem 0.9rem;
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-reset:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+    /* ── RESULTS ── */
+    .results-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .chart-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.4rem;
+    }
+    .chart-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.25rem;
+    }
+    .chart-card .chart-sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      height: 280px;
+    }
+    .empty-msg {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+    }
+    .empty-msg .big { font-size: 1.6rem; margin-bottom: 0.4rem; }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+    .summary-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+    .summary-card .lbl {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .summary-card .val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: var(--dark);
+      line-height: 1;
+    }
+    .summary-card .sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Access denied */
+    .denied {
+      max-width: 480px;
+      margin: 5rem auto;
+      text-align: center;
+      padding: 2.5rem 2rem;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .denied h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .denied p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 900px) {
+      header { padding: 1rem 1.25rem; }
+      .logo { font-size: 1.4rem; }
+      .page-title-bar { padding: 1.25rem 1.25rem 0.5rem; }
+      .page-title { font-size: 1.7rem; }
+      .body-grid {
+        grid-template-columns: 1fr;
+        padding: 1.25rem 1.25rem 3rem;
+        gap: 1.25rem;
+      }
+      .params-panel {
+        position: static;
+        max-height: none;
+      }
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .chart-canvas-wrap { height: 240px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <a href="festv-index.html" class="logo">FEST<span class="v">V</span></a>
+    <div class="header-right">
+      <a href="javascript:history.back()" class="back-link">← Back</a>
+      <button class="back-link" title="Profile" style="background:none;border:none;padding:0.4rem;cursor:pointer;color:var(--charcoal);">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ACCESS DENIED (shown if not logged in or no dev access) -->
+  <div id="deniedView" style="display:none;">
+    <div class="denied">
+      <h2>Dev access required</h2>
+      <p id="deniedMsg">This page is gated to admin emails (ADMIN_EMAILS) and test accounts. Sign in as one of those to continue.</p>
+      <a href="signin.html" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--dark);color:var(--gold-light);border-radius:8px;text-decoration:none;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Sign In</a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="mainView" style="display:none;">
+
+    <div class="page-title-bar">
+      <div class="eyebrow">Dev · Planning Tool</div>
+      <h1 class="page-title">Monte Carlo Simulator</h1>
+      <p class="page-sub">
+        2,000 simulations × 24 months. Tweak parameters, hit run, see how your business model behaves under uncertainty.
+        Bands show the 25th–75th percentile of outcomes around the median.
+      </p>
+    </div>
+
+    <div class="body-grid">
+
+      <!-- PARAMS -->
+      <div class="params-panel">
+        <div class="panel-title">Simulation Parameters</div>
+        <div class="panel-sub">Worst-case modelling — minimums can go to zero.</div>
+
+        <div class="group-label gl-growth">Growth</div>
+        <div id="g-growth"></div>
+
+        <div class="group-label gl-events">Events</div>
+        <div id="g-events"></div>
+
+        <div class="group-label gl-revenue">Revenue</div>
+        <div id="g-revenue"></div>
+
+        <div class="group-label gl-personnel">Personnel</div>
+        <div id="g-personnel"></div>
+
+        <div class="btn-row">
+          <button class="btn-run" id="btnRun">Run Simulation</button>
+          <button class="btn-reset" id="btnReset">Reset</button>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-col">
+
+        <div id="summarySection" style="display:none;">
+          <div class="summary-grid" id="summaryGrid"></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>User Growth Projection</h3>
+          <div class="chart-sub">Median forecast with 25–75 percentile band over 24 months</div>
+          <div class="chart-canvas-wrap" id="usersWrap">
+            <div class="empty-msg" id="emptyUsers">
+              <div class="big">📈</div>
+              Hit <strong>Run Simulation</strong> to populate.
+            </div>
+            <canvas id="chartUsers" style="display:none;"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Revenue vs. Costs</h3>
+          <div class="chart-sub">Monthly run-rate. Breakeven highlighted when median revenue crosses costs.</div>
+          <div class="chart-canvas-wrap" id="revenueWrap">
+            <div class="empty-msg" id="emptyRevenue">
+              <div class="big">💰</div>
+              Run a simulation to see this chart.
+            </div>
+            <canvas id="chartRevenue" style="display:none;"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Net Profit / Loss</h3>
+          <div class="chart-sub">Median P&L per month. Above zero = profitable, below = burning cash.</div>
+          <div class="chart-canvas-wrap" id="profitWrap">
+            <div class="empty-msg" id="emptyProfit">
+              <div class="big">📊</div>
+              Run a simulation to see this chart.
+            </div>
+            <canvas id="chartProfit" style="display:none;"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ────────────────────────────────────────────────────────────
+  //  AUTH GATE
+  // ────────────────────────────────────────────────────────────
+  (function () {
+    var token = localStorage.getItem('accessToken');
+    if (!token) { showDenied('Sign in first.'); return; }
+
+    fetch('/api/v1/auth/dev-access', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (d && d.data && d.data.canAccessDev) {
+          document.getElementById('mainView').style.display = '';
+          init();
+        } else {
+          showDenied();
+        }
+      })
+      .catch(function () { showDenied(); });
+
+    function showDenied(msg) {
+      document.getElementById('deniedView').style.display = '';
+      if (msg) document.getElementById('deniedMsg').textContent = msg;
+    }
+  })();
+
+  // ────────────────────────────────────────────────────────────
+  //  PARAMS DEFINITION
+  // ────────────────────────────────────────────────────────────
+  var PARAM_GROUPS = {
+    'g-growth': [
+      { key: 'initialUsers',      label: 'Initial Users',           min: 10,   max: 500,    step: 10,    fmt: 'users',   def: 100 },
+      { key: 'monthlyGrowthMin',  label: 'Min Monthly Growth',      min: 0,    max: 0.30,   step: 0.01,  fmt: 'percent', def: 0.05 },
+      { key: 'monthlyGrowthMax',  label: 'Max Monthly Growth',      min: 0,    max: 0.60,   step: 0.01,  fmt: 'percent', def: 0.20 },
+      { key: 'growthStdDev',      label: 'Growth Volatility',       min: 0,    max: 0.20,   step: 0.01,  fmt: 'percent', def: 0.05 },
+    ],
+    'g-events': [
+      { key: 'viralProb',         label: 'Viral Spike Probability', min: 0,    max: 0.15,   step: 0.01,  fmt: 'percent', def: 0.03 },
+      { key: 'viralBoostMin',     label: 'Viral Boost Min',         min: 0,    max: 0.50,   step: 0.05,  fmt: 'percent', def: 0.10 },
+      { key: 'viralBoostMax',     label: 'Viral Boost Max',         min: 0,    max: 1.00,   step: 0.05,  fmt: 'percent', def: 0.40 },
+      { key: 'churnProb',         label: 'Churn Event Probability', min: 0,    max: 0.20,   step: 0.01,  fmt: 'percent', def: 0.05 },
+      { key: 'churnMin',          label: 'Churn Min',               min: 0,    max: 0.20,   step: 0.01,  fmt: 'percent', def: 0.05 },
+      { key: 'churnMax',          label: 'Churn Max',               min: 0,    max: 0.30,   step: 0.01,  fmt: 'percent', def: 0.15 },
+    ],
+    'g-revenue': [
+      { key: 'bookingRateMin',    label: 'Min Booking Rate',        min: 0,    max: 0.15,   step: 0.005, fmt: 'percent', def: 0.03 },
+      { key: 'bookingRateMax',    label: 'Max Booking Rate',        min: 0,    max: 0.25,   step: 0.005, fmt: 'percent', def: 0.08 },
+      { key: 'avgBookingValue',   label: 'Avg Booking Value',       min: 200,  max: 2000,   step: 50,    fmt: 'dollar',  def: 800 },
+      { key: 'bookingValueStd',   label: 'Booking Value Std Dev',   min: 0,    max: 500,    step: 25,    fmt: 'dollar',  def: 200 },
+      { key: 'commissionMin',     label: 'Min Commission',          min: 0,    max: 0.20,   step: 0.01,  fmt: 'percent', def: 0.08 },
+      { key: 'commissionMax',     label: 'Max Commission',          min: 0,    max: 0.30,   step: 0.01,  fmt: 'percent', def: 0.15 },
+    ],
+    'g-personnel': [
+      { key: 'partTimeThreshold', label: 'Part-Time Hire At',       min: 0,    max: 50000,  step: 1000,  fmt: 'users',   def: 10000 },
+      { key: 'partTimeSalary',    label: 'Part-Time Salary',        min: 0,    max: 8000,   step: 500,   fmt: 'dollar',  def: 3000 },
+      { key: 'fullTimeThreshold', label: 'Full-Time Hire At',       min: 0,    max: 100000, step: 5000,  fmt: 'users',   def: 25000 },
+      { key: 'fullTimeSalary',    label: 'Full-Time Salary',        min: 0,    max: 15000,  step: 500,   fmt: 'dollar',  def: 6500 },
+      { key: 'teamThreshold',     label: 'Team Hire At',            min: 0,    max: 250000, step: 5000,  fmt: 'users',   def: 100000 },
+      { key: 'teamSalary',        label: 'Team Salary',             min: 0,    max: 60000,  step: 1000,  fmt: 'dollar',  def: 24000 },
+    ],
+  };
+
+  function getDefaultParams() {
+    var p = {};
+    Object.keys(PARAM_GROUPS).forEach(function (g) {
+      PARAM_GROUPS[g].forEach(function (s) { p[s.key] = s.def; });
+    });
+    return p;
+  }
+
+  var params = getDefaultParams();
+
+  // ────────────────────────────────────────────────────────────
+  //  FORMATTING
+  // ────────────────────────────────────────────────────────────
+  function fmtVal(v, type) {
+    if (type === 'percent') return (v * 100).toFixed(0) + '%';
+    if (type === 'dollar')  return '$' + Number(v).toLocaleString();
+    if (type === 'users')   return Number(v).toLocaleString();
+    return String(v);
+  }
+  function fmtUsers(v) {
+    if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+    return Math.round(v).toLocaleString();
+  }
+  function fmtDollar(v) {
+    var sign = v < 0 ? '-' : '';
+    var a = Math.abs(v);
+    if (a >= 1e6) return sign + '$' + (a/1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return sign + '$' + (a/1e3).toFixed(0) + 'K';
+    return sign + '$' + Math.round(a).toLocaleString();
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  BUILD SLIDERS
+  // ────────────────────────────────────────────────────────────
+  function buildSliders() {
+    Object.keys(PARAM_GROUPS).forEach(function (groupId) {
+      var groupEl = document.getElementById(groupId);
+      groupEl.innerHTML = '';
+      PARAM_GROUPS[groupId].forEach(function (s) {
+        var row = document.createElement('div');
+        row.className = 'slider-row';
+        row.innerHTML =
+          '<div class="slider-head"><span>' + s.label + '</span><span class="slider-val" id="val-' + s.key + '">' + fmtVal(params[s.key], s.fmt) + '</span></div>' +
+          '<input type="range" id="sl-' + s.key + '" min="' + s.min + '" max="' + s.max + '" step="' + s.step + '" value="' + params[s.key] + '">';
+        groupEl.appendChild(row);
+        var slider = row.querySelector('input');
+        var valEl  = row.querySelector('.slider-val');
+        slider.addEventListener('input', function () {
+          params[s.key] = parseFloat(slider.value);
+          valEl.textContent = fmtVal(params[s.key], s.fmt);
+        });
+      });
+    });
+  }
+
+  function syncSlidersToParams() {
+    Object.keys(PARAM_GROUPS).forEach(function (groupId) {
+      PARAM_GROUPS[groupId].forEach(function (s) {
+        var slider = document.getElementById('sl-' + s.key);
+        var valEl  = document.getElementById('val-' + s.key);
+        if (slider) slider.value = params[s.key];
+        if (valEl)  valEl.textContent = fmtVal(params[s.key], s.fmt);
+      });
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  MONTE CARLO ENGINE
+  // ────────────────────────────────────────────────────────────
+  function gauss() {
+    var u = 0, v = 0;
+    while (!u) u = Math.random();
+    while (!v) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function pct(sorted, p) { return sorted[Math.floor(sorted.length * p / 100)]; }
+
+  function runMonteCarlo(p, nSim) {
+    nSim = nSim || 1500;
+    var months = 25;
+    var allU = [], allR = [], allC = [], allP = [];
+
+    for (var s = 0; s < nSim; s++) {
+      var uPath = [p.initialUsers];
+      var rPath = [0];
+      var cPath = [7];
+      var pPath = [-7];
+      var users = p.initialUsers;
+
+      for (var m = 1; m < months; m++) {
+        var growth = p.monthlyGrowthMin + Math.random() * (p.monthlyGrowthMax - p.monthlyGrowthMin) + gauss() * p.growthStdDev;
+        if (Math.random() < p.viralProb) growth += p.viralBoostMin + Math.random() * (p.viralBoostMax - p.viralBoostMin);
+        if (Math.random() < p.churnProb) growth -= p.churnMin + Math.random() * (p.churnMax - p.churnMin);
+        users = Math.max(users * (1 + Math.max(growth, -0.15)), users * 0.85);
+
+        var bookingRate = p.bookingRateMin + Math.random() * (p.bookingRateMax - p.bookingRateMin);
+        var bookingValue = Math.max(p.avgBookingValue + gauss() * p.bookingValueStd, 150);
+        var commission = p.commissionMin + Math.random() * (p.commissionMax - p.commissionMin);
+        var rev = users * bookingRate * bookingValue * commission;
+
+        var infra;
+        if      (users < 1000)   infra = 7;
+        else if (users < 5000)   infra = 25  + (users / 5000)   * 35;
+        else if (users < 10000)  infra = 60  + (users / 10000)  * 60;
+        else if (users < 25000)  infra = 120 + (users / 25000)  * 105;
+        else if (users < 50000)  infra = 225 + (users / 50000)  * 210;
+        else if (users < 100000) infra = 435 + (users / 100000) * 340;
+        else                     infra = 775 + (users / 250000) * 1100;
+
+        var salary = users >= p.teamThreshold ? p.teamSalary
+                   : users >= p.fullTimeThreshold ? p.fullTimeSalary
+                   : users >= p.partTimeThreshold ? p.partTimeSalary
+                   : 0;
+
+        uPath.push(users);
+        rPath.push(rev);
+        cPath.push(infra + salary);
+        pPath.push(rev - infra - salary);
+      }
+      allU.push(uPath);
+      allR.push(rPath);
+      allC.push(cPath);
+      allP.push(pPath);
+    }
+
+    var data = [];
+    for (var mm = 0; mm < months; mm++) {
+      var u = allU.map(function (s) { return s[mm]; }).sort(function (a, b) { return a - b; });
+      var r = allR.map(function (s) { return s[mm]; }).sort(function (a, b) { return a - b; });
+      var c = allC.map(function (s) { return s[mm]; }).sort(function (a, b) { return a - b; });
+      var pp = allP.map(function (s) { return s[mm]; }).sort(function (a, b) { return a - b; });
+      data.push({
+        month: mm,
+        users_p25: pct(u, 25), users_p50: pct(u, 50), users_p75: pct(u, 75),
+        rev_p25:   pct(r, 25), rev_p50:   pct(r, 50), rev_p75:   pct(r, 75),
+        cost_p25:  pct(c, 25), cost_p50:  pct(c, 50), cost_p75:  pct(c, 75),
+        profit_p25: pct(pp, 25), profit_p50: pct(pp, 50), profit_p75: pct(pp, 75),
+      });
+    }
+    return data;
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  RENDER CHARTS
+  // ────────────────────────────────────────────────────────────
+  var charts = { users: null, revenue: null, profit: null };
+
+  function buildBandDataset(label, color, data, key) {
+    return [
+      {
+        label: label + ' (P25–P75)',
+        data: data.map(function (d) { return d[key + '_p75']; }),
+        borderColor: 'transparent',
+        backgroundColor: color + '22',
+        fill: '+1',
+        pointRadius: 0,
+        tension: 0.3,
+      },
+      {
+        label: '_p25',
+        data: data.map(function (d) { return d[key + '_p25']; }),
+        borderColor: 'transparent',
+        backgroundColor: 'transparent',
+        pointRadius: 0,
+        tension: 0.3,
+      },
+      {
+        label: label + ' (median)',
+        data: data.map(function (d) { return d[key + '_p50']; }),
+        borderColor: color,
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        fill: false,
+        pointRadius: 0,
+        tension: 0.3,
+      },
+    ];
+  }
+
+  function renderCharts(data) {
+    var labels = data.map(function (d) { return 'M' + d.month; });
+
+    // Hide empty msgs, show canvases
+    ['Users', 'Revenue', 'Profit'].forEach(function (k) {
+      document.getElementById('empty' + k).style.display = 'none';
+      document.getElementById('chart' + k).style.display = '';
+    });
+
+    // Destroy old charts
+    Object.keys(charts).forEach(function (k) {
+      if (charts[k]) { charts[k].destroy(); charts[k] = null; }
+    });
+
+    // ── Users chart ─────────────────────
+    var usersCtx = document.getElementById('chartUsers').getContext('2d');
+    charts.users = new Chart(usersCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: buildBandDataset('Users', '#C4A06A', data, 'users'),
+      },
+      options: lineChartOpts(fmtUsers, 'Users'),
+    });
+
+    // ── Revenue vs Costs ─────────────────────
+    var revCtx = document.getElementById('chartRevenue').getContext('2d');
+    var revDS = buildBandDataset('Revenue', '#3A8A55', data, 'rev');
+    var costDS = buildBandDataset('Costs', '#B84040', data, 'cost');
+    // Filter the legend hidden p25 entries
+    revDS[1].label = '_';
+    costDS[1].label = '_';
+    charts.revenue = new Chart(revCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: revDS.concat(costDS),
+      },
+      options: lineChartOpts(fmtDollar, '$/month'),
+    });
+
+    // ── Profit ─────────────────────
+    var profCtx = document.getElementById('chartProfit').getContext('2d');
+    charts.profit = new Chart(profCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Net Profit (P25–P75)',
+            data: data.map(function (d) { return d.profit_p75; }),
+            borderColor: 'transparent',
+            backgroundColor: 'rgba(107,79,160,0.18)',
+            fill: '+1',
+            pointRadius: 0,
+            tension: 0.3,
+          },
+          {
+            label: '_',
+            data: data.map(function (d) { return d.profit_p25; }),
+            borderColor: 'transparent',
+            backgroundColor: 'transparent',
+            pointRadius: 0,
+            tension: 0.3,
+          },
+          {
+            label: 'Net Profit (median)',
+            data: data.map(function (d) { return d.profit_p50; }),
+            borderColor: '#6B4FA0',
+            backgroundColor: 'transparent',
+            borderWidth: 2.5,
+            fill: false,
+            pointRadius: 0,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: lineChartOpts(fmtDollar, '$/month'),
+    });
+  }
+
+  function lineChartOpts(fmt, axisLabel) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            font: { family: "'Montserrat', sans-serif", size: 11 },
+            filter: function (item) { return item.text && item.text.indexOf('_') !== 0; },
+          },
+        },
+        tooltip: {
+          backgroundColor: '#1A1714',
+          titleFont: { family: "'Montserrat', sans-serif", size: 12 },
+          bodyFont:  { family: "'Montserrat', sans-serif", size: 11 },
+          callbacks: {
+            label: function (ctx) {
+              if (ctx.dataset.label === '_' || ctx.dataset.label.indexOf('_p25') === 0) return null;
+              return ctx.dataset.label + ': ' + fmt(ctx.parsed.y);
+            },
+          },
+        },
+      },
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 }, color: '#7A7068' } },
+        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 }, color: '#7A7068', callback: function (v) { return fmt(v); } } },
+      },
+    };
+  }
+
+  function renderSummary(data) {
+    var last = data[data.length - 1];
+    var first = data[0];
+    var totalRev = data.reduce(function (s, d) { return s + d.rev_p50; }, 0);
+    var totalProfit = data.reduce(function (s, d) { return s + d.profit_p50; }, 0);
+    var breakEven = -1;
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].profit_p50 > 0) { breakEven = i; break; }
+    }
+    var breakEvenLbl = breakEven >= 0 ? 'Month ' + breakEven : 'Not in 24mo';
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML =
+      '<div class="summary-card"><div class="lbl">Users at M24</div><div class="val">' + fmtUsers(last.users_p50) + '</div><div class="sub">Median, from ' + fmtUsers(first.users_p50) + '</div></div>' +
+      '<div class="summary-card"><div class="lbl">24mo Revenue</div><div class="val" style="color:var(--green);">' + fmtDollar(totalRev) + '</div><div class="sub">Sum of medians</div></div>' +
+      '<div class="summary-card"><div class="lbl">24mo Net P&L</div><div class="val" style="color:' + (totalProfit >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + fmtDollar(totalProfit) + '</div><div class="sub">Cumulative median</div></div>' +
+      '<div class="summary-card"><div class="lbl">Breakeven</div><div class="val">' + breakEvenLbl + '</div><div class="sub">First month profit ≥ 0</div></div>';
+    document.getElementById('summarySection').style.display = '';
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  RUN HANDLER
+  // ────────────────────────────────────────────────────────────
+  function runSim() {
+    var btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+
+    // Defer to next tick so UI updates
+    setTimeout(function () {
+      var data = runMonteCarlo(params, 1500);
+      renderCharts(data);
+      renderSummary(data);
+      btn.disabled = false;
+      btn.textContent = 'Run Simulation';
+    }, 30);
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  INIT
+  // ────────────────────────────────────────────────────────────
+  function init() {
+    buildSliders();
+    document.getElementById('btnRun').addEventListener('click', runSim);
+    document.getElementById('btnReset').addEventListener('click', function () {
+      params = getDefaultParams();
+      syncSlidersToParams();
+      setTimeout(runSim, 50);
+    });
+    // Auto-run on first load
+    setTimeout(runSim, 100);
+  }
+  </script>
+
+  <script src="/profile-menu.js"></script>
+</body>
+</html>
