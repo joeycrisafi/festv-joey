@@ -737,6 +737,113 @@
       cursor: pointer; transition: all 0.2s;
     }
     .btn-section-add:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+    /* ── REVIEW CARDS (step 3) ── */
+    .review-card {
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .review-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.015);
+    }
+    .review-card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; font-weight: 600; color: var(--dark);
+    }
+    .btn-edit-card {
+      padding: 0.3rem 0.85rem;
+      background: none;
+      border: 1.5px solid var(--gold);
+      border-radius: 20px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gold-dark); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-edit-card:hover { background: rgba(196,160,106,0.1); }
+    .review-card-body { padding: 0.85rem 1.1rem; }
+    .review-row {
+      display: flex; align-items: baseline; gap: 0.6rem;
+      margin-bottom: 0.5rem; flex-wrap: wrap;
+    }
+    .review-row-label {
+      font-size: 0.63rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted);
+      min-width: 105px; flex-shrink: 0;
+    }
+    .review-row-value {
+      font-size: 0.78rem; color: var(--charcoal); line-height: 1.5; flex: 1;
+    }
+    .review-row-value.biz-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.45rem; font-weight: 600; color: var(--dark);
+    }
+    .review-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .review-chip {
+      display: inline-flex; align-items: center;
+      padding: 0.2rem 0.6rem;
+      background: rgba(196,160,106,0.1);
+      border: 1px solid rgba(196,160,106,0.25);
+      border-radius: 20px;
+      font-size: 0.65rem; font-weight: 600; color: var(--gold-dark);
+    }
+    .review-chip.muted {
+      background: rgba(0,0,0,0.03);
+      border-color: var(--border);
+      color: var(--charcoal);
+    }
+    .review-svc-row {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .review-svc-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .review-svc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.2rem;
+    }
+    .review-svc-name { font-size: 0.8rem; font-weight: 600; color: var(--dark); }
+    .review-svc-price { font-size: 0.73rem; color: var(--gold-dark); font-weight: 600; }
+    .review-svc-desc { font-size: 0.71rem; color: var(--muted); line-height: 1.45; margin-bottom: 0.2rem; }
+    .review-svc-features { display: flex; flex-wrap: wrap; gap: 0.15rem 0.55rem; }
+    .review-svc-feat { font-size: 0.66rem; color: var(--muted); }
+    .review-svc-feat::before { content: '· '; }
+    .review-menu-row {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .review-menu-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .review-menu-header { display: flex; align-items: center; justify-content: space-between; }
+    .review-menu-name { font-size: 0.78rem; font-weight: 600; color: var(--dark); }
+    .review-menu-price { font-size: 0.72rem; color: var(--muted); }
+    .review-menu-cat { font-size: 0.67rem; color: var(--muted); margin: 0.12rem 0; }
+    .review-empty { font-size: 0.72rem; color: var(--muted); padding: 0.4rem 0; font-style: italic; }
+
+    /* ── CONFIRMATION SCREEN ── */
+    .confirm-screen { display: none; text-align: center; padding: 4rem 1.5rem 3rem; }
+    .confirm-screen.show { display: block; }
+    .confirm-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(196,160,106,0.1);
+      border: 2px solid rgba(196,160,106,0.25);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.75rem;
+    }
+    .confirm-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem; font-weight: 500; color: var(--dark);
+      margin-bottom: 0.7rem;
+    }
+    .confirm-sub {
+      font-size: 0.78rem; color: var(--muted);
+      max-width: 380px; margin: 0 auto 2.5rem; line-height: 1.7;
+    }
+
   </style>
 </head>
 <body>
@@ -766,7 +873,7 @@
     <div class="step-connector"></div>
     <div class="step-item" id="si-3">
       <div class="step-num">3</div>
-      <div class="step-label">Done</div>
+      <div class="step-label">Review</div>
     </div>
   </div>
 
@@ -1039,22 +1146,79 @@
         </div>
       </div>
 
-      <!-- ── STEP 3: DONE ── -->
+      <!-- ── STEP 3: REVIEW & SUBMIT ── -->
       <div class="step-panel" id="panel-3">
+        <div class="panel-heading">
+          <div class="panel-label">Step 3 of 3</div>
+          <h1 class="panel-title">Review &amp; Submit</h1>
+          <p class="panel-sub">Almost there. Review your profile below before submitting for approval. Once approved, you'll go live on FESTV.</p>
+        </div>
         <div class="card">
-          <div class="done-panel">
-            <div class="done-icon">
-              <svg width="32" height="32" fill="none" viewBox="0 0 32 32">
-                <path d="M6 16.5L13 23.5L26 10" stroke="#3A8A55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+          <!-- Loading state -->
+          <div id="s3-loading" style="text-align:center; padding:2rem 0;">
+            <div class="pdf-spinner" style="width:26px;height:26px;margin:0 auto 0.65rem;"></div>
+            <div style="font-size:0.71rem;color:var(--muted);">Loading your profile summary…</div>
+          </div>
+
+          <!-- Summary cards — populated by JS -->
+          <div id="s3-content" style="display:none;">
+
+            <div class="review-card">
+              <div class="review-card-header">
+                <div class="review-card-title">Business Profile</div>
+                <button class="btn-edit-card" onclick="goToStep(1)">Edit</button>
+              </div>
+              <div class="review-card-body" id="s3-bizBody"></div>
+            </div>
+
+            <div class="review-card">
+              <div class="review-card-header">
+                <div class="review-card-title">Vendor Type &amp; Details</div>
+                <button class="btn-edit-card" onclick="goToStep(1)">Edit</button>
+              </div>
+              <div class="review-card-body" id="s3-typeBody"></div>
+            </div>
+
+            <div class="review-card">
+              <div class="review-card-header">
+                <div class="review-card-title">Services &amp; Packages</div>
+                <button class="btn-edit-card" onclick="goToStep(2)">Edit</button>
+              </div>
+              <div class="review-card-body" id="s3-svcBody"></div>
+            </div>
+
+            <div class="review-card" id="s3-cardMenu" style="display:none;">
+              <div class="review-card-header">
+                <div class="review-card-title">Menu Items</div>
+                <button class="btn-edit-card" onclick="goToStep(2)">Edit</button>
+              </div>
+              <div class="review-card-body" id="s3-menuBody"></div>
+            </div>
+
+            <div id="err-3" class="error-msg"></div>
+            <button class="btn-primary" id="btn3">
+              <div class="spinner"></div>
+              <span class="btn-text">Submit for Approval</span>
+              <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+          <!-- Confirmation screen — shown after submit -->
+          <div class="confirm-screen" id="s3-confirm">
+            <div class="confirm-icon">
+              <svg width="36" height="36" fill="none" viewBox="0 0 36 36">
+                <path d="M8 19L15 26L28 12" stroke="#C4A06A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <div class="done-title">Profile Published</div>
-            <p class="done-sub">Your profile is now live and visible to event planners browsing FESTV. You can update your details anytime from your dashboard.</p>
-            <button class="btn-primary" id="btnToDashboard" style="margin-top:0; max-width:280px; margin-left:auto; margin-right:auto;">
+            <div class="confirm-title">You're all set</div>
+            <p class="confirm-sub">Your profile is under review. We'll notify you by email once you're approved and live on FESTV. In the meantime, explore your dashboard.</p>
+            <button class="btn-primary" id="btnToDashboard" style="max-width:260px; margin:0 auto;">
               <span class="btn-text">Go to Dashboard</span>
               <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
+
         </div>
       </div>
 
@@ -2027,9 +2191,202 @@
       window.location.href = 'vendordashboard.html';
     });
 
-    // ── goToStep hook: init step 2 when entering it ──
+    // ── STEP 3: Review & Submit ──
+    function initStep3() {
+      var loading = document.getElementById('s3-loading');
+      var content = document.getElementById('s3-content');
+      loading.style.display = '';
+      content.style.display = 'none';
+      document.getElementById('s3-confirm').classList.remove('show');
+      clearError('err-3');
+
+      Promise.all([
+        authFetch('/providers/profile/me'),
+        authFetch('/providers/services'),
+        authFetch('/providers/menu-items')
+      ]).then(function(results) {
+        var profile   = (results[0] && (results[0].data || results[0].providerProfile || results[0])) || null;
+        var services  = (results[1] && results[1].services) || [];
+        var menuItems = (results[2] && results[2].menuItems) || [];
+
+        if (!profile || !profile.id) { goToStep(1); return; }
+
+        s3RenderBiz(profile);
+        s3RenderType(profile);
+        s3RenderSvc(services);
+
+        var types = profile.providerTypes || [];
+        if (types.indexOf('RESTO_VENUE') !== -1 || types.indexOf('CATERER') !== -1) {
+          document.getElementById('s3-cardMenu').style.display = '';
+          s3RenderMenu(menuItems);
+        } else {
+          document.getElementById('s3-cardMenu').style.display = 'none';
+        }
+
+        loading.style.display = 'none';
+        content.style.display = '';
+      }).catch(function() {
+        loading.style.display = 'none';
+        content.style.display = '';
+        showError('err-3', 'Could not load your profile summary. Please try again.');
+      });
+    }
+
+    function s3Row(label, valueHtml) {
+      if (valueHtml === null || valueHtml === undefined || valueHtml === '') return '';
+      return '<div class="review-row">' +
+        '<div class="review-row-label">' + escHtml(label) + '</div>' +
+        '<div class="review-row-value">' + valueHtml + '</div></div>';
+    }
+
+    function s3Chips(arr, muted) {
+      if (!arr || !arr.length) return '';
+      return '<div class="review-chips">' +
+        arr.map(function(v) {
+          return '<span class="review-chip' + (muted ? ' muted' : '') + '">' + escHtml(v) + '</span>';
+        }).join('') + '</div>';
+    }
+
+    function s3TypeLabel(t) {
+      var map = { RESTO_VENUE: 'Restaurant / Venue', CATERER: 'Caterer',
+                  ENTERTAINMENT: 'Entertainment', PHOTO_VIDEO: 'Photo & Video', FLORIST_DECOR: 'Florist & Decor' };
+      return map[t] || t;
+    }
+
+    function s3RenderBiz(p) {
+      var u = p.user || {};
+      var html = '';
+      html += '<div class="review-row"><div class="review-row-value biz-name">' + escHtml(p.businessName || '—') + '</div></div>';
+      if (p.tagline)           html += s3Row('Tagline',     escHtml(p.tagline));
+      if (u.phoneNumber)       html += s3Row('Phone',       escHtml(u.phoneNumber));
+      if (u.email)             html += s3Row('Email',       escHtml(u.email));
+      if (p.websiteUrl)        html += s3Row('Website',     escHtml(p.websiteUrl));
+      if (p.instagramHandle)   html += s3Row('Instagram',   '@' + escHtml(p.instagramHandle));
+      if (p.yearsInBusiness != null) html += s3Row('Experience', p.yearsInBusiness + ' yr' + (p.yearsInBusiness !== 1 ? 's' : ''));
+      var addrParts = [u.address, [u.city, u.state, u.country].filter(Boolean).join(', ')].filter(Boolean);
+      if (addrParts.length)    html += s3Row('Location',    escHtml(addrParts.join(', ')));
+      if (p.serviceRadius) {
+        var travel = p.travelOutsideRegion ? ' · will travel outside region' : '';
+        html += s3Row('Service Area', p.serviceRadius + ' km radius' + travel);
+      }
+      if (p.businessDescription) html += s3Row('About',    escHtml(p.businessDescription));
+      if (p.languages && p.languages.length) html += s3Row('Languages', s3Chips(p.languages));
+      if (p.minimumBudget || p.maximumBudget) {
+        var bMin = p.minimumBudget ? '$' + Number(p.minimumBudget).toLocaleString() : '';
+        var bMax = p.maximumBudget ? '$' + Number(p.maximumBudget).toLocaleString() : '';
+        html += s3Row('Budget Range', escHtml(bMin && bMax ? bMin + ' – ' + bMax : bMin || bMax));
+      }
+      document.getElementById('s3-bizBody').innerHTML = html;
+    }
+
+    function s3RenderType(p) {
+      var html = '';
+      var primary = p.primaryType || (p.providerTypes && p.providerTypes[0]);
+      if (primary) html += s3Row('Primary Type', '<span class="review-chip">' + escHtml(s3TypeLabel(primary)) + '</span>');
+      var secondaries = (p.providerTypes || []).filter(function(t) { return t !== primary; });
+      if (secondaries.length) html += s3Row('Also Offers', s3Chips(secondaries.map(s3TypeLabel), true));
+
+      var types = p.providerTypes || [];
+      if (types.indexOf('RESTO_VENUE') !== -1) {
+        if (p.seatedCapacity)   html += s3Row('Seated Cap.',  p.seatedCapacity + ' guests');
+        if (p.standingCapacity) html += s3Row('Standing Cap.',p.standingCapacity + ' guests');
+        if (p.venueCuisine)     html += s3Row('Cuisine',      escHtml(p.venueCuisine));
+        if (p.venueIndoorOutdoor) html += s3Row('Setting', escHtml(p.venueIndoorOutdoor.charAt(0) + p.venueIndoorOutdoor.slice(1).toLowerCase()));
+        if (p.dietaryOptions && p.dietaryOptions.length) html += s3Row('Dietary', s3Chips(p.dietaryOptions, true));
+        if (p.avTechAvailable)  html += s3Row('AV Tech',      'Available');
+      }
+      if (types.indexOf('CATERER') !== -1) {
+        if (p.equipmentRentalAvailable) html += s3Row('Equipment Rental', 'Available');
+        if (p.caterSetupIncluded)       html += s3Row('Setup',            'Included');
+      }
+      if (types.indexOf('ENTERTAINMENT') !== -1) {
+        if (p.genreTags && p.genreTags.length)   html += s3Row('Genres',       s3Chips(p.genreTags, true));
+        if (p.setupTimeMinutes)                  html += s3Row('Setup Time',   p.setupTimeMinutes + ' min');
+        if (p.equipmentIncluded)                 html += s3Row('Equipment',    'Included');
+        if (p.overtimeRatePerHour)               html += s3Row('Overtime Rate','$' + p.overtimeRatePerHour + '/hr');
+      }
+      if (types.indexOf('PHOTO_VIDEO') !== -1) {
+        if (p.styleTags && p.styleTags.length)   html += s3Row('Style',        s3Chips(p.styleTags, true));
+        if (p.deliveryTimelineDays)              html += s3Row('Delivery',     p.deliveryTimelineDays + ' days');
+        if (p.editedPhotosCount)                 html += s3Row('Edited Photos',p.editedPhotosCount);
+        if (p.travelFeePolicy)                   html += s3Row('Travel Fee',   escHtml(p.travelFeePolicy.replace(/_/g,' ').toLowerCase()));
+        if (p.rawFilesIncluded)                  html += s3Row('Raw Files',    'Included');
+      }
+      if (types.indexOf('FLORIST_DECOR') !== -1) {
+        if (p.floristStyleTags && p.floristStyleTags.length) html += s3Row('Style', s3Chips(p.floristStyleTags, true));
+        if (p.seasonalCustomFloral) html += s3Row('Seasonal / Custom', 'Yes');
+        if (p.floristSetupIncluded) html += s3Row('Setup',             'Included');
+        if (p.rentalItemsAvailable) html += s3Row('Rental Items',      'Available');
+      }
+
+      document.getElementById('s3-typeBody').innerHTML = html || '<div class="review-empty">No type details added.</div>';
+    }
+
+    function s3RenderSvc(services) {
+      if (!services.length) {
+        document.getElementById('s3-svcBody').innerHTML = '<div class="review-empty">No services added yet.</div>';
+        return;
+      }
+      var html = services.map(function(s) {
+        var price = s.priceType === 'PER_PERSON' ? '$' + s.basePrice + '/person'
+                  : s.priceType === 'PER_HOUR'   ? '$' + s.basePrice + '/hr'
+                  : s.priceType === 'CUSTOM'      ? 'Custom Quote'
+                  : '$' + Number(s.basePrice || 0).toLocaleString();
+        var feats = (s.features || []).map(function(f) {
+          return '<span class="review-svc-feat">' + escHtml(f) + '</span>';
+        }).join('');
+        return '<div class="review-svc-row">' +
+          '<div class="review-svc-header">' +
+            '<div class="review-svc-name">' + escHtml(s.name) + '</div>' +
+            '<div class="review-svc-price">' + escHtml(price) + '</div>' +
+          '</div>' +
+          (s.description ? '<div class="review-svc-desc">' + escHtml(s.description) + '</div>' : '') +
+          (feats ? '<div class="review-svc-features">' + feats + '</div>' : '') +
+          '</div>';
+      }).join('');
+      document.getElementById('s3-svcBody').innerHTML = html;
+    }
+
+    function s3RenderMenu(items) {
+      if (!items.length) {
+        document.getElementById('s3-menuBody').innerHTML = '<div class="review-empty">No menu items added.</div>';
+        return;
+      }
+      var html = items.map(function(m) {
+        var diet = (m.dietaryInfo || []).map(function(d) {
+          return '<span class="review-chip muted" style="font-size:0.6rem;padding:0.15rem 0.45rem;">' + escHtml(d) + '</span>';
+        }).join('');
+        return '<div class="review-menu-row">' +
+          '<div class="review-menu-header">' +
+            '<div class="review-menu-name">' + escHtml(m.name) + '</div>' +
+            (m.price ? '<div class="review-menu-price">$' + parseFloat(m.price).toFixed(2) + '</div>' : '') +
+          '</div>' +
+          (m.category ? '<div class="review-menu-cat">' + escHtml(m.category) + '</div>' : '') +
+          (diet ? '<div style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.25rem;">' + diet + '</div>' : '') +
+          (m.description ? '<div class="review-svc-desc" style="margin-top:0.2rem;">' + escHtml(m.description) + '</div>' : '') +
+          '</div>';
+      }).join('');
+      document.getElementById('s3-menuBody').innerHTML = html;
+    }
+
+    document.getElementById('btn3').addEventListener('click', function() {
+      clearError('err-3');
+      var btn = this;
+      btn.classList.add('loading');
+      // All data already saved in Steps 1 & 2 — just confirm
+      setTimeout(function() {
+        btn.classList.remove('loading');
+        document.getElementById('s3-content').style.display = 'none';
+        document.getElementById('s3-confirm').classList.add('show');
+        // Lock back navigation so vendor can't re-submit
+        history.pushState(null, '', window.location.href);
+        window.onpopstate = function() { history.pushState(null, '', window.location.href); };
+      }, 500);
+    });
+
+    // ── goToStep hook: init step 2 and 3 when entering them ──
     var _origGoToStep = goToStep;
-    goToStep = function(n) { _origGoToStep(n); if (n === 2) initStep2(); };
+    goToStep = function(n) { _origGoToStep(n); if (n === 2) initStep2(); if (n === 3) initStep3(); };
 
 
   })();
