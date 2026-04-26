@@ -1701,6 +1701,22 @@
     }
 
     function initStep2() {
+      if (primaryType) {
+        _doInitStep2();
+      } else {
+        // Jumped here directly (e.g. ?step=2) — fetch profile to get vendor type first
+        authFetch('/providers/profile/me').then(function(data) {
+          var p = data.data || data.providerProfile || data;
+          if (p && p.primaryType) {
+            primaryType    = p.primaryType;
+            secondaryTypes = (p.providerTypes || []).filter(function(t) { return t !== primaryType; });
+          }
+          _doInitStep2();
+        }).catch(function() { _doInitStep2(); });
+      }
+    }
+
+    function _doInitStep2() {
       renderSpecialFields();
       renderSuggestionChips();
       renderServiceCards();
