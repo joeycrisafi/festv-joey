@@ -887,6 +887,12 @@
 
         errEl.style.display = 'none';
 
+        if (!selectedVendor) {
+          errEl.textContent = 'Please select your vendor type before continuing.';
+          errEl.style.display = 'block';
+          return;
+        }
+
         if (!contactName || !email || !pw || !pwConf) {
           errEl.textContent = 'Please fill in all required fields.';
           errEl.style.display = 'block';
