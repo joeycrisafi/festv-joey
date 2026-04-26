@@ -289,41 +289,6 @@
     }
     .eye-btn:hover { color: var(--charcoal); }
 
-    /* ── PROOF OF OWNERSHIP (conditional) ── */
-    .proof-group {
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, margin-top 0.3s;
-      margin-top: 0;
-    }
-    .proof-group.open {
-      max-height: 300px;
-      opacity: 1;
-      margin-top: 1rem;
-    }
-    .upload-zone {
-      border: 2px dashed rgba(196,160,106,0.45);
-      border-radius: 10px;
-      padding: 1.5rem 1.25rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: rgba(196,160,106,0.03);
-      position: relative;
-    }
-    .upload-zone:hover { border-color: var(--gold); background: rgba(196,160,106,0.07); }
-    .upload-zone.has-file { border-color: var(--green); background: rgba(58,138,85,0.04); }
-    .upload-zone input[type="file"] {
-      position: absolute; inset: 0;
-      opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-    .upload-icon { font-size: 1.6rem; margin-bottom: 0.45rem; display: block; pointer-events: none; }
-    .upload-title { font-size: 0.76rem; font-weight: 600; color: var(--charcoal); margin-bottom: 0.25rem; pointer-events: none; }
-    .upload-sub  { font-size: 0.67rem; color: var(--muted); line-height: 1.5; pointer-events: none; }
-    .upload-filename { display: none; font-size: 0.72rem; font-weight: 600; color: var(--green); margin-top: 0.35rem; pointer-events: none; }
-    .upload-zone.has-file .upload-filename  { display: block; }
-    .upload-zone.has-file .upload-default   { display: none; }
     .field-hint { font-size: 0.67rem; color: var(--muted); line-height: 1.5; margin-top: 0.2rem; }
 
     /* ── REVIEW NOTE ── */
@@ -661,22 +626,6 @@
             </div>
           </div>
 
-          <!-- Proof of ownership (restaurant / venue / caterer only) -->
-          <div class="proof-group" id="proofGroup">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">Proof of Ownership <span class="req">*</span></label>
-              <div class="upload-zone" id="uploadZone">
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileUpload(this)">
-                <div class="upload-default">
-                  <span class="upload-icon">📄</span>
-                  <div class="upload-title">Upload a business document</div>
-                  <p class="upload-sub">Business license, lease agreement, or certificate of ownership<br>PDF, JPG or PNG · Max 10 MB</p>
-                </div>
-                <div class="upload-filename" id="uploadFilename"></div>
-              </div>
-              <span class="field-hint">Required for venues, restaurants, and caterers to verify ownership.</span>
-            </div>
-          </div>
 
           <!-- Review note -->
           <div class="review-note">
@@ -851,9 +800,6 @@
         document.getElementById('vcard-' + vendor).classList.add('selected');
         vendorFormLabel.textContent = vendorLabels[vendor] + ' Details';
 
-        // Show proof of ownership only for restaurant/venue and caterer
-        var needsProof = vendor === 'RESTO_VENUE' || vendor === 'CATERER';
-        document.getElementById('proofGroup').classList.toggle('open', needsProof);
 
         vendorFormSection.classList.add('open');
         scrollTo(vendorFormSection);
@@ -1024,15 +970,6 @@
       });
     });
 
-    // File upload handler
-    function handleFileUpload(input) {
-      var zone     = document.getElementById('uploadZone');
-      var filename = document.getElementById('uploadFilename');
-      if (input.files && input.files[0]) {
-        zone.classList.add('has-file');
-        filename.textContent = '✓ ' + input.files[0].name;
-      }
-    }
 
     // Password visibility toggle
     function togglePw(id, btn) {
