@@ -823,6 +823,11 @@
           errEl.style.display = 'block';
           return;
         }
+        if (!/[a-z]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one lowercase letter (e.g. Festv2026).';
+          errEl.style.display = 'block';
+          return;
+        }
         if (!/[0-9]/.test(pw)) {
           errEl.textContent = 'Password must contain at least one number (e.g. Festv2026).';
           errEl.style.display = 'block';
@@ -857,7 +862,8 @@
             successSub.textContent   = 'Your planner account has been created. Start building your perfect event.';
             showVerifyOverlay(email, payload.accessToken, 'plannerdashboard.html');
           } else {
-            errEl.textContent = data.message || data.error || 'Registration failed. Please try again.';
+            var detail = (data.details && data.details[0] && data.details[0].message) ? data.details[0].message : null;
+            errEl.textContent = detail || data.message || data.error || 'Registration failed. Please try again.';
             errEl.style.display = 'block';
           }
         })
@@ -901,6 +907,11 @@
           errEl.style.display = 'block';
           return;
         }
+        if (!/[a-z]/.test(pw)) {
+          errEl.textContent = 'Password must contain at least one lowercase letter (e.g. Festv2026).';
+          errEl.style.display = 'block';
+          return;
+        }
         if (!/[0-9]/.test(pw)) {
           errEl.textContent = 'Password must contain at least one number (e.g. Festv2026).';
           errEl.style.display = 'block';
@@ -935,7 +946,8 @@
             successSub.textContent   = 'Thanks for signing up as a ' + label + '. Our team will review your details and reach out within 1–2 business days.';
             showVerifyOverlay(email, payload.accessToken, 'vendorsetup.html');
           } else {
-            errEl.textContent = data.message || data.error || 'Registration failed. Please try again.';
+            var detail = (data.details && data.details[0] && data.details[0].message) ? data.details[0].message : null;
+            errEl.textContent = detail || data.message || data.error || 'Registration failed. Please try again.';
             errEl.style.display = 'block';
           }
         })
