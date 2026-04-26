@@ -777,6 +777,37 @@
       stroke-linejoin: round;
       flex-shrink: 0;
     }
+
+    /* ── REVIEW PENDING BANNER ── */
+    #reviewBanner {
+      display: none;
+      align-items: flex-start;
+      gap: 1rem;
+      background: #FBF6EE;
+      border-left: 4px solid var(--gold);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 1.5rem;
+    }
+    #reviewBanner.show { display: flex; }
+    .review-banner-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 0.05rem;
+    }
+    .review-banner-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.25rem;
+    }
+    .review-banner-sub {
+      font-size: 0.73rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
   </style>
 </head>
 <body>
@@ -873,6 +904,15 @@
 
   <!-- PAGE BODY -->
   <div class="page-body">
+
+    <!-- Review pending banner — shown when verificationStatus !== VERIFIED -->
+    <div id="reviewBanner" style="width:100%;box-sizing:border-box;">
+      <div class="review-banner-icon">🕐</div>
+      <div>
+        <div class="review-banner-heading">Your profile is under review</div>
+        <div class="review-banner-sub">We'll notify you by email once you're approved and live on FESTV. This usually takes 1–2 business days.</div>
+      </div>
+    </div>
 
     <!-- LEFT COLUMN -->
     <div class="left-col">
@@ -1293,6 +1333,19 @@
 
     // Redirect to setup if no token
     if (!token) { window.location.href = 'signin.html'; return; }
+
+    // ── Review pending banner ──
+    fetch('/api/v1/providers/profile/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var profile = data.data || data.providerProfile || data;
+      if (profile && profile.verificationStatus && profile.verificationStatus !== 'VERIFIED') {
+        document.getElementById('reviewBanner').classList.add('show');
+      }
+    })
+    .catch(function() { /* silently ignore — banner stays hidden */ });
 
     // ── Load incoming requests ──
     function loadRequests() {
