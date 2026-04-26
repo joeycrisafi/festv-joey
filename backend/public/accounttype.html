@@ -732,8 +732,21 @@
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _verifyToken }
         })
         .then(function(r) { return r.json(); })
-        .then(function() { btn.textContent = 'Code sent!'; setTimeout(function() { btn.textContent = 'Resend code'; }, 3000); })
-        .catch(function() { btn.textContent = 'Resend code'; });
+        .then(function(data) {
+          if (data.success) {
+            btn.textContent = 'Code sent!';
+            setTimeout(function() { btn.textContent = 'Resend code'; }, 3000);
+          } else {
+            btn.textContent = 'Resend code';
+            verifyError.textContent = data.error || data.message || 'Failed to resend code. Please try again.';
+            verifyError.style.display = 'block';
+          }
+        })
+        .catch(function() {
+          btn.textContent = 'Resend code';
+          verifyError.textContent = 'Failed to resend code. Please try again.';
+          verifyError.style.display = 'block';
+        });
       });
       var successTitle       = document.getElementById('successTitle');
       var successSub         = document.getElementById('successSub');
