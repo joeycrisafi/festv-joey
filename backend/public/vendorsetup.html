@@ -2293,12 +2293,21 @@
 
     function normalizePdfData(d) {
       var sc=0, ic=0;
+      // Derive priceType and basePrice consistently — use the field that matches the chosen type.
+      // If Claude returns both flatPrice and pricePerPerson, prefer PER_PERSON for food/catering
+      // style items (pricePerPerson takes priority) and use that value as basePrice to avoid mismatch.
+      function resolvePrice(p) {
+        var isPP = p.pricePerPerson != null && p.pricePerPerson > 0;
+        return { priceType: isPP ? 'PER_PERSON' : 'FLAT_RATE', basePrice: isPP ? p.pricePerPerson : (p.flatPrice || 0) };
+      }
       var pkgs = d.packages||d.services||[];
       pkgs.forEach(function(p){
-        s2Services.push({_id:++_cardIdSeq,name:p.name||'Package',description:p.description||(p.includes?p.includes.join(', '):''),priceType:p.pricePerPerson?'PER_PERSON':'FLAT_RATE',basePrice:p.flatPrice||p.pricePerPerson||0,features:p.includes||[],collapsed:true}); sc++;
+        var rp = resolvePrice(p);
+        s2Services.push({_id:++_cardIdSeq,name:p.name||'Package',description:p.description||(p.includes?p.includes.join(', '):''),priceType:rp.priceType,basePrice:rp.basePrice,features:p.includes||[],collapsed:true}); sc++;
       });
       if(d.barPackages) d.barPackages.forEach(function(bp){
-        s2Services.push({_id:++_cardIdSeq,name:bp.name||'Bar Package',description:bp.includes?bp.includes.join(', '):'',priceType:bp.pricePerPerson?'PER_PERSON':'FLAT_RATE',basePrice:bp.flatPrice||bp.pricePerPerson||0,features:bp.includes||[],collapsed:true}); sc++;
+        var rp = resolvePrice(bp);
+        s2Services.push({_id:++_cardIdSeq,name:bp.name||'Bar Package',description:bp.includes?bp.includes.join(', '):'',priceType:rp.priceType,basePrice:rp.basePrice,features:bp.includes||[],collapsed:true}); sc++;
       });
       if(d.menuSections) d.menuSections.forEach(function(sec){
         (sec.items||[]).forEach(function(item){
