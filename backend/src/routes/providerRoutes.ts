@@ -25,13 +25,13 @@ router.delete('/menu-items/:itemId', authenticate, requireProvider, asyncHandler
 
 // Services (authenticated)
 router.post('/services', authenticate, requireProvider, asyncHandler(providerController.createService));
-router.put('/services/:serviceId', authenticate, requireProvider, asyncHandler(providerController.updateService));
-router.delete('/services/:serviceId', authenticate, requireProvider, asyncHandler(providerController.deleteService));
+router.put('/services/:id', authenticate, requireProvider, asyncHandler(providerController.updateService));
+router.delete('/services/:id', authenticate, requireProvider, asyncHandler(providerController.deleteService));
 
 // Equipment (authenticated)
 router.post('/equipment', authenticate, requireProvider, asyncHandler(providerController.createEquipment));
-router.put('/equipment/:equipmentId', authenticate, requireProvider, asyncHandler(providerController.updateEquipment));
-router.delete('/equipment/:equipmentId', authenticate, requireProvider, asyncHandler(providerController.deleteEquipment));
+router.put('/equipment/:id', authenticate, requireProvider, asyncHandler(providerController.updateEquipment));
+router.delete('/equipment/:id', authenticate, requireProvider, asyncHandler(providerController.deleteEquipment));
 
 // Availability (authenticated)
 router.post('/availability', authenticate, requireProvider, asyncHandler(providerController.setAvailability));
