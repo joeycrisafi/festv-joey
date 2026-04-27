@@ -2303,11 +2303,20 @@
       var pkgs = d.packages||d.services||[];
       pkgs.forEach(function(p){
         var rp = resolvePrice(p);
-        s2Services.push({_id:++_cardIdSeq,name:p.name||'Package',description:p.description||(p.includes?p.includes.join(', '):''),priceType:rp.priceType,basePrice:rp.basePrice,features:p.includes||[],collapsed:true}); sc++;
+        // Fix #3: map extras[] into the features array as "name — $price" strings
+        var extraFeatures = (p.extras||[]).map(function(e){ return e.price ? e.name+' — $'+e.price : e.name; });
+        var features = (p.includes||[]).concat(extraFeatures);
+        s2Services.push({_id:++_cardIdSeq,name:p.name||'Package',description:p.description||(p.includes?p.includes.join(', '):''),priceType:rp.priceType,basePrice:rp.basePrice,features:features,collapsed:true}); sc++;
       });
       if(d.barPackages) d.barPackages.forEach(function(bp){
         var rp = resolvePrice(bp);
         s2Services.push({_id:++_cardIdSeq,name:bp.name||'Bar Package',description:bp.includes?bp.includes.join(', '):'',priceType:rp.priceType,basePrice:rp.basePrice,features:bp.includes||[],collapsed:true}); sc++;
+      });
+      // Fix #2: map addOns to service cards (RESTO_VENUE, CATERER, FLORIST_DECOR responses)
+      if(d.addOns) d.addOns.forEach(function(a){
+        var unit = (a.unit||'').toLowerCase();
+        var pt = unit.indexOf('per person')!==-1 ? 'PER_PERSON' : unit.indexOf('per hour')!==-1 ? 'PER_HOUR' : 'FLAT_RATE';
+        s2Services.push({_id:++_cardIdSeq,name:a.name||'Add-on',description:a.description||'',priceType:pt,basePrice:a.price||0,features:[],collapsed:true}); sc++;
       });
       if(d.menuSections) d.menuSections.forEach(function(sec){
         (sec.items||[]).forEach(function(item){
