@@ -25,7 +25,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
 	-[ ] wire vendor portfolio uploads to Cloudinary
 	-[ ] connect friends/guestlist page to API
-	-[ ] wire admin dashboard to admin routes
+	-[ ] wire admin dashboard to admin routes (POST /admin/providers/:id/verify + /reject already exist)
 	-[ ] build menu item isAvailable toggle in vendor dashboard
 	-[ ] make menu items selectable in planner request flow
 	-[ ] mobile responsiveness pass on all pages
@@ -70,7 +70,8 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] Backend admin gate extended — isDevAccess() helper, GET /api/v1/auth/dev-access endpoint, requireAdminEmail now allows test users for the DEV pages
 	-[x] planner.html ported from caterease/Planner.tsx — Monte Carlo simulator with parameter sliders, fan charts (users / revenue+costs / profit), summary cards, mobile-responsive (Chart.js via CDN)
 	-[x] database.html ported from caterease/EventDashboard.tsx — Schema tab (interactive ERD with 24 nodes + clickable relationship highlighting) + Event Feed tab (filter by model, live refresh every 15s, stats cards)
-	-[ ] full database.html port — still missing: Provider graph tab (bubble graph by capacity), Client flow graph tab, Settings tab (watched models toggle, env vars table). Schema + Event Feed are the most-used parts; rest can be added on demand
+	-[x] Provider Graph tab on database.html — planners left column (all CLIENT users), vendors right column grouped by type in dotted boxes, color-coded connection lines (solid green = confirmed booking, dashed gold = pending quote). Click any node to highlight connections + open detail panel with stats. Vendor detail: Services sub-graph (service cards fanning from vendor node) + History sub-graph (bookings and quote interactions). Planner detail: History only (event requests with status + vendor). Refresh button. Uses /admin/users + /admin/providers + /admin/event-requests.
+	-[ ] full database.html port — still missing: Client flow graph tab, Settings tab (watched models toggle, env vars table)
 	-[ ] full planner.html port — still missing: Growth Strategy tab (profit-first vs growth-first vs hybrid), Cost Model tab (stacked bar + tier cards), Architecture tab, Roadmap timeline tab. Monte Carlo is the core tool; other tabs are reference material
 	-[x] Vendor setup Step 2 (publish) — 400 error on POST /api/v1/providers/profile/me fixed: ProviderProfile schema migration (tagline, websiteUrl, instagramHandle, yearsInBusiness, languages, travelOutsideRegion, serviceRadius, minimumBudget, maximumBudget) applied to caterease-db via 20260428_apply_profile_columns; confirmed live on festv.org
 	-[x] runStartupMigrations safe enum check — replaced unsafe ::regtype cast with pg_type JOIN; added IF NOT EXISTS to ALTER TYPE

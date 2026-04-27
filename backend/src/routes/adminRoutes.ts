@@ -368,4 +368,25 @@ router.get('/providers/all', async (req: AuthenticatedRequest, res: Response) =>
   }
 });
 
+// GET /admin/users — All CLIENT users for graph visualization
+router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const prismaModule = await import('../config/database.js');
+    const db = prismaModule.default;
+
+    const users = await db.user.findMany({
+      where: { role: 'CLIENT' },
+      select: {
+        id: true, firstName: true, lastName: true, email: true,
+        avatarUrl: true, city: true, state: true, createdAt: true, status: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({ success: true, data: users });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

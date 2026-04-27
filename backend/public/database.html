@@ -409,6 +409,62 @@
     .denied h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; margin-bottom: 0.5rem; }
     .denied p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem; }
 
+    /* ── PROVIDER GRAPH ── */
+    .graph-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    #graphMainSvg {
+      display: block;
+      width: 100%;
+      min-width: 900px;
+      background: linear-gradient(180deg, #fafaf6 0%, var(--white) 100%);
+      border-radius: 10px;
+    }
+    .g-node { cursor: pointer; }
+    .graph-detail {
+      margin-top: 1rem;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.4rem;
+    }
+    .gd-header { margin-bottom: 1rem; }
+    .gd-tabs {
+      display: flex;
+      gap: 0.4rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .gd-tab {
+      padding: 0.55rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+    }
+    .gd-tab:hover { color: var(--charcoal); }
+    .gd-tab.active { color: var(--dark); border-bottom-color: var(--gold); }
+    .gd-subgraph-wrap {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
     /* Mobile */
     @media (max-width: 760px) {
       header { padding: 1rem 1.25rem; }
@@ -458,6 +514,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tabSchema" onclick="switchTab('schema')">Schema</button>
       <button class="tab-btn" id="tabFeed"  onclick="switchTab('feed')">Event Feed</button>
+      <button class="tab-btn" id="tabGraph" onclick="switchTab('graph')">Provider Graph</button>
     </div>
 
     <div class="body-wrap">
@@ -493,6 +550,19 @@
           </div>
           <div id="eventsList"></div>
         </div>
+      </div>
+
+      <!-- PROVIDER GRAPH TAB -->
+      <div id="graphView" style="display:none;">
+        <div class="toolbar">
+          <button class="toolbar-btn" onclick="reloadGraph()">↻ Refresh</button>
+          <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);" id="graphStatus"></span>
+        </div>
+        <div class="graph-wrap">
+          <svg id="graphMainSvg" viewBox="0 0 1200 400" style="min-height:360px;"></svg>
+        </div>
+        <div class="schema-legend" id="graphLegend" style="padding-top:0.75rem;"></div>
+        <div class="graph-detail" id="graphDetail" style="display:none;"></div>
       </div>
 
     </div>
@@ -822,12 +892,436 @@
   //  TABS
   // ────────────────────────────────────────────────────────────
   window.switchTab = function (tab) {
-    var schemaActive = tab === 'schema';
-    document.getElementById('tabSchema').classList.toggle('active', schemaActive);
-    document.getElementById('tabFeed').classList.toggle('active',   !schemaActive);
-    document.getElementById('schemaView').style.display = schemaActive ? '' : 'none';
-    document.getElementById('feedView').style.display   = schemaActive ? 'none' : '';
-    if (!schemaActive) fetchEvents();
+    document.getElementById('tabSchema').classList.toggle('active', tab === 'schema');
+    document.getElementById('tabFeed').classList.toggle('active',   tab === 'feed');
+    document.getElementById('tabGraph').classList.toggle('active',  tab === 'graph');
+    document.getElementById('schemaView').style.display = tab === 'schema' ? '' : 'none';
+    document.getElementById('feedView').style.display   = tab === 'feed'   ? '' : 'none';
+    document.getElementById('graphView').style.display  = tab === 'graph'  ? '' : 'none';
+    if (tab === 'feed')  fetchEvents();
+    if (tab === 'graph') initProviderGraph();
+  };
+
+  // ────────────────────────────────────────────────────────────
+  //  PROVIDER GRAPH
+  // ────────────────────────────────────────────────────────────
+  var VENDOR_TYPES  = ['RESTO_VENUE','CATERER','ENTERTAINMENT','PHOTO_VIDEO','FLORIST_DECOR'];
+  var VTYPE_LABEL   = { RESTO_VENUE:'Restaurant & Venue', CATERER:'Caterer', ENTERTAINMENT:'Entertainment', PHOTO_VIDEO:'Photo & Video', FLORIST_DECOR:'Florist & Decor' };
+  var VTYPE_COLOR   = { RESTO_VENUE:'#B84040', CATERER:'#3B6FB8', ENTERTAINMENT:'#d4a047', PHOTO_VIDEO:'#6B4FA0', FLORIST_DECOR:'#c44d80' };
+  var STATUS_COLOR  = { VERIFIED:'#3A8A55', PENDING:'#C4A06A', UNVERIFIED:'#7A7068', REJECTED:'#B84040' };
+  var BOOKING_STATUSES = ['CONFIRMED','DEPOSIT_PAID','IN_PROGRESS','COMPLETED'];
+
+  var gdata = null;       // { clients, providers, connections, rawRequests }
+  var gsel  = null;       // { id, nodeType: 'client'|'provider' }
+  var gDetailTab = 'connections';
+  var gLoaded = false;
+  var gLayout = null;
+
+  function initProviderGraph() {
+    if (gLoaded && gdata) { renderOverview(); return; }
+    var svg = document.getElementById('graphMainSvg');
+    svg.setAttribute('viewBox', '0 0 1200 300');
+    svg.innerHTML = '<text x="600" y="150" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="13" fill="#7A7068">Loading…</text>';
+    document.getElementById('graphStatus').textContent = '';
+    var hdr = { 'Authorization': 'Bearer ' + token };
+    Promise.all([
+      fetch('/api/v1/admin/users',          { headers: hdr }).then(function(r){ return r.ok ? r.json() : {data:[]}; }),
+      fetch('/api/v1/admin/providers',      { headers: hdr }).then(function(r){ return r.ok ? r.json() : {data:[]}; }),
+      fetch('/api/v1/admin/event-requests', { headers: hdr }).then(function(r){ return r.ok ? r.json() : {data:[]}; }),
+    ]).then(function(res) {
+      buildGData(res[0].data || [], res[1].data || [], res[2].data || []);
+      gLoaded = true;
+      document.getElementById('graphStatus').textContent =
+        gdata.clients.length + ' planners · ' + gdata.providers.length + ' vendors · ' + gdata.connections.length + ' connections';
+      renderOverview();
+    }).catch(function() {
+      document.getElementById('graphMainSvg').innerHTML =
+        '<text x="600" y="150" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="13" fill="#B84040">Failed to load data.</text>';
+    });
+  }
+
+  window.reloadGraph = function() {
+    gLoaded = false; gdata = null; gsel = null; gLayout = null;
+    document.getElementById('graphDetail').style.display = 'none';
+    initProviderGraph();
+  };
+
+  function buildGData(apiClients, apiProviders, apiRequests) {
+    var clientMap = {};
+    apiClients.forEach(function(c) { clientMap[c.id] = c; });
+    apiRequests.forEach(function(r) {
+      var cid = r.clientId || (r.client && r.client.id);
+      if (cid && r.client && !clientMap[cid]) { clientMap[cid] = r.client; apiClients.push(r.client); }
+    });
+
+    var connections = [];
+    apiRequests.forEach(function(r) {
+      var cid = r.clientId || (r.client && r.client.id);
+      if (!cid) return;
+      var bookedPid = r.booking && r.booking.provider ? r.booking.provider.id : null;
+      if (bookedPid) {
+        connections.push({ clientId: cid, providerId: bookedPid, type: 'booking',
+          status: r.booking.status, requestId: r.id, eventType: r.eventType,
+          eventDate: r.booking.eventDate, amount: r.booking.totalAmount, title: r.title });
+      }
+      if (r.quotes) r.quotes.forEach(function(q) {
+        var pid = q.provider && q.provider.id;
+        if (!pid || pid === bookedPid) return;
+        connections.push({ clientId: cid, providerId: pid, type: 'quote',
+          status: q.status, requestId: r.id, eventType: r.eventType,
+          amount: q.totalAmount, title: r.title });
+      });
+    });
+
+    gdata = { clients: apiClients, providers: apiProviders, connections: connections, rawRequests: apiRequests };
+  }
+
+  // ── Layout ──────────────────────────────────────────────────
+  function computeLayout() {
+    var NW=210, NH=50, NX=20, NT=60, NS=72;   // client lane
+    var VW=192, VH=50, VGX=14, VPR=4;          // vendor nodes per row
+    var GX=264, GPH=40, GPB=16, GGB=16, GPL=18; // group coords
+    var SW=1200;
+
+    var layout = { clients:[], providers:[], groups:[], svgWidth:SW, svgHeight:500 };
+    var activeTypes = VENDOR_TYPES.filter(function(t) {
+      return gdata.providers.some(function(p){ return p.primaryType === t; });
+    });
+
+    var groupY = 22;
+    activeTypes.forEach(function(type) {
+      var vendors = gdata.providers.filter(function(p){ return p.primaryType === type; });
+      var rows = Math.ceil(vendors.length / VPR) || 1;
+      var groupH = GPH + rows * (VH + 14) + GPB;
+      var rw = SW - GX - 20;
+      layout.groups.push({ type:type, x:GX, y:groupY, width:rw, height:groupH });
+      vendors.forEach(function(v, i) {
+        var col=i%VPR, row=Math.floor(i/VPR);
+        var vx = GX + GPL + col*(VW+VGX);
+        var vy = groupY + GPH + row*(VH+14);
+        layout.providers.push({ id:v.id, data:v, x:vx, y:vy, w:VW, h:VH, lx:vx, cy:vy+VH/2 });
+      });
+      groupY += groupH + GGB;
+    });
+
+    gdata.clients.forEach(function(c, i) {
+      var py = NT + i*NS;
+      layout.clients.push({ id:c.id, data:c, x:NX, y:py, w:NW, h:NH, rx:NX+NW, cy:py+NH/2 });
+    });
+
+    layout.svgHeight = Math.max(NT + gdata.clients.length*NS + 60, groupY + 20, 300);
+    return layout;
+  }
+
+  function nodeActive(id) {
+    if (!gsel) return true;
+    if (gsel.id === id) return true;
+    return gdata.connections.some(function(c) {
+      return gsel.nodeType === 'client'
+        ? c.clientId === gsel.id && c.providerId === id
+        : c.providerId === gsel.id && c.clientId === id;
+    });
+  }
+
+  // ── Overview render ─────────────────────────────────────────
+  function renderOverview() {
+    gLayout = computeLayout();
+    var svg = document.getElementById('graphMainSvg');
+    svg.setAttribute('viewBox', '0 0 '+gLayout.svgWidth+' '+gLayout.svgHeight);
+    svg.style.minHeight = gLayout.svgHeight + 'px';
+
+    var h = '<defs><filter id="gGlow" x="-30%" y="-30%" width="160%" height="160%">'
+           +'<feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/>'
+           +'</filter></defs>';
+
+    // Connection lines
+    gdata.connections.forEach(function(conn) {
+      var cl = gLayout.clients.find(function(c){ return c.id===conn.clientId; });
+      var pv = gLayout.providers.find(function(p){ return p.id===conn.providerId; });
+      if (!cl || !pv) return;
+      var live = !gsel || conn.clientId===gsel.id || conn.providerId===gsel.id;
+      var isBook = conn.type==='booking' && BOOKING_STATUSES.indexOf(conn.status)>=0;
+      var color = isBook ? '#3A8A55' : '#C4A06A';
+      var dash  = isBook ? '' : 'stroke-dasharray="7 4"';
+      var mx = (cl.rx + pv.lx)/2;
+      h += '<path d="M '+cl.rx+' '+cl.cy+' C '+mx+' '+cl.cy+' '+mx+' '+pv.cy+' '+pv.lx+' '+pv.cy+'" '
+         + 'stroke="'+color+'" stroke-width="'+(live?2:1.2)+'" fill="none" '+dash+' opacity="'+(live?0.8:0.07)+'"/>';
+    });
+
+    // Vendor type group boxes
+    gLayout.groups.forEach(function(g) {
+      var tc = VTYPE_COLOR[g.type];
+      var lbl = VTYPE_LABEL[g.type];
+      h += '<rect x="'+g.x+'" y="'+g.y+'" width="'+g.width+'" height="'+g.height+'" rx="10" fill="none" stroke="'+tc+'" stroke-width="1.4" stroke-dasharray="7 4" opacity="0.4"/>';
+      var bw = lbl.length*7+22;
+      h += '<rect x="'+(g.x+14)+'" y="'+(g.y-12)+'" width="'+bw+'" height="23" rx="5" fill="'+tc+'" opacity="0.9"/>';
+      h += '<text x="'+(g.x+25)+'" y="'+(g.y+5.5)+'" font-size="10" font-weight="700" font-family="Montserrat,sans-serif" fill="#fff" letter-spacing="0.04em">'+lbl+'</text>';
+    });
+
+    // Vendor nodes
+    gLayout.providers.forEach(function(vn) {
+      var p = vn.data, tc = VTYPE_COLOR[p.primaryType]||'#888';
+      var sc = STATUS_COLOR[p.verificationStatus]||'#7A7068';
+      var active = nodeActive(p.id), sel = gsel && gsel.id===p.id;
+      h += '<g class="g-node" data-id="'+p.id+'" data-ntype="provider" opacity="'+(active?1:0.2)+'">';
+      h += '<rect x="'+vn.x+'" y="'+vn.y+'" width="'+vn.w+'" height="'+vn.h+'" rx="8" '
+         + 'fill="'+tc+'14" stroke="'+(sel?tc:tc+'88')+'" stroke-width="'+(sel?2.4:1.3)+'"'
+         + (sel?' filter="url(#gGlow)"':'')+'/>';
+      h += '<circle cx="'+(vn.x+vn.w-12)+'" cy="'+(vn.y+14)+'" r="4" fill="'+sc+'"/>';
+      h += '<text x="'+(vn.x+10)+'" y="'+(vn.y+22)+'" font-size="11" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml((p.businessName||'').substring(0,18))+'</text>';
+      h += '<text x="'+(vn.x+10)+'" y="'+(vn.y+37)+'" font-size="9" fill="#7A7068" font-family="Montserrat,sans-serif">'+(p._count?p._count.services:0)+' svc · '+escapeHtml(p.verificationStatus||'')+'</text>';
+      h += '</g>';
+    });
+
+    // Planner column header + divider
+    h += '<text x="125" y="38" text-anchor="middle" font-size="10" font-weight="700" font-family="Montserrat,sans-serif" fill="#C4A06A" letter-spacing="0.14em">PLANNERS</text>';
+    h += '<line x1="248" y1="46" x2="248" y2="'+(gLayout.svgHeight-10)+'" stroke="rgba(0,0,0,0.07)" stroke-width="1" stroke-dasharray="4 3"/>';
+
+    // Client nodes
+    gLayout.clients.forEach(function(cn) {
+      var c = cn.data, active = nodeActive(c.id), sel = gsel && gsel.id===c.id;
+      var name = ((c.firstName||'')+' '+(c.lastName||'')).trim().substring(0,20)||'Planner';
+      h += '<g class="g-node" data-id="'+c.id+'" data-ntype="client" opacity="'+(active?1:0.2)+'">';
+      h += '<rect x="'+cn.x+'" y="'+cn.y+'" width="'+cn.w+'" height="'+cn.h+'" rx="8" '
+         + 'fill="rgba(196,160,106,0.1)" stroke="'+(sel?'#C4A06A':'rgba(196,160,106,0.5)')+'" stroke-width="'+(sel?2.4:1.3)+'"'
+         + (sel?' filter="url(#gGlow)"':'')+'/>';
+      h += '<text x="'+(cn.x+10)+'" y="'+(cn.y+22)+'" font-size="11" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml(name)+'</text>';
+      h += '<text x="'+(cn.x+10)+'" y="'+(cn.y+37)+'" font-size="9" fill="#7A7068" font-family="Montserrat,sans-serif">'+escapeHtml((c.city||'Planner').substring(0,18))+'</text>';
+      h += '</g>';
+    });
+
+    if (!gdata.clients.length)  h += '<text x="125" y="160" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="11" fill="rgba(196,160,106,0.4)">No planners yet</text>';
+    if (!gdata.providers.length) h += '<text x="730" y="160" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="11" fill="rgba(0,0,0,0.2)">No vendors yet</text>';
+
+    svg.innerHTML = h;
+    svg.querySelectorAll('.g-node').forEach(function(el) {
+      el.addEventListener('click', function() { selectGNode(el.getAttribute('data-id'), el.getAttribute('data-ntype')); });
+    });
+
+    // Legend
+    document.getElementById('graphLegend').innerHTML =
+      '<span class="legend-pill"><span style="display:inline-block;width:22px;height:2px;background:#3A8A55;vertical-align:middle;border-radius:1px;margin-right:2px;"></span>Confirmed Booking</span>' +
+      '<span class="legend-pill"><span style="display:inline-block;width:22px;height:0;border-top:2px dashed #C4A06A;vertical-align:middle;margin-right:2px;"></span>Pending Quote</span>' +
+      '<span class="legend-pill"><span class="legend-dot" style="background:#3A8A55;border-radius:50%;"></span>Verified</span>' +
+      '<span class="legend-pill"><span class="legend-dot" style="background:#C4A06A;border-radius:50%;"></span>Pending Approval</span>' +
+      '<span class="legend-pill"><span class="legend-dot" style="background:#7A7068;border-radius:50%;"></span>Unverified</span>';
+  }
+
+  // ── Node click ──────────────────────────────────────────────
+  function selectGNode(id, nodeType) {
+    if (gsel && gsel.id === id) {
+      gsel = null;
+      renderOverview();
+      document.getElementById('graphDetail').style.display = 'none';
+      return;
+    }
+    gsel = { id: id, nodeType: nodeType };
+    gDetailTab = nodeType === 'provider' ? 'connections' : 'history';
+    renderOverview();
+    renderDetailPanel();
+    var el = document.getElementById('graphDetail');
+    el.style.display = '';
+    setTimeout(function(){ el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 60);
+  }
+
+  function renderDetailPanel() {
+    if (!gsel || !gdata) return;
+    if (gsel.nodeType === 'provider') {
+      var p = gdata.providers.find(function(x){ return x.id===gsel.id; });
+      if (p) renderProviderDetail(p);
+    } else {
+      var c = gdata.clients.find(function(x){ return x.id===gsel.id; });
+      if (c) renderClientDetail(c);
+    }
+  }
+
+  // ── Detail panels ───────────────────────────────────────────
+  function renderProviderDetail(p) {
+    var tc = VTYPE_COLOR[p.primaryType]||'#888';
+    var sc = STATUS_COLOR[p.verificationStatus]||'#7A7068';
+    var conns = gdata.connections.filter(function(c){ return c.providerId===p.id; });
+    var bookConns = conns.filter(function(c){ return c.type==='booking'; });
+
+    var h = '<div class="gd-header">';
+    h += '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">';
+    h += '<span style="background:'+tc+'18;border:1px solid '+tc+'55;border-radius:6px;padding:0.25rem 0.65rem;font-size:0.67rem;font-weight:700;color:'+tc+';">'+VTYPE_LABEL[p.primaryType]+'</span>';
+    h += '<span style="background:'+sc+'18;border:1px solid '+sc+'55;border-radius:6px;padding:0.25rem 0.65rem;font-size:0.67rem;font-weight:700;color:'+sc+';">'+escapeHtml(p.verificationStatus||'UNVERIFIED')+'</span>';
+    h += '</div>';
+    h += '<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;margin:0 0 0.15rem;">'+escapeHtml(p.businessName||'Unnamed')+'</h3>';
+    if (p.user) h += '<p style="font-size:0.78rem;color:var(--muted);">'+escapeHtml(p.user.email||'')+(p.user.city?' · '+escapeHtml(p.user.city):'')+'</p>';
+    h += '<div style="display:flex;gap:1.25rem;margin-top:0.75rem;flex-wrap:wrap;">';
+    [{lbl:'Services',val:p._count?p._count.services:(p.services?p.services.length:0)},
+     {lbl:'Bookings',val:p._count?p._count.bookings:0},
+     {lbl:'Connections',val:conns.length},
+     {lbl:'Confirmed',val:bookConns.length}
+    ].forEach(function(s){
+      h += '<div style="text-align:center;">'
+         + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;line-height:1;">'+s.val+'</div>'
+         + '<div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">'+s.lbl+'</div></div>';
+    });
+    h += '</div></div>';
+
+    h += '<div class="gd-tabs">';
+    h += '<button class="gd-tab '+(gDetailTab==='connections'?'active':'')+'" onclick="switchGTab(\'connections\')">Services</button>';
+    h += '<button class="gd-tab '+(gDetailTab==='history'?'active':'')+'" onclick="switchGTab(\'history\')">History</button>';
+    h += '</div>';
+    h += '<div class="gd-subgraph-wrap" id="gdSubgraph">'+buildProviderSubGraph(p, gDetailTab)+'</div>';
+    h += '<button onclick="closeGDetail()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:0.4rem 1rem;font-size:0.7rem;font-family:Montserrat,sans-serif;cursor:pointer;color:var(--muted);">← Back to Graph</button>';
+
+    document.getElementById('graphDetail').innerHTML = h;
+  }
+
+  function renderClientDetail(c) {
+    var conns = gdata.connections.filter(function(conn){ return conn.clientId===c.id; });
+    var myReqs = gdata.rawRequests.filter(function(r){ return r.clientId===c.id||(r.client&&r.client.id===c.id); });
+    var name = ((c.firstName||'')+' '+(c.lastName||'')).trim()||'Planner';
+
+    var h = '<div class="gd-header">';
+    h += '<div style="margin-bottom:0.5rem;"><span style="background:rgba(196,160,106,0.12);border:1px solid rgba(196,160,106,0.4);border-radius:6px;padding:0.25rem 0.65rem;font-size:0.67rem;font-weight:700;color:var(--gold-dark);">PLANNER</span></div>';
+    h += '<h3 style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;margin:0 0 0.15rem;">'+escapeHtml(name)+'</h3>';
+    h += '<p style="font-size:0.78rem;color:var(--muted);">'+escapeHtml(c.email||'')+(c.city?' · '+escapeHtml(c.city):'')+'</p>';
+    h += '<div style="display:flex;gap:1.25rem;margin-top:0.75rem;flex-wrap:wrap;">';
+    [{lbl:'Events',val:myReqs.length},
+     {lbl:'Vendors Connected',val:conns.length},
+     {lbl:'Bookings',val:conns.filter(function(c){return c.type==='booking';}).length}
+    ].forEach(function(s){
+      h += '<div style="text-align:center;">'
+         + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;line-height:1;">'+s.val+'</div>'
+         + '<div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">'+s.lbl+'</div></div>';
+    });
+    h += '</div></div>';
+    h += '<div class="gd-tabs"><button class="gd-tab active">History</button></div>';
+    h += '<div class="gd-subgraph-wrap" id="gdSubgraph">'+buildClientSubGraph(c, myReqs)+'</div>';
+    h += '<button onclick="closeGDetail()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:0.4rem 1rem;font-size:0.7rem;font-family:Montserrat,sans-serif;cursor:pointer;color:var(--muted);">← Back to Graph</button>';
+
+    document.getElementById('graphDetail').innerHTML = h;
+  }
+
+  // ── Sub-graphs ──────────────────────────────────────────────
+  function gfmtDate(s) {
+    if (!s) return '';
+    try { return new Date(s.split('T')[0]+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return ''; }
+  }
+  function gfmtPrice(price, priceType) {
+    var p = '$'+Number(price||0).toLocaleString();
+    if (priceType==='PER_PERSON') return p+'/person';
+    if (priceType==='PER_HOUR')   return p+'/hr';
+    if (priceType==='FLAT_RATE')  return p+' flat';
+    return p;
+  }
+
+  function buildProviderSubGraph(p, tab) {
+    var tc = VTYPE_COLOR[p.primaryType]||'#888';
+    var items = [];
+
+    if (tab === 'connections') {
+      items = (p.services||[]).slice(0,12);
+    } else {
+      gdata.rawRequests.forEach(function(r) {
+        if (r.booking && r.booking.provider && r.booking.provider.id===p.id) {
+          items.push({ _type:'booking', _b:r.booking, _r:r });
+        } else if (r.quotes) {
+          r.quotes.forEach(function(q) {
+            if (q.provider && q.provider.id===p.id)
+              items.push({ _type:'quote', _q:q, _r:r });
+          });
+        }
+      });
+      items = items.slice(0,12);
+    }
+
+    if (!items.length) {
+      return '<svg width="100%" height="72" viewBox="0 0 800 72"><text x="400" y="40" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" fill="#7A7068">'
+        +(tab==='connections'?'No services added yet.':'No event history yet.')+'</text></svg>';
+    }
+
+    var N=items.length, IH=54, IW=230, IX=290, IVG=12;
+    var totalH = N*(IH+IVG)-IVG;
+    var SH = Math.max(totalH+44, 100);
+    var CY = SH/2, startY = (SH-totalH)/2;
+
+    var sv = '<svg width="100%" height="'+SH+'" viewBox="0 0 800 '+SH+'">';
+    // Center vendor node
+    sv += '<rect x="20" y="'+(CY-28)+'" width="232" height="56" rx="10" fill="'+tc+'18" stroke="'+tc+'" stroke-width="1.8"/>';
+    sv += '<text x="136" y="'+(CY-5)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml((p.businessName||'').substring(0,20))+'</text>';
+    sv += '<text x="136" y="'+(CY+12)+'" text-anchor="middle" font-size="9" fill="#7A7068" font-family="Montserrat,sans-serif">'+VTYPE_LABEL[p.primaryType]+'</text>';
+
+    items.forEach(function(item, i) {
+      var iy=startY+i*(IH+IVG), iCY=iy+IH/2, cpX=(250+IX)/2;
+      var iColor, lbl1, lbl2;
+      if (tab==='connections') {
+        iColor=tc; lbl1=(item.name||'Service').substring(0,30); lbl2=gfmtPrice(item.basePrice,item.priceType);
+      } else if (item._type==='booking') {
+        var b=item._b, r=item._r;
+        var scs={COMPLETED:'#3A8A55',CONFIRMED:'#3A8A55',DEPOSIT_PAID:'#3B6FB8',PENDING_DEPOSIT:'#C4A06A',CANCELLED:'#B84040',IN_PROGRESS:'#6B4FA0'};
+        iColor=scs[b.status]||'#7A7068'; lbl1=(r.title||r.eventType||'Event').substring(0,30); lbl2=b.status+(b.eventDate?' · '+gfmtDate(b.eventDate):'');
+      } else {
+        var q=item._q, r=item._r;
+        iColor='#7A7068'; lbl1=(r.title||r.eventType||'Event').substring(0,30); lbl2='Quote: '+q.status+(q.totalAmount?' · $'+Number(q.totalAmount).toLocaleString():'');
+      }
+      sv += '<path d="M 252 '+CY+' C '+cpX+' '+CY+' '+cpX+' '+iCY+' '+IX+' '+iCY+'" stroke="'+tc+'" stroke-width="1.3" fill="none" opacity="0.35"/>';
+      sv += '<rect x="'+IX+'" y="'+iy+'" width="'+IW+'" height="'+IH+'" rx="8" fill="'+iColor+'12" stroke="'+iColor+'60" stroke-width="1.3"/>';
+      sv += '<text x="'+(IX+10)+'" y="'+(iy+21)+'" font-size="10.5" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml(lbl1)+'</text>';
+      sv += '<text x="'+(IX+10)+'" y="'+(iy+38)+'" font-size="9.5" fill="#7A7068" font-family="Montserrat,sans-serif">'+escapeHtml(lbl2)+'</text>';
+    });
+
+    sv += '</svg>';
+    return sv;
+  }
+
+  function buildClientSubGraph(c, myReqs) {
+    if (!myReqs||!myReqs.length) {
+      return '<svg width="100%" height="72" viewBox="0 0 800 72"><text x="400" y="40" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" fill="#7A7068">No event history yet.</text></svg>';
+    }
+    var items=myReqs.slice(0,12), N=items.length, IH=66, IW=240, IX=290, IVG=12;
+    var totalH=N*(IH+IVG)-IVG, SH=Math.max(totalH+44,100), CY=SH/2, startY=(SH-totalH)/2;
+    var name=((c.firstName||'')+' '+(c.lastName||'')).trim().substring(0,18)||'Planner';
+
+    var sv = '<svg width="100%" height="'+SH+'" viewBox="0 0 800 '+SH+'">';
+    sv += '<rect x="20" y="'+(CY-28)+'" width="232" height="56" rx="10" fill="rgba(196,160,106,0.12)" stroke="#C4A06A" stroke-width="1.8"/>';
+    sv += '<text x="136" y="'+(CY-5)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml(name)+'</text>';
+    sv += '<text x="136" y="'+(CY+12)+'" text-anchor="middle" font-size="9" fill="#7A7068" font-family="Montserrat,sans-serif">Planner</text>';
+
+    items.forEach(function(req, i) {
+      var iy=startY+i*(IH+IVG), iCY=iy+IH/2, cpX=(250+IX)/2;
+      var hasBook = req.booking && BOOKING_STATUSES.indexOf(req.booking.status)>=0;
+      var lColor = hasBook?'#3A8A55':'#C4A06A';
+      var sColor = hasBook?'#3A8A55':(req.booking?'#C4A06A':'#7A7068');
+      var statusStr = req.booking?req.booking.status:(req.status||'SUBMITTED');
+      var provName  = req.booking&&req.booking.provider ? req.booking.provider.businessName
+                      : (req.quotes&&req.quotes.length ? req.quotes.length+' quote(s) received' : 'Awaiting quotes');
+      var dateStr = req.eventDate ? gfmtDate(req.eventDate) : '';
+      sv += '<path d="M 252 '+CY+' C '+cpX+' '+CY+' '+cpX+' '+iCY+' '+IX+' '+iCY+'" stroke="'+lColor+'" stroke-width="1.3" fill="none" opacity="0.4"'+(hasBook?'':' stroke-dasharray="5 3"')+'/>';
+      sv += '<rect x="'+IX+'" y="'+iy+'" width="'+IW+'" height="'+IH+'" rx="8" fill="'+sColor+'10" stroke="'+sColor+'55" stroke-width="1.3"/>';
+      sv += '<text x="'+(IX+10)+'" y="'+(iy+20)+'" font-size="10.5" font-weight="700" fill="#1A1714" font-family="Montserrat,sans-serif">'+escapeHtml((req.title||req.eventType||'Event').substring(0,30))+'</text>';
+      sv += '<text x="'+(IX+10)+'" y="'+(iy+36)+'" font-size="9.5" fill="#7A7068" font-family="Montserrat,sans-serif">'+escapeHtml((provName||'').substring(0,32))+'</text>';
+      sv += '<text x="'+(IX+10)+'" y="'+(iy+52)+'" font-size="9" fill="'+sColor+'" font-family="Montserrat,sans-serif">'+escapeHtml(statusStr)+(dateStr?' · '+dateStr:'')+'</text>';
+    });
+
+    sv += '</svg>';
+    return sv;
+  }
+
+  window.switchGTab = function(tab) {
+    gDetailTab = tab;
+    if (gsel && gsel.nodeType==='provider') {
+      var p = gdata.providers.find(function(x){ return x.id===gsel.id; });
+      if (p) {
+        var el = document.getElementById('gdSubgraph');
+        if (el) el.innerHTML = buildProviderSubGraph(p, tab);
+        document.querySelectorAll('.gd-tab').forEach(function(btn) {
+          btn.classList.toggle('active',
+            (tab==='connections' && btn.textContent==='Services') ||
+            (tab==='history'     && btn.textContent==='History'));
+        });
+      }
+    }
+  };
+
+  window.closeGDetail = function() {
+    gsel = null;
+    document.getElementById('graphDetail').style.display = 'none';
+    renderOverview();
   };
 
   // ────────────────────────────────────────────────────────────

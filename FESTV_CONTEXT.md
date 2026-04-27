@@ -137,6 +137,9 @@ All pages are in `/backend/public/`. They use vanilla JS with `fetch()` calls to
 | `/pdf-import` | pdfImportController | Upload vendor PDF → Claude extracts services/menu |
 | `/admin` | adminController | Admin-only operations |
 | `/admin/events`, `/admin/events/stats` | adminRoutes | Live DB event feed for `database.html`. Gated by `requireAdminEmail` (which now ALSO accepts test users). |
+| `/admin/users` | adminRoutes | All CLIENT-role users (id, name, email, city, status). Used by `database.html` Provider Graph tab to populate the planner column. |
+| `/admin/providers` | adminRoutes | All ProviderProfiles with services, menu items, portfolio, counts. Used by Provider Graph tab. |
+| `/admin/event-requests` | adminRoutes | All EventRequests with full pipeline (client, quotes, booking). Used by Provider Graph tab. |
 | `/auth/dev-access` | authController | Returns `{ canAccessDev, isAdmin, email }`. Used by `profile-menu.js` to decide whether to render the DEV section. |
 | `/auth/seed-test-accounts` | authController | Dev-only. Gated by `ENABLE_TEST_ACCOUNTS=true`. Creates/refreshes the 5 test accounts and returns plaintext credentials so `signin.html`'s picker can autofill. 404s in prod. |
 | `/verification` | verificationController | Email/phone verification codes |
@@ -350,7 +353,7 @@ Vendors can complete all 3 steps while `PENDING_VERIFICATION`. Nothing goes live
 - **Test accounts have full ProviderProfiles** — services, portfolio photos (picsum.photos with stable seeds), menu items (caterer + bartender), 3 pricing tiers (caterer), cuisine/theme links.
 - **DEV section in profile dropdown** — admin emails + test users get "Planner" + "Database" links between Account Settings and Sign Out.
 - **`planner.html`** — Monte Carlo simulator with parameter sliders, 3 fan charts, 4 summary cards. Chart.js via CDN. Mobile-responsive.
-- **`database.html`** — Schema ERD (24 nodes, click to highlight relationships) + live Event Feed tab (filter by model, 15s auto-refresh).
+- **`database.html`** — Schema ERD (24 nodes, click to highlight relationships) + live Event Feed tab (filter by model, 15s auto-refresh) + **Provider Graph tab** (see below).
 
 ### 🟡 Placeholder / Partial
 - **Vendor setup Step 2** — built and 400 error fixed (all ProviderProfile columns now in production DB, confirmed live on festv.org). Functional but untested end-to-end with a real vendor account.
@@ -361,7 +364,7 @@ Vendors can complete all 3 steps while `PENDING_VERIFICATION`. Nothing goes live
 - **Friends/Guestlist** — page exists, not wired to API
 - **Stripe / payments** — deposit UI is built, actual payment not connected
 - **`planner.html` ported tabs** — Monte Carlo only. Growth Strategy / Cost Model / Architecture / Roadmap tabs not yet ported.
-- **`database.html` ported tabs** — Schema + Event Feed only. Provider graph, Client flow graph, Settings tab not yet ported.
+- **`database.html` Provider Graph tab** — built and wired to live DB (planners left, vendors right grouped by type, color-coded connections). Client flow graph and Settings tabs not yet ported. Provider Graph uses `/admin/users`, `/admin/providers`, `/admin/event-requests` — untested against a full production dataset.
 
 ### ❌ Not started
 - Admin dashboard vendor approval flow (flip verificationStatus to VERIFIED)
@@ -410,3 +413,5 @@ Backend (`/backend/.env` or Render dashboard):
 13. **Two separate statuses** — `User.status` (PENDING_VERIFICATION → ACTIVE, controlled by email verification) and `ProviderProfile.verificationStatus` (controlled by admin approval). Never conflate them.
 14. **`providerTypes[]` always includes `primaryType`** — never send one without the other. Step 2 of vendorsetup reads `providerTypes[]` to determine which fields and menu sections to show.
 15. **`getMyProfile` returns null not 404** — for new vendors with no profile yet, `GET /api/v1/providers/profile/me` returns `{ success: true, data: { providerProfile: null } }`. vendorsetup.html handles this by rendering an empty form.
+16. **`database.html` Provider Graph tab** — Loads data from three admin endpoints in parallel (`/admin/users`, `/admin/providers`, `/admin/event-requests`). Only vendor types with at least one vendor are rendered as dotted group boxes — empty types are hidden. Planner nodes include clients extracted from event-requests that may not be in the `/admin/users` response. Click a node to highlight its connections and open the detail panel; click again to deselect. Vendor detail has two sub-graph tabs: **Services** (fan of service cards) and **History** (bookings + quotes). Planner detail has **History** only.
+17. **`/admin/*` routes return all providers regardless of verificationStatus** — including UNVERIFIED and REJECTED. The Provider Graph shows a status dot (green/amber/gray) on each vendor node to indicate this. The public `/providers/search` endpoint still returns ALL providers and needs the VERIFIED-only filter applied before launch.
