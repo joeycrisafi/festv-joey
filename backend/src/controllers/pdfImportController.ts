@@ -196,11 +196,8 @@ export const importFromPdf = asyncHandler(async (req: AuthenticatedRequest, res:
     const parsed = await pdfParse(req.file.buffer);
     pdfText = parsed.text.trim();
   } catch (err) {
-    console.error('[PDF-IMPORT] pdf-parse threw:', err);
     throw new AppError('Failed to parse PDF. Make sure the file is a valid, text-based PDF.', 400);
   }
-
-  console.log(`[PDF-IMPORT] PDF text extracted — length: ${pdfText?.length ?? 0}, first 500 chars:\n${pdfText?.slice(0, 500)}`);
 
   if (!pdfText || pdfText.length < 50) {
     throw new AppError('PDF appears to be empty or image-based (scanned). Only text-based PDFs are supported.', 400);
@@ -214,7 +211,7 @@ export const importFromPdf = asyncHandler(async (req: AuthenticatedRequest, res:
   try {
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-5',
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [
         {
@@ -225,17 +222,11 @@ export const importFromPdf = asyncHandler(async (req: AuthenticatedRequest, res:
     });
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : '';
-    console.log(`[PDF-IMPORT] Claude raw response (first 1000 chars):\n${raw.slice(0, 1000)}`);
-
-    // Strip any accidental markdown code fences
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    try {
-      extracted = JSON.parse(cleaned);
-    } catch (parseErr: any) {
-      console.error('[PDF-IMPORT] JSON.parse failed. Error:', parseErr.message);
-      console.error('[PDF-IMPORT] cleaned string that failed to parse (first 500 chars):\n', cleaned.slice(0, 500));
-      throw parseErr;
-    }
+    // Extract JSON between first { and last } — handles any preamble text or fences Claude adds
+    const first = raw.indexOf('{');
+    const last = raw.lastIndexOf('}');
+    const cleaned = first !== -1 && last > first ? raw.slice(first, last + 1) : raw.trim();
+    extracted = JSON.parse(cleaned);
   } catch (err: any) {
     if (err instanceof SyntaxError) {
       throw new AppError('AI returned malformed data. Please try again or enter your info manually.', 500);
