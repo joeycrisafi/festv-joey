@@ -20,6 +20,7 @@ Extract the following and return ONLY valid JSON (no markdown, no commentary):
       "description": string,
       "pricePerPerson": number|null,
       "flatPrice": number|null,
+      "minimumSpend": number|null, // use for minimum spend / F&B minimum / revenue minimum
       "capacity": number|null,
       "duration": string|null      // e.g. "4 hours", "Full day"
     }

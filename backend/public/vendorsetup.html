@@ -2297,8 +2297,11 @@
       // If Claude returns both flatPrice and pricePerPerson, prefer PER_PERSON for food/catering
       // style items (pricePerPerson takes priority) and use that value as basePrice to avoid mismatch.
       function resolvePrice(p) {
-        var isPP = p.pricePerPerson != null && p.pricePerPerson > 0;
-        return { priceType: isPP ? 'PER_PERSON' : 'FLAT_RATE', basePrice: isPP ? p.pricePerPerson : (p.flatPrice || 0) };
+        if (p.pricePerPerson != null && p.pricePerPerson > 0) {
+          return { priceType: 'PER_PERSON', basePrice: p.pricePerPerson };
+        }
+        var flat = p.flatPrice || p.minimumSpend || p.price || p.spend || 0;
+        return { priceType: 'FLAT_RATE', basePrice: flat };
       }
       var pkgs = d.packages||d.services||[];
       pkgs.forEach(function(p){
