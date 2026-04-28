@@ -1,3 +1,6 @@
+/* ── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,45 +9,100 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply bg-stone-50 text-stone-900 antialiased;
+    background-color: #F5F3EF;
+    color: #3A3530;
+    font-family: 'Montserrat', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', serif;
+    color: #1A1714;
+  }
+
   ::selection {
-    @apply bg-brand-200 text-brand-900;
+    background-color: #D9BF8C;
+    color: #1A1714;
   }
 }
 
 @layer components {
+  /* ── Buttons ───────────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition-all duration-200 shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30 hover:-translate-y-0.5 active:translate-y-0;
+    @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
+    background-color: #C4A06A;
+    color: #1A1714;
+    border: none;
   }
-  
+  .btn-primary:hover {
+    background-color: #9C7A45;
+  }
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-white text-stone-800 font-semibold rounded-full border-2 border-stone-200 hover:border-brand-500 hover:text-brand-600 transition-all duration-200;
+    @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-full border transition-all duration-200;
+    background-color: #FFFFFF;
+    color: #1A1714;
+    border-color: rgba(0,0,0,0.09);
   }
-  
+  .btn-secondary:hover {
+    border-color: #C4A06A;
+    color: #9C7A45;
+  }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-4 py-2 text-stone-600 font-medium hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition-all duration-200;
+    color: #7A7068;
   }
-  
-  .input-field {
-    @apply w-full px-4 py-3 bg-white border-2 border-stone-200 rounded-xl focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200;
+  .btn-ghost:hover {
+    color: #C4A06A;
+    background-color: rgba(196,160,106,0.08);
   }
-  
+
+  /* ── Cards ─────────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-lg hover:border-stone-200 transition-all duration-300;
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.09);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
   }
-  
+  .card:hover {
+    border-color: rgba(196,160,106,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+
   .card-hover {
     @apply hover:-translate-y-1 cursor-pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  
+
+  /* ── Form inputs ───────────────────────────────────────────────────────── */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl outline-none transition-all duration-200;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #1A1714;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .input-field::placeholder {
+    color: #7A7068;
+  }
+  .input-field:focus {
+    border-color: #C4A06A;
+    box-shadow: 0 0 0 3px rgba(196,160,106,0.15);
+  }
+
+  /* ── Typography helpers ────────────────────────────────────────────────── */
   .gradient-text {
-    @apply bg-gradient-to-r from-brand-500 to-brand-700 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, #C4A06A, #9C7A45);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
+
   .section-padding {
     @apply px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto;
   }
@@ -56,4 +114,7 @@
   .animate-delay-300 { animation-delay: 300ms; }
   .animate-delay-400 { animation-delay: 400ms; }
   .animate-delay-500 { animation-delay: 500ms; }
+
+  .font-serif { font-family: 'Cormorant Garamond', serif; }
+  .font-sans  { font-family: 'Montserrat', sans-serif; }
 }

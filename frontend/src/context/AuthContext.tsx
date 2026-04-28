@@ -27,8 +27,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => 
-    localStorage.getItem('token')
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem('accessToken')
   );
   const [refreshToken, setRefreshToken] = useState<string | null>(() =>
     localStorage.getItem('refreshToken')
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setToken(null);
     setRefreshToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   }, []);
 
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', newRefreshToken);
     } else {
       throw new Error(response.message || 'Login failed');
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', newRefreshToken);
     } else {
       throw new Error(response.message || 'Registration failed');
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', newRefreshToken);
     } else {
       throw new Error(response.message || 'Failed to switch role');

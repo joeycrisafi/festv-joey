@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL 
+const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1`
   : '/api/v1';
 
@@ -11,42 +11,40 @@ export async function apiFetch<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const { token, ...fetchOptions } = options;
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
-  
+
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
-  
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...fetchOptions,
     headers,
   });
-  
+
   const data = await response.json();
-  
+
   if (!response.ok) {
-    // Build detailed error message
     let errorMessage = data.message || data.error || 'An error occurred';
-    
-    // If there are validation details, append them
     if (data.details && Array.isArray(data.details)) {
       const fieldErrors = data.details
         .map((d: { field: string; message: string }) => `${d.field}: ${d.message}`)
         .join(', ');
       errorMessage = `${errorMessage} (${fieldErrors})`;
     }
-    
     throw new Error(errorMessage);
   }
-  
+
   return data;
 }
 
-// Auth API
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth
+// ─────────────────────────────────────────────────────────────────────────────
 export const authApi = {
   register: (data: {
     email: string;
@@ -55,194 +53,253 @@ export const authApi = {
     lastName: string;
     role: 'CLIENT' | 'PROVIDER';
     roles?: ('CLIENT' | 'PROVIDER')[];
-  }) => apiFetch('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
+  }) => apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+
   login: (data: { email: string; password: string }) =>
-    apiFetch('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  
+    apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+
   getMe: (token: string) =>
     apiFetch('/auth/me', { token }),
-  
+
   logout: (token: string, refreshToken: string) =>
-    apiFetch('/auth/logout', {
-      method: 'POST',
-      token,
-      body: JSON.stringify({ refreshToken }),
-    }),
-  
+    apiFetch('/auth/logout', { method: 'POST', token, body: JSON.stringify({ refreshToken }) }),
+
   switchRole: (role: string, token: string) =>
-    apiFetch('/auth/switch-role', {
-      method: 'POST',
-      token,
-      body: JSON.stringify({ role }),
-    }),
-  
+    apiFetch('/auth/switch-role', { method: 'POST', token, body: JSON.stringify({ role }) }),
+
   addRole: (role: string, token: string) =>
-    apiFetch('/auth/add-role', {
-      method: 'POST',
-      token,
-      body: JSON.stringify({ role }),
-    }),
+    apiFetch('/auth/add-role', { method: 'POST', token, body: JSON.stringify({ role }) }),
 };
 
-// Providers API
+// ─────────────────────────────────────────────────────────────────────────────
+// Providers
+// ─────────────────────────────────────────────────────────────────────────────
 export const providersApi = {
   search: (params: Record<string, string | number | undefined>, token?: string) => {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        searchParams.append(key, String(value));
-      }
+      if (value !== undefined) searchParams.append(key, String(value));
     });
     return apiFetch(`/providers/search?${searchParams.toString()}`, { token });
   },
-  
+
   getById: (id: string, token?: string) =>
     apiFetch(`/providers/${id}`, { token }),
-  
+
   getPortfolio: (id: string) =>
     apiFetch(`/providers/${id}/portfolio`),
-    
-  createProfile: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/providers/profile', {
-      method: 'POST',
-      token,
-      body: JSON.stringify(data),
-    }),
-    
+
+  getMyProfile: (token: string) =>
+    apiFetch('/providers/profile/me', { token }),
+
   getMyProfiles: (token: string) =>
     apiFetch('/providers/profile/all', { token }),
-    
+
+  createProfile: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/providers/profile', { method: 'POST', token, body: JSON.stringify(data) }),
+
   updateProfile: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/providers/profile', {
-      method: 'PUT',
-      token,
-      body: JSON.stringify(data),
-    }),
+    apiFetch('/providers/profile', { method: 'PUT', token, body: JSON.stringify(data) }),
+
+  getMenuItems: (providerId: string) =>
+    apiFetch(`/providers/${providerId}/menu-items`),
 };
 
-// Event Requests API
+// ─────────────────────────────────────────────────────────────────────────────
+// Packages
+// ─────────────────────────────────────────────────────────────────────────────
+export const packagesApi = {
+  getEstimate: (data: Record<string, unknown>) =>
+    apiFetch('/packages/estimate', { method: 'POST', body: JSON.stringify(data) }),
+
+  getById: (id: string, token?: string) =>
+    apiFetch(`/packages/${id}`, { token }),
+
+  getMyPackages: (token: string) =>
+    apiFetch('/packages/me', { token }),
+
+  create: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/packages', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  update: (id: string, data: Record<string, unknown>, token: string) =>
+    apiFetch(`/packages/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+
+  delete: (id: string, token: string) =>
+    apiFetch(`/packages/${id}`, { method: 'DELETE', token }),
+
+  toggleActive: (id: string, token: string) =>
+    apiFetch(`/packages/${id}/toggle`, { method: 'PATCH', token }),
+
+  addSeasonalRule: (id: string, data: Record<string, unknown>, token: string) =>
+    apiFetch(`/packages/${id}/seasonal-rules`, { method: 'POST', token, body: JSON.stringify(data) }),
+
+  addDowRule: (id: string, data: Record<string, unknown>, token: string) =>
+    apiFetch(`/packages/${id}/dow-rules`, { method: 'POST', token, body: JSON.stringify(data) }),
+
+  getProviderPackages: (providerId: string) =>
+    apiFetch(`/providers/${providerId}/packages`),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Add-ons
+// ─────────────────────────────────────────────────────────────────────────────
+export const addOnsApi = {
+  getMyAddOns: (token: string) =>
+    apiFetch('/addons/me', { token }),
+
+  create: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/addons', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  update: (id: string, data: Record<string, unknown>, token: string) =>
+    apiFetch(`/addons/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+
+  delete: (id: string, token: string) =>
+    apiFetch(`/addons/${id}`, { method: 'DELETE', token }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Availability
+// ─────────────────────────────────────────────────────────────────────────────
+export const availabilityApi = {
+  getMyBlocks: (token: string) =>
+    apiFetch('/availability/me', { token }),
+
+  blockDate: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/availability', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  deleteBlock: (id: string, token: string) =>
+    apiFetch(`/availability/${id}`, { method: 'DELETE', token }),
+
+  check: (params: Record<string, string>) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`/availability/check?${searchParams.toString()}`);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event Requests
+// ─────────────────────────────────────────────────────────────────────────────
 export const eventRequestsApi = {
   create: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/event-requests', {
-      method: 'POST',
-      token,
-      body: JSON.stringify(data),
-    }),
-  
-  getMyRequests: (token: string) =>
-    apiFetch('/event-requests/my-requests', { token }),
-  
+    apiFetch('/event-requests', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  getMyRequestsAsClient: (token: string) =>
+    apiFetch('/event-requests/me/client', { token }),
+
+  getMyRequestsAsVendor: (token: string) =>
+    apiFetch('/event-requests/me/vendor', { token }),
+
+  getIncoming: (token: string, params?: Record<string, string>) => {
+    const searchParams = params ? `?${new URLSearchParams(params)}` : '';
+    return apiFetch(`/event-requests/incoming${searchParams}`, { token });
+  },
+
   getById: (id: string, token: string) =>
     apiFetch(`/event-requests/${id}`, { token }),
-  
-  submit: (id: string, token: string) =>
-    apiFetch(`/event-requests/${id}/submit`, {
-      method: 'POST',
-      token,
-    }),
-    
-  getAvailable: (token: string) =>
-    apiFetch('/event-requests/available/for-providers', { token }),
+
+  updateStatus: (id: string, status: string, token: string) =>
+    apiFetch(`/event-requests/${id}/status`, { method: 'PATCH', token, body: JSON.stringify({ status }) }),
 };
 
-// Quotes API
+// ─────────────────────────────────────────────────────────────────────────────
+// Quotes
+// ─────────────────────────────────────────────────────────────────────────────
 export const quotesApi = {
-  create: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/quotes', {
-      method: 'POST',
-      token,
-      body: JSON.stringify(data),
-    }),
-  
-  getMyQuotes: (token: string) =>
-    apiFetch('/quotes/my', { token }),
-  
+  autoGenerate: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/quotes/auto-generate', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  createManual: (data: Record<string, unknown>, token: string) =>
+    apiFetch('/quotes/manual', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  getMyQuotesAsClient: (token: string) =>
+    apiFetch('/quotes/me/client', { token }),
+
+  getMyQuotesAsVendor: (token: string) =>
+    apiFetch('/quotes/me/vendor', { token }),
+
   getById: (id: string, token: string) =>
     apiFetch(`/quotes/${id}`, { token }),
-  
+
   accept: (id: string, token: string) =>
-    apiFetch(`/quotes/${id}/accept`, {
-      method: 'POST',
-      token,
-    }),
-  
+    apiFetch(`/quotes/${id}/accept`, { method: 'POST', token }),
+
   reject: (id: string, token: string) =>
-    apiFetch(`/quotes/${id}/reject`, {
-      method: 'POST',
-      token,
-    }),
+    apiFetch(`/quotes/${id}/reject`, { method: 'POST', token }),
+
+  revise: (id: string, data: Record<string, unknown>, token: string) =>
+    apiFetch(`/quotes/${id}/revise`, { method: 'POST', token, body: JSON.stringify(data) }),
 };
 
-// Bookings API
+// ─────────────────────────────────────────────────────────────────────────────
+// Bookings
+// ─────────────────────────────────────────────────────────────────────────────
 export const bookingsApi = {
-  getClientBookings: (token: string) =>
-    apiFetch('/bookings/client', { token }),
-  
-  getProviderBookings: (token: string) =>
-    apiFetch('/bookings/provider', { token }),
-  
+  getMyBookingsAsClient: (token: string) =>
+    apiFetch('/bookings/me/client', { token }),
+
+  getMyBookingsAsVendor: (token: string) =>
+    apiFetch('/bookings/me/vendor', { token }),
+
+  getUpcoming: (token: string) =>
+    apiFetch('/bookings/upcoming', { token }),
+
+  getStats: (token: string) =>
+    apiFetch('/bookings/stats', { token }),
+
   getById: (id: string, token: string) =>
     apiFetch(`/bookings/${id}`, { token }),
-  
-  payDeposit: (id: string, paymentData: Record<string, unknown>, token: string) =>
-    apiFetch(`/bookings/${id}/pay-deposit`, {
-      method: 'POST',
-      token,
-      body: JSON.stringify(paymentData),
-    }),
+
+  markDepositPaid: (id: string, token: string) =>
+    apiFetch(`/bookings/${id}/deposit-paid`, { method: 'PATCH', token }),
+
+  confirm: (id: string, token: string) =>
+    apiFetch(`/bookings/${id}/confirm`, { method: 'PATCH', token }),
+
+  complete: (id: string, token: string) =>
+    apiFetch(`/bookings/${id}/complete`, { method: 'PATCH', token }),
+
+  cancel: (id: string, token: string) =>
+    apiFetch(`/bookings/${id}/cancel`, { method: 'PATCH', token }),
+
+  approve: (id: string, token: string) =>
+    apiFetch(`/bookings/${id}/approve`, { method: 'PATCH', token }),
 };
 
-// Reviews API  
+// ─────────────────────────────────────────────────────────────────────────────
+// Reviews
+// ─────────────────────────────────────────────────────────────────────────────
 export const reviewsApi = {
   create: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/reviews', {
-      method: 'POST',
-      token,
-      body: JSON.stringify(data),
-    }),
-  
+    apiFetch('/reviews', { method: 'POST', token, body: JSON.stringify(data) }),
+
   getProviderReviews: (providerId: string) =>
     apiFetch(`/reviews/provider/${providerId}`),
 };
 
-// Menu Items API
+// ─────────────────────────────────────────────────────────────────────────────
+// Menu Items
+// ─────────────────────────────────────────────────────────────────────────────
 export const menuItemsApi = {
   getByProvider: (providerId: string) =>
     apiFetch(`/providers/${providerId}/menu-items`),
-  
+
   create: (data: Record<string, unknown>, token: string) =>
-    apiFetch('/providers/menu-items', {
-      method: 'POST',
-      token,
-      body: JSON.stringify(data),
-    }),
-  
+    apiFetch('/providers/menu-items', { method: 'POST', token, body: JSON.stringify(data) }),
+
   update: (itemId: string, data: Record<string, unknown>, token: string) =>
-    apiFetch(`/providers/menu-items/${itemId}`, {
-      method: 'PUT',
-      token,
-      body: JSON.stringify(data),
-    }),
-  
+    apiFetch(`/providers/menu-items/${itemId}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+
   delete: (itemId: string, token: string) =>
-    apiFetch(`/providers/menu-items/${itemId}`, {
-      method: 'DELETE',
-      token,
-    }),
+    apiFetch(`/providers/menu-items/${itemId}`, { method: 'DELETE', token }),
 };
 
-// Users API
+// ─────────────────────────────────────────────────────────────────────────────
+// Users
+// ─────────────────────────────────────────────────────────────────────────────
 export const usersApi = {
   getProfile: (token: string) =>
     apiFetch('/users/profile', { token }),
-    
+
   updateProfile: (data: {
     firstName?: string;
     lastName?: string;
@@ -251,33 +308,26 @@ export const usersApi = {
     city?: string;
     state?: string;
     zipCode?: string;
-  }) => {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('Not authenticated');
-    return apiFetch('/users/profile', {
-      method: 'PUT',
-      token,
-      body: JSON.stringify(data),
-    });
-  },
+  }, token: string) =>
+    apiFetch('/users/profile', { method: 'PUT', token, body: JSON.stringify(data) }),
 
-  updateAvatar: (avatarUrl: string) => {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('Not authenticated');
-    return apiFetch('/users/avatar', {
-      method: 'PUT',
-      token,
-      body: JSON.stringify({ avatarUrl }),
-    });
-  },
+  updateAvatar: (avatarUrl: string, token: string) =>
+    apiFetch('/users/avatar', { method: 'PUT', token, body: JSON.stringify({ avatarUrl }) }),
 
-  updateBanner: (bannerUrl: string | null) => {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('Not authenticated');
-    return apiFetch('/users/banner', {
-      method: 'PUT',
-      token,
-      body: JSON.stringify({ bannerUrl }),
-    });
-  },
+  updateBanner: (bannerUrl: string | null, token: string) =>
+    apiFetch('/users/banner', { method: 'PUT', token, body: JSON.stringify({ bannerUrl }) }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+export const notificationsApi = {
+  getAll: (token: string) =>
+    apiFetch('/notifications', { token }),
+
+  markRead: (id: string, token: string) =>
+    apiFetch(`/notifications/${id}/read`, { method: 'PATCH', token }),
+
+  markAllRead: (token: string) =>
+    apiFetch('/notifications/read-all', { method: 'PATCH', token }),
 };

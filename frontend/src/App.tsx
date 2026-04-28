@@ -1,6 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
+
+// ── New vendor pages (placeholders — full implementations coming) ─────────────
+const VendorSetup       = () => <div className="p-8 font-sans text-charcoal">VendorSetup — coming soon</div>;
+const VendorPackages    = () => <div className="p-8 font-sans text-charcoal">VendorPackages — coming soon</div>;
+const VendorAvailability = () => <div className="p-8 font-sans text-charcoal">VendorAvailability — coming soon</div>;
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -35,7 +40,7 @@ function ProtectedRoute({ children, allowedRoles }: {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-500 border-t-transparent" />
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gold border-t-transparent" />
       </div>
     );
   }
@@ -157,6 +162,23 @@ function App() {
         <Route path="provider/earnings" element={
           <ProtectedRoute allowedRoles={['PROVIDER']}>
             <ProviderEarnings />
+          </ProtectedRoute>
+        } />
+
+        {/* New vendor package/setup routes */}
+        <Route path="vendor/setup" element={
+          <ProtectedRoute allowedRoles={['PROVIDER']}>
+            <VendorSetup />
+          </ProtectedRoute>
+        } />
+        <Route path="vendor/packages" element={
+          <ProtectedRoute allowedRoles={['PROVIDER']}>
+            <VendorPackages />
+          </ProtectedRoute>
+        } />
+        <Route path="vendor/availability" element={
+          <ProtectedRoute allowedRoles={['PROVIDER']}>
+            <VendorAvailability />
           </ProtectedRoute>
         } />
 
