@@ -515,10 +515,15 @@ export const getEquipment = asyncHandler(async (req: AuthenticatedRequest, res: 
   });
 });
 
+export const updateEquipment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  // TODO: implement full equipment update once Equipment model is fully wired
+  return res.json({ success: true, data: null, message: 'Coming soon' });
+});
+
 export const deleteEquipment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user!.id;
   const { id } = req.params;
-  
+
   const equipment = await prisma.equipment.findUnique({
     where: { id },
     include: { provider: true },

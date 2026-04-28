@@ -101,13 +101,9 @@ router.get('/event-requests', async (req: AuthenticatedRequest, res: Response) =
           },
           orderBy: { createdAt: 'desc' },
         },
-        booking: {
-          select: {
-            id: true, status: true, total: true, eventDate: true, guestCount: true,
-            providerProfile: { select: { id: true, businessName: true, primaryType: true } },
-            payments: { select: { id: true, type: true, status: true, amount: true } },
-            review: { select: { id: true, overallRating: true } },
-          },
+        // EventRequest has no direct booking relation — bookings flow through quotes
+        providerProfile: {
+          select: { id: true, businessName: true, primaryType: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -194,10 +190,10 @@ router.get('/providers/pending', async (req: AuthenticatedRequest, res: Response
         },
         _count: {
           select: {
+            packages: true,
             menuItems: true,
             portfolioItems: true,
             bookings: true,
-            reviews: true,
           },
         },
       },
@@ -265,9 +261,10 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
 
     const provider = await db.providerProfile.update({
       where: { id },
-      data: { 
+      data: {
         verificationStatus: 'REJECTED',
-        rejectionReason: reason.trim(),
+        // rejectionReason field does not exist on ProviderProfile schema —
+        // reason is returned in the response JSON only (no DB storage yet)
       },
       include: {
         user: {
@@ -283,10 +280,11 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
     console.log(`❌ Provider rejected: ${provider.businessName} (${provider.user.email})`);
     console.log(`   Reason: ${reason}`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: provider,
-      message: 'Provider rejected' 
+      adminNote: reason.trim(),   // stored in response only — no DB field yet
+      message: 'Provider rejected',
     });
   } catch (err: any) {
     console.error('Error rejecting provider:', err);
@@ -327,11 +325,10 @@ router.get('/providers/all', async (req: AuthenticatedRequest, res: Response) =>
         },
         _count: {
           select: {
-            // TODO: rewire to new schema — services removed; use packages count instead
+            packages: true,
             menuItems: true,
             portfolioItems: true,
             bookings: true,
-            reviews: true,
           },
         },
       },

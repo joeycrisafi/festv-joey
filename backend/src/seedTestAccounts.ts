@@ -812,20 +812,7 @@ async function seedProviderProfile(
               })),
             }
           : undefined,
-      pricingLevels:
-        data.pricingLevels && data.pricingLevels.length > 0
-          ? {
-              create: data.pricingLevels.map((p, i) => ({
-                name: p.name,
-                description: p.description,
-                pricePerPerson: p.pricePerPerson,
-                minimumGuests: p.minimumGuests ?? null,
-                features: p.features,
-                displayOrder: i,
-                isActive: true,
-              })),
-            }
-          : undefined,
+      // pricingLevels removed — PricingLevel model no longer exists; use Package model instead
       cuisineTypes: cuisineConnect.length > 0 ? { connect: cuisineConnect } : undefined,
       eventThemes: themeConnect.length > 0 ? { connect: themeConnect } : undefined,
     },
