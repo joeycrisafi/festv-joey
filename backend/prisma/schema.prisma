@@ -74,6 +74,7 @@ model User {
   favorites            Favorite[]
   refreshTokens        RefreshToken[]
   verificationCodes    VerificationCode[]
+  events               Event[]
 
   @@index([email])
   @@index([role])
@@ -493,6 +494,36 @@ model Equipment {
 }
 
 // ============================================
+// EVENTS  (top-level planning object — groups multiple vendor requests)
+// ============================================
+
+enum EventStatus {
+  PLANNING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Event {
+  id          String         @id @default(uuid())
+  clientId    String
+  client      User           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name        String         // e.g. "Sarah & John's Wedding"
+  eventType   EventType
+  eventDate   DateTime
+  guestCount  Int
+  notes       String?
+  status      EventStatus    @default(PLANNING)
+  requests    EventRequest[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([clientId])
+  @@index([eventDate])
+  @@index([status])
+}
+
+// ============================================
 // EVENT REQUESTS  (redesigned)
 // ============================================
 
@@ -539,6 +570,8 @@ model EventRequest {
   id                 String             @id @default(uuid())
   clientId           String
   client             User               @relation("ClientRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  eventId            String?
+  event              Event?             @relation(fields: [eventId], references: [id], onDelete: SetNull)
   providerProfileId  String
   providerProfile    ProviderProfile    @relation(fields: [providerProfileId], references: [id])
   packageId          String?
@@ -558,6 +591,7 @@ model EventRequest {
   quotes             Quote[]
 
   @@index([clientId])
+  @@index([eventId])
   @@index([providerProfileId])
   @@index([status])
   @@index([eventDate])

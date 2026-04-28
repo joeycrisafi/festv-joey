@@ -14,6 +14,7 @@ import pdfImportRoutes from './pdfImportRoutes';
 import jessRoutes from './jessRoutes';
 import favoriteRoutes from './favoriteRoutes';
 import packageRoutes, { addonRouter, availabilityRouter } from './packageRoutes';
+import eventRoutes from './eventRoutes';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/favorites', favoriteRoutes);
 router.use('/packages', packageRoutes);
 router.use('/addons', addonRouter);
 router.use('/availability', availabilityRouter);
+router.use('/events', eventRoutes);
 
 export default router;
