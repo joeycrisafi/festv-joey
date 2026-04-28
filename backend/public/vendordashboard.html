@@ -1538,12 +1538,29 @@
 
     // ── Load vendor profile ──
     function loadProfile() {
+      // Show user name immediately as fallback (removes the "Loading…" state)
+      var _u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (_u.firstName || _u.lastName) {
+        document.getElementById('heroName').textContent = [_u.firstName, _u.lastName].filter(Boolean).join(' ');
+      } else if (token) {
+        // Fallback: decode JWT payload to get name fields
+        try {
+          var _jp = JSON.parse(atob(token.split('.')[1]));
+          if (_jp.firstName || _jp.lastName) {
+            document.getElementById('heroName').textContent = [_jp.firstName, _jp.lastName].filter(Boolean).join(' ');
+          }
+        } catch(_e) {}
+      }
+
       fetch('/api/v1/providers/profile/me', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var p = data.data || data;
+        // Support both response shapes:
+        //   { data: { ...profile fields... } }  — profile exists
+        //   { data: { providerProfile: null } }  — no profile yet
+        var p = (data.data && data.data.providerProfile) || data.data || data;
         if (!p || !p.businessName) return;
 
         // Wire "Preview My Profile" link to this vendor's actual profile ID
