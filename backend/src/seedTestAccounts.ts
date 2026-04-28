@@ -24,7 +24,6 @@ import {
   UserStatus,
   ProviderType,
   VerificationStatus,
-  PriceType,
   MediaType,
   EventType,
   EventRequestStatus,
@@ -32,6 +31,16 @@ import {
   BookingStatus,
 } from '@prisma/client';
 import { config } from './config/index.js';
+
+// PriceType is an orphaned enum in the new schema (Service model was dropped).
+// Prisma generate no longer exports it, so we define it locally to keep
+// the legacy services data compilable without a full seeder rewrite.
+const PriceType = {
+  FLAT_RATE: 'FLAT_RATE',
+  PER_PERSON: 'PER_PERSON',
+  PER_HOUR: 'PER_HOUR',
+  CUSTOM: 'CUSTOM',
+} as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER ACCOUNTS

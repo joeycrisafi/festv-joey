@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { UserRole, ProviderType, EventType, ServiceStyle, MediaType, PriceType } from '@prisma/client';
+import { UserRole, ProviderType, EventType, MediaType } from '@prisma/client';
+
+// PriceType and ServiceStyle are orphaned enums in the new schema (Service model dropped).
+// Prisma generate no longer exports them, so define locally to keep validators compilable.
+const PriceType = { FLAT_RATE: 'FLAT_RATE', PER_PERSON: 'PER_PERSON', PER_HOUR: 'PER_HOUR', CUSTOM: 'CUSTOM' } as const;
+const ServiceStyle = { BUFFET: 'BUFFET', PLATED: 'PLATED', FAMILY_STYLE: 'FAMILY_STYLE', FOOD_STATIONS: 'FOOD_STATIONS', COCKTAIL: 'COCKTAIL', DROP_OFF: 'DROP_OFF', FOOD_TRUCK: 'FOOD_TRUCK', CUSTOM: 'CUSTOM' } as const;
 
 // Auth schemas
 export const registerSchema = z.object({

@@ -1,5 +1,8 @@
 import { Request } from 'express';
-import { User, UserRole, ProviderType, EventType, ServiceStyle, MediaType } from '@prisma/client';
+import { User, UserRole, ProviderType, EventType, MediaType } from '@prisma/client';
+
+// ServiceStyle is an orphaned enum in the new schema — define locally to keep types compilable
+type ServiceStyle = 'BUFFET' | 'PLATED' | 'FAMILY_STYLE' | 'FOOD_STATIONS' | 'COCKTAIL' | 'DROP_OFF' | 'FOOD_TRUCK' | 'CUSTOM';
 
 // Extend Express Request to include authenticated user
 export interface AuthenticatedRequest extends Request {
