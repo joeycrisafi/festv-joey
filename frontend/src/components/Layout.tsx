@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import JessWidget from './JessWidget';
 import { useState } from 'react';
 import {
   Menu,
@@ -670,6 +671,9 @@ export default function Layout() {
           </div>
         </div>
       </footer>
+
+      {/* ── Jess AI Widget ────────────────────────────────────────────────── */}
+      <JessWidget />
     </div>
   );
 }
