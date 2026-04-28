@@ -134,14 +134,20 @@ export default function Landing() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
             <Link
-              to="/providers"
+              to="/events/new"
               className="bg-gold text-dark font-sans text-xs tracking-widest uppercase px-8 py-4 hover:bg-gold-dark transition-colors duration-200"
+            >
+              Plan an Event
+            </Link>
+            <Link
+              to="/providers"
+              className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-8 py-4 hover:bg-gold/5 transition-colors duration-200"
             >
               Find a Vendor
             </Link>
             <Link
               to="/register?role=PROVIDER"
-              className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-8 py-4 hover:bg-gold/5 transition-colors duration-200"
+              className="border border-gold/40 text-gold/70 font-sans text-xs tracking-widest uppercase px-8 py-4 hover:border-gold hover:text-gold transition-colors duration-200"
             >
               List Your Business
             </Link>

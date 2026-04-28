@@ -319,6 +319,34 @@ export const usersApi = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Events (top-level planning objects)
+// ─────────────────────────────────────────────────────────────────────────────
+export const eventsApi = {
+  create: (data: {
+    name: string;
+    eventType: string;
+    eventDate: string;
+    guestCount: number;
+    notes?: string;
+  }, token: string) =>
+    apiFetch('/events', { method: 'POST', token, body: JSON.stringify(data) }),
+
+  getMyEvents: (token: string) =>
+    apiFetch('/events/me', { token }),
+
+  getById: (id: string, token: string) =>
+    apiFetch(`/events/${id}`, { token }),
+
+  update: (id: string, data: {
+    name?: string;
+    notes?: string;
+    guestCount?: number;
+    status?: string;
+  }, token: string) =>
+    apiFetch(`/events/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Notifications
 // ─────────────────────────────────────────────────────────────────────────────
 export const notificationsApi = {

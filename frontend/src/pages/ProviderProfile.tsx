@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Star, MapPin, Globe, Instagram, ChevronDown, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -184,11 +184,12 @@ const defaultEstimator = (): EstimatorState => ({
 });
 
 // ── Package card with inline estimator ───────────────────────────────────────
-function PackageCard({ pkg, isAuthenticated, providerId, providerName }: {
+function PackageCard({ pkg, isAuthenticated, providerId, providerName, eventId }: {
   pkg: Package;
   isAuthenticated: boolean;
   providerId: string;
   providerName: string;
+  eventId?: string | null;
 }) {
   const navigate = useNavigate();
   const { token, user } = useAuth();
@@ -245,6 +246,7 @@ function PackageCard({ pkg, isAuthenticated, providerId, providerName }: {
       const body: Record<string, unknown> = {
         providerProfileId: providerId,
         packageId: pkg.id,
+        ...(eventId           ? { eventId }                               : {}),
         ...(est.eventType     ? { eventType: est.eventType }              : {}),
         ...(est.eventDate     ? { eventDate: est.eventDate }              : {}),
         ...(est.guestCount    ? { guestCount: Number(est.guestCount) }    : {}),
@@ -587,6 +589,13 @@ export default function ProviderProfile() {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  // eventId arrives either via router state (from VendorCard) or URL param
+  const eventId: string | null =
+    (location.state as { eventId?: string } | null)?.eventId ??
+    searchParams.get('eventId') ??
+    null;
 
   const [provider, setProvider]         = useState<Provider | null>(null);
   const [packageGroups, setPackageGroups] = useState<PackageGroup[]>([]);
@@ -847,6 +856,7 @@ export default function ProviderProfile() {
                     isAuthenticated={isAuthenticated}
                     providerId={id!}
                     providerName={provider.businessName}
+                    eventId={eventId}
                   />
                   </motion.div>
                 ))}

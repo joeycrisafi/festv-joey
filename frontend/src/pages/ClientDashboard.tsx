@@ -10,9 +10,10 @@ import {
   Inbox,
   Heart,
   ChevronRight,
+  CalendarPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { eventRequestsApi, quotesApi, bookingsApi, apiFetch } from '../utils/api';
+import { eventRequestsApi, quotesApi, bookingsApi, apiFetch, eventsApi } from '../utils/api';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -86,6 +87,17 @@ interface FavoriteItem {
   providerProfile?: ProviderInfo;
 }
 
+interface EventItem {
+  id: string;
+  name: string;
+  eventType: string;
+  eventDate: string;
+  guestCount: number;
+  status: string;
+  _count: { requests: number };
+  requests: { status: string }[];
+}
+
 // ─── Status badge configs ─────────────────────────────────────────────────────
 
 const REQUEST_STATUS: Record<string, { label: string; cls: string }> = {
@@ -129,6 +141,7 @@ export default function ClientDashboard() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
+  const [events, setEvents]     = useState<EventItem[]>([]);
   const [requests, setRequests] = useState<EventRequestItem[]>([]);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
@@ -145,12 +158,19 @@ export default function ClientDashboard() {
     if (!token) return;
 
     const load = async () => {
-      const [reqRes, bkRes, qtRes, favRes] = await Promise.allSettled([
+      const [evtRes, reqRes, bkRes, qtRes, favRes] = await Promise.allSettled([
+        eventsApi.getMyEvents(token),
         eventRequestsApi.getMyRequestsAsClient(token),
         bookingsApi.getMyBookingsAsClient(token),
         quotesApi.getMyQuotesAsClient(token),
         apiFetch('/favorites', { token }),
       ]);
+
+      if (evtRes.status === 'fulfilled') {
+        const d = evtRes.value as any;
+        const arr = d?.data ?? [];
+        setEvents(Array.isArray(arr) ? arr : []);
+      }
 
       if (reqRes.status === 'fulfilled') {
         const d = reqRes.value as any;
@@ -263,6 +283,82 @@ export default function ClientDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-10">
+
+          {/* SECTION 0 — MY EVENTS */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal">
+                My Events
+              </p>
+              <Link
+                to="/events/new"
+                className="bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-md hover:bg-gold-dark transition-colors flex items-center gap-1.5"
+              >
+                <CalendarPlus size={12} strokeWidth={2} />
+                Plan a New Event
+              </Link>
+            </div>
+
+            {loading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : events.length === 0 ? (
+              <div className="bg-white border border-border rounded-md p-8 flex flex-col items-center gap-3 text-center">
+                <CalendarPlus size={32} strokeWidth={1} className="text-muted" />
+                <p className="font-serif text-lg text-muted">No events yet</p>
+                <p className="font-sans text-xs text-muted mb-2">
+                  Start planning your next event and find the perfect vendors.
+                </p>
+                <Link
+                  to="/events/new"
+                  className="bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-5 py-2 rounded-md hover:bg-gold-dark transition-colors"
+                >
+                  Plan Your First Event
+                </Link>
+              </div>
+            ) : (
+              events.map((evt, i) => {
+                const bookedCount = evt.requests.filter(r => r.status === 'ACCEPTED').length;
+                const totalVendors = evt._count.requests;
+                const eventTypeLabel = evt.eventType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                return (
+                  <motion.div
+                    key={evt.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
+                  >
+                  <div className="bg-white border border-gold/20 rounded-md p-5 mb-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-serif text-xl text-dark truncate">{evt.name}</p>
+                        <p className="font-sans text-xs text-muted mt-0.5">
+                          {eventTypeLabel}
+                          {evt.eventDate ? ` · ${format(parseISO(evt.eventDate), 'MMM d, yyyy')}` : ''}
+                          {` · ${evt.guestCount} guests`}
+                        </p>
+                        {totalVendors > 0 && (
+                          <p className="font-sans text-xs text-muted mt-1">
+                            {bookedCount} of {totalVendors} vendor{totalVendors !== 1 ? 's' : ''} booked
+                          </p>
+                        )}
+                      </div>
+                      <Link
+                        to={`/events/${evt.id}`}
+                        className="font-sans text-xs text-gold hover:text-gold-dark font-semibold transition-colors flex-shrink-0 flex items-center gap-1"
+                      >
+                        View Event <ChevronRight size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
 
           {/* SECTION 1 — QUOTES AWAITING RESPONSE */}
           <div ref={quotesRef}>
@@ -566,6 +662,16 @@ export default function ClientDashboard() {
               Quick Actions
             </p>
             <div className="divide-y divide-white/10">
+              <Link
+                to="/events/new"
+                className="flex items-center justify-between py-3 text-white/60 hover:text-gold-light font-sans text-sm transition-colors group"
+              >
+                <span className="flex items-center gap-2">
+                  <CalendarPlus size={14} strokeWidth={1.5} />
+                  Plan an Event
+                </span>
+                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
               <Link
                 to="/providers"
                 className="flex items-center justify-between py-3 text-white/60 hover:text-gold-light font-sans text-sm transition-colors group"

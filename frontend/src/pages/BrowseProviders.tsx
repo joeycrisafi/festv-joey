@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Star } from 'lucide-react';
+import { MapPin, Star, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProviderTypeBadge, providerTypeConfig } from '../components/ProviderTypeBadge';
 
@@ -117,6 +117,13 @@ function SkeletonCard() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function BrowseProviders() {
   const [searchParams] = useSearchParams();
+
+  // Optional event context passed from EventDetail
+  const eventId   = searchParams.get('eventId');
+  const eventName = eventId
+    ? (JSON.parse(localStorage.getItem(`festv_browse_event_meta_${eventId}`) ?? 'null') as
+        { name?: string; eventType?: string } | null)
+    : null;
 
   // Initialise from URL ?type= param; default to all 5 types when no param
   const urlType = searchParams.get('type');
@@ -337,6 +344,25 @@ export default function BrowseProviders() {
       {/* ── RESULTS AREA ──────────────────────────────────────────────────── */}
       <main className="flex-1 bg-bg px-8 py-8 min-w-0">
 
+        {/* Event context banner */}
+        {eventId && (
+          <div className="flex items-center gap-3 bg-gold/10 border border-gold/30 rounded-md px-4 py-3 mb-6">
+            <CalendarDays size={16} className="text-gold-dark flex-shrink-0" strokeWidth={1.5} />
+            <p className="font-sans text-sm text-gold-dark flex-1">
+              {eventName?.name
+                ? <>You're browsing vendors for <strong>{eventName.name}</strong></>
+                : <>You're browsing vendors for your event</>}
+              {' '}— vendors you request will be linked to this event.
+            </p>
+            <Link
+              to={`/events/${eventId}`}
+              className="font-sans text-xs text-gold-dark hover:text-gold font-semibold transition-colors flex-shrink-0"
+            >
+              ← Back to event
+            </Link>
+          </div>
+        )}
+
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
           <p className="font-sans text-sm text-muted">
@@ -389,7 +415,7 @@ export default function BrowseProviders() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i, 5) * 0.07, duration: 0.4 }}
                 >
-                  <VendorCard provider={p} />
+                  <VendorCard provider={p} eventId={eventId} />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -402,7 +428,7 @@ export default function BrowseProviders() {
 }
 
 // ── Vendor card sub-component ─────────────────────────────────────────────────
-function VendorCard({ provider: p }: { provider: ProviderCard }) {
+function VendorCard({ provider: p, eventId }: { provider: ProviderCard; eventId?: string | null }) {
   return (
     <div className="bg-white rounded-2xl border border-border p-6 hover:border-gold hover:shadow-sm transition-all duration-200 flex flex-col">
 
@@ -456,6 +482,7 @@ function VendorCard({ provider: p }: { provider: ProviderCard }) {
       {/* CTA */}
       <Link
         to={`/providers/${p.id}`}
+        state={eventId ? { eventId } : undefined}
         className="font-sans text-xs text-gold hover:text-gold-dark transition-colors mt-4 self-start"
       >
         View Profile →

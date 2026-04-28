@@ -31,6 +31,8 @@ import EventDashboard from './pages/EventDashboard';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AccountVerify from './pages/AccountVerify';
 import QuoteDetail from './pages/QuoteDetail';
+import CreateEvent from './pages/CreateEvent';
+import EventDetail from './pages/EventDetail';
 
 function ProtectedRoute({ children, allowedRoles }: { 
   children: React.ReactNode; 
@@ -121,6 +123,16 @@ function App() {
         <Route path="bookings/:id" element={
           <ProtectedRoute>
             <BookingDetail />
+          </ProtectedRoute>
+        } />
+        <Route path="events/new" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <CreateEvent />
+          </ProtectedRoute>
+        } />
+        <Route path="events/:id" element={
+          <ProtectedRoute allowedRoles={['CLIENT']}>
+            <EventDetail />
           </ProtectedRoute>
         } />
         <Route path="quotes/:id" element={
