@@ -38,24 +38,22 @@ interface ProviderCard {
   id: string;
   businessName: string;
   primaryType: string;
-  verificationStatus: string;
-  averageRating: number;
-  totalReviews: number;
-  user: {
-    firstName: string;
-    lastName: string;
-    city?: string;
-    state?: string;
-    avatarUrl?: string;
-  };
-  startingFrom: number | null;
-  featuredPackage: {
+  verificationStatus?: string;
+  averageRating?: number;
+  totalReviews?: number;
+  // city/state are returned flat on the provider object (not under user)
+  city?: string | null;
+  state?: string | null;
+  logoUrl?: string | null;
+  tagline?: string | null;
+  startingFrom?: number | null;
+  featuredPackage?: {
     id: string;
     name: string;
     basePrice: number;
   } | null;
-  activePackageCount: number;
-  isAvailable: boolean;
+  activePackageCount?: number;
+  isAvailable?: boolean;
 }
 
 // ── Filter shape ──────────────────────────────────────────────────────────────
@@ -407,17 +405,17 @@ function VendorCard({ provider: p }: { provider: ProviderCard }) {
 
       {/* City + rating */}
       <div className="flex items-center gap-4 mt-3">
-        {p.user.city && (
+        {p.city && (
           <span className="flex items-center gap-1 text-xs text-muted font-sans">
             <MapPin size={12} className="text-muted flex-shrink-0" />
-            {p.user.city}{p.user.state ? `, ${p.user.state}` : ''}
+            {p.city}{p.state ? `, ${p.state}` : ''}
           </span>
         )}
-        {(p.averageRating > 0 || p.totalReviews > 0) && (
+        {((p.averageRating ?? 0) > 0 || (p.totalReviews ?? 0) > 0) && (
           <span className="flex items-center gap-1 text-xs text-muted font-sans">
             <Star size={12} className="text-gold flex-shrink-0" />
-            {p.averageRating > 0 ? p.averageRating.toFixed(1) : '—'}
-            {p.totalReviews > 0 && <span className="text-muted/60">({p.totalReviews})</span>}
+            {(p.averageRating ?? 0) > 0 ? p.averageRating!.toFixed(1) : '—'}
+            {(p.totalReviews ?? 0) > 0 && <span className="text-muted/60">({p.totalReviews})</span>}
           </span>
         )}
       </div>
@@ -431,10 +429,10 @@ function VendorCard({ provider: p }: { provider: ProviderCard }) {
         ) : (
           <p className="font-serif text-lg text-muted">Contact for pricing</p>
         )}
-        {p.featuredPackage && (
+        {p.featuredPackage?.name && (
           <p className="font-sans text-xs text-muted mt-1 truncate">{p.featuredPackage.name}</p>
         )}
-        {p.activePackageCount > 0 && (
+        {(p.activePackageCount ?? 0) > 0 && (
           <p className="font-sans text-xs text-muted mt-1">
             {p.activePackageCount} package{p.activePackageCount !== 1 ? 's' : ''} available
           </p>
