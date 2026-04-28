@@ -229,15 +229,15 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
   }[pkg.pricingModel];
 
   return (
-    <div className="bg-bg rounded-2xl border border-border shadow-sm p-6 mb-4 hover:shadow-md hover:border-gold transition-all duration-200">
+    <div className="bg-white border border-border rounded-md p-7 mb-4">
 
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h4 className="font-serif text-lg text-dark">{pkg.name}</h4>
-          <p className="font-serif text-4xl text-dark font-light mt-4 mb-2">{priceLabel()}</p>
+          <h4 className="font-sans text-sm font-bold text-dark uppercase tracking-wide">{pkg.name}</h4>
+          <p className="font-serif text-xl text-gold-dark font-semibold mt-2">{priceLabel()}</p>
           {pkg.minimumSpend != null && pkg.minimumSpend > pkg.basePrice && (
-            <p className="font-sans text-xs text-muted">Minimum spend applies</p>
+            <p className="font-sans text-xs text-muted mt-0.5">Minimum spend applies</p>
           )}
         </div>
         <span className="font-sans text-xs text-muted border border-border rounded-full px-3 py-1 flex-shrink-0">
@@ -249,26 +249,26 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
         <p className="font-sans text-sm text-muted mt-3 leading-relaxed">{pkg.description}</p>
       )}
 
-      {/* Meta row — pill chips */}
-      <div className="flex flex-wrap gap-2 mt-4">
-        {pkg.durationHours != null && (
-          <span className="inline-flex items-center gap-1 bg-white border border-border rounded-full px-3 py-1 font-sans text-xs text-charcoal">
-            <Clock size={11} />
-            {pkg.durationHours} hour{pkg.durationHours !== 1 ? 's' : ''}
-          </span>
-        )}
-        {(pkg.minGuests != null || pkg.maxGuests != null) && (
-          <span className="inline-flex items-center gap-1 bg-white border border-border rounded-full px-3 py-1 font-sans text-xs text-charcoal">
-            {pkg.minGuests ?? 1}–{pkg.maxGuests ?? '∞'} guests
-          </span>
-        )}
-      </div>
+      {/* Meta row — plain text with · separator */}
+      {(pkg.durationHours != null || pkg.minGuests != null || pkg.maxGuests != null) && (
+        <p className="font-sans text-xs text-muted mt-3">
+          {pkg.durationHours != null && (
+            <span>{pkg.durationHours} hour{pkg.durationHours !== 1 ? 's' : ''}</span>
+          )}
+          {pkg.durationHours != null && (pkg.minGuests != null || pkg.maxGuests != null) && (
+            <span className="mx-1.5">·</span>
+          )}
+          {(pkg.minGuests != null || pkg.maxGuests != null) && (
+            <span>{pkg.minGuests ?? 1}–{pkg.maxGuests ?? '∞'} guests</span>
+          )}
+        </p>
+      )}
 
       {/* Included chips */}
       {pkg.included?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3">
+        <div className="flex flex-wrap gap-2 mt-4">
           {pkg.included.slice(0, SHOWN_ITEMS).map((item, i) => (
-            <span key={i} className="font-sans text-xs bg-white border border-border rounded-full px-3 py-1 text-charcoal">
+            <span key={i} className="font-sans text-xs bg-bg border border-border rounded-full px-3 py-1 text-charcoal">
               {item}
             </span>
           ))}
@@ -283,7 +283,7 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
       {/* Estimator toggle */}
       <button
         onClick={() => updateEst({ isOpen: !est.isOpen })}
-        className="mt-6 w-full sm:w-auto flex items-center justify-center gap-2 bg-gold text-dark font-sans text-xs tracking-widest uppercase px-6 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"
+        className="mt-5 flex items-center gap-2 border border-gold text-gold font-sans text-xs font-bold tracking-widest uppercase px-6 py-3 hover:bg-gold hover:text-dark transition-colors duration-200 focus:outline-none rounded-md"
       >
         Get a Price Estimate
         <ChevronDown
@@ -512,18 +512,10 @@ export default function ProviderProfile() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-bg">
-        {/* Banner skeleton */}
-        <div className="h-64 bg-charcoal animate-pulse" />
-        {/* Profile card skeleton */}
-        <div className="mx-8 -mt-12 bg-white rounded-2xl border border-border p-8 animate-pulse">
-          <div className="flex gap-6">
-            <div className="w-20 h-20 rounded-full bg-border" />
-            <div className="flex-1 space-y-3">
-              <div className="h-6 bg-border rounded w-1/3" />
-              <div className="h-4 bg-border rounded w-1/4" />
-              <div className="h-4 bg-border rounded w-1/2" />
-            </div>
-          </div>
+        <div className="h-96 bg-charcoal animate-pulse" />
+        <div className="max-w-5xl mx-auto px-6 md:px-12 py-12 space-y-4">
+          <div className="h-4 bg-border rounded w-1/4 animate-pulse" />
+          <div className="h-4 bg-border rounded w-1/2 animate-pulse" />
         </div>
       </div>
     );
@@ -552,9 +544,10 @@ export default function ProviderProfile() {
 
       {/* ── STICKY NAV ──────────────────────────────────────────────────────── */}
       <div
-        className={`fixed top-16 left-0 right-0 z-40 bg-white border-b border-border transition-all duration-300 ${
+        className={`fixed top-16 left-0 right-0 z-40 bg-dark transition-all duration-300 ${
           showStickyNav ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
         }`}
+        style={{ borderBottom: '1px solid rgba(196,160,106,0.2)' }}
       >
         <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -562,7 +555,7 @@ export default function ProviderProfile() {
               <button
                 key={anchor}
                 onClick={() => scrollTo(anchor)}
-                className="font-sans text-xs uppercase tracking-widest text-charcoal hover:text-gold transition-colors focus:outline-none"
+                className="font-sans text-xs font-semibold uppercase tracking-widest text-white/50 hover:text-gold-light transition-colors focus:outline-none"
               >
                 {anchor === 'packages' ? 'Packages' : anchor.charAt(0).toUpperCase() + anchor.slice(1)}
               </button>
@@ -573,93 +566,93 @@ export default function ProviderProfile() {
               ? navigate('/create-request', { state: { providerId: id } })
               : navigate(`/login?redirect=/providers/${id}`)
             }
-            className="bg-gold text-dark font-sans text-xs tracking-widest uppercase px-5 py-2 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"
+            className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-6 py-2 hover:bg-gold hover:text-dark transition-colors duration-200 focus:outline-none"
           >
             Request This Vendor
           </button>
         </div>
       </div>
 
-      {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
-      <div ref={heroRef}>
-        {/* Banner */}
+      {/* ── SECTION 1: HERO — content sits inside at the bottom ─────────────── */}
+      <div
+        ref={heroRef}
+        className="relative h-96 bg-gradient-to-br from-dark via-charcoal to-dark overflow-hidden"
+        style={provider.user?.bannerUrl ? {
+          backgroundImage: `url(${provider.user.bannerUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
+        {/* Darkening overlay when a real banner image is used */}
+        {provider.user?.bannerUrl && (
+          <div className="absolute inset-0" style={{ background: 'rgba(26,23,20,0.6)' }} />
+        )}
+        {/* Bottom gradient vignette */}
         <div
-          className="w-full h-56 bg-gradient-to-br from-dark via-charcoal to-dark"
-          style={provider.user?.bannerUrl ? {
-            backgroundImage: `url(${provider.user.bannerUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          } : undefined}
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(26,23,20,0.85) 0%, rgba(26,23,20,0.15) 55%, transparent 100%)' }}
         />
 
-        {/* Profile card — floats over banner */}
-        <div className="mx-6 md:mx-12 -mt-16 relative z-10 bg-white rounded-2xl shadow-md border border-border p-8">
-          <div className="flex flex-col md:flex-row gap-6">
-
+        {/* Content — bottom of hero */}
+        <div className="absolute bottom-0 left-0 right-0 p-8 flex items-end justify-between gap-6">
+          <div className="flex items-end gap-5 min-w-0">
             {/* Avatar */}
             {provider.logoUrl ? (
               <img
                 src={provider.logoUrl}
                 alt={provider.businessName}
-                className="w-20 h-20 rounded-full object-cover flex-shrink-0 border border-border"
+                className="w-24 h-24 rounded-full object-cover flex-shrink-0 border-2 border-gold-light"
               />
             ) : (
-              <Initials name={provider.businessName} size={80} />
+              <div className="w-24 h-24 rounded-full flex-shrink-0 border-2 border-gold-light flex items-center justify-center"
+                style={{ background: 'rgba(196,160,106,0.15)' }}>
+                <span className="font-serif text-2xl text-gold-light">
+                  {provider.businessName.slice(0, 2).toUpperCase()}
+                </span>
+              </div>
             )}
 
-            {/* Centre */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <h1 className="font-serif text-4xl text-dark font-light leading-tight">
-                    {provider.businessName}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <ProviderTypeBadge type={provider.primaryType} size="sm" />
-                    {city && (
-                      <>
-                        <span className="text-muted text-xs">·</span>
-                        <span className="flex items-center gap-1 font-sans text-xs text-muted">
-                          <MapPin size={12} />
-                          {city}{state ? `, ${state}` : ''}
-                        </span>
-                      </>
-                    )}
-                    {provider.averageRating > 0 && (
-                      <>
-                        <span className="text-muted text-xs">·</span>
-                        <span className="flex items-center gap-1.5">
-                          <Star size={13} className="text-gold fill-gold" />
-                          <span className="font-sans text-xs text-dark">{provider.averageRating.toFixed(1)}</span>
-                          <span className="font-sans text-xs text-muted">
-                            ({provider.totalReviews})
-                          </span>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {provider.tagline && (
-                    <p className="font-sans text-sm text-muted italic mt-2">{provider.tagline}</p>
-                  )}
-                </div>
-
-                {/* Request CTA — top-right */}
-                <button
-                  onClick={() => isAuthenticated
-                    ? navigate('/create-request', { state: { providerId: id } })
-                    : navigate(`/login?redirect=/providers/${id}`)
-                  }
-                  className="flex-shrink-0 bg-gold text-dark font-sans text-xs tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none self-start"
-                >
-                  Request This Vendor
-                </button>
+            {/* Text */}
+            <div className="min-w-0">
+              <h1 className="font-serif text-4xl font-semibold text-white leading-tight">
+                {provider.businessName}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <ProviderTypeBadge type={provider.primaryType} size="xs" />
+                {city && (
+                  <span className="flex items-center gap-1 font-sans text-xs text-white/70">
+                    <span className="text-white/40">·</span>
+                    <MapPin size={11} />
+                    {city}{state ? `, ${state}` : ''}
+                  </span>
+                )}
+                {provider.averageRating > 0 && (
+                  <span className="flex items-center gap-1 font-sans text-xs text-white/70">
+                    <span className="text-white/40">·</span>
+                    <Star size={11} className="text-gold fill-gold" />
+                    {provider.averageRating.toFixed(1)}
+                    <span className="text-white/40">({provider.totalReviews})</span>
+                  </span>
+                )}
               </div>
-
-              {/* Languages */}
+              {provider.tagline && (
+                <p className="font-sans text-sm italic mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  {provider.tagline}
+                </p>
+              )}
               {provider.languages && provider.languages.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {provider.languages.map(lang => (
-                    <span key={lang} className="font-sans text-xs bg-bg border border-border rounded-full px-3 py-1 text-charcoal">
+                    <span
+                      key={lang}
+                      className="font-sans text-xs rounded-full px-3 py-1 border"
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(8px)',
+                        borderColor: 'rgba(255,255,255,0.2)',
+                        color: 'rgba(255,255,255,0.8)',
+                      }}
+                    >
                       {lang}
                     </span>
                   ))}
@@ -667,13 +660,24 @@ export default function ProviderProfile() {
               )}
             </div>
           </div>
+
+          {/* Request CTA */}
+          <button
+            onClick={() => isAuthenticated
+              ? navigate('/create-request', { state: { providerId: id } })
+              : navigate(`/login?redirect=/providers/${id}`)
+            }
+            className="flex-shrink-0 bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none self-end"
+          >
+            Request This Vendor
+          </button>
         </div>
       </div>
 
-      {/* ── SECTION 3: PACKAGES (bg-white) ───────────────────────────────────── */}
-      <section id="packages" className="bg-white py-16 px-6 md:px-12">
+      {/* ── SECTION 3: PACKAGES ─────────────────────────────────────────────── */}
+      <section id="packages" className="py-12 px-6 md:px-12">
         <div className="max-w-5xl mx-auto">
-          <p className="font-sans text-xs uppercase tracking-widest text-gold mb-3">
+          <p className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-3">
             Packages &amp; Pricing
           </p>
 
@@ -682,7 +686,7 @@ export default function ProviderProfile() {
           ) : (
             packageGroups.map(group => (
               <div key={group.category}>
-                <h3 className="font-serif text-2xl text-dark border-l-4 border-gold pl-4 mb-8 mt-12 first:mt-0">
+                <h3 className="font-serif text-xl text-dark border-b border-border pb-3 mb-6 mt-10 first:mt-0">
                   {group.category}
                 </h3>
                 {group.packages.map(pkg => (
@@ -699,10 +703,10 @@ export default function ProviderProfile() {
         </div>
       </section>
 
-      {/* ── SECTION 4: ABOUT (bg-bg) ──────────────────────────────────────────── */}
-      <section id="about" className="bg-bg py-16 px-6 md:px-12">
+      {/* ── SECTION 4: ABOUT ────────────────────────────────────────────────── */}
+      <section id="about" className="py-12 px-6 md:px-12">
         <div className="max-w-5xl mx-auto">
-          <p className="font-sans text-xs uppercase tracking-widest text-gold mb-6">About</p>
+          <p className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-6">About</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
 
@@ -710,7 +714,7 @@ export default function ProviderProfile() {
             <div className="md:col-span-2">
               {provider.businessDescription ? (
                 provider.businessDescription.split('\n\n').map((para, i) => (
-                  <p key={i} className="font-sans text-base text-charcoal leading-loose mb-4">{para}</p>
+                  <p key={i} className="font-sans text-sm text-muted leading-relaxed mb-4">{para}</p>
                 ))
               ) : (
                 <p className="font-sans text-muted text-sm">No description provided.</p>
@@ -718,16 +722,16 @@ export default function ProviderProfile() {
             </div>
 
             {/* Details card */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm p-6 self-start space-y-4">
+            <div className="bg-white border border-border rounded-md p-6 self-start space-y-4">
               {provider.serviceRadius != null && (
                 <div>
-                  <p className="font-sans text-xs uppercase tracking-widest text-muted mb-1">Service Radius</p>
-                  <p className="font-sans text-sm text-charcoal">{provider.serviceRadius} km</p>
+                  <p className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-1">Service Radius</p>
+                  <p className="font-sans text-sm font-medium text-dark">{provider.serviceRadius} km</p>
                 </div>
               )}
               {provider.languages && provider.languages.length > 0 && (
                 <div>
-                  <p className="font-sans text-xs uppercase tracking-widest text-muted mb-2">Languages</p>
+                  <p className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-2">Languages</p>
                   <div className="flex flex-wrap gap-2">
                     {provider.languages.map(lang => (
                       <span key={lang} className="font-sans text-xs border border-border rounded-full px-3 py-1 text-charcoal">
@@ -765,20 +769,20 @@ export default function ProviderProfile() {
         </div>
       </section>
 
-      {/* ── SECTION 5: REVIEWS (bg-white) ─────────────────────────────────────── */}
-      <section id="reviews" className="bg-white py-16 px-6 md:px-12">
+      {/* ── SECTION 5: REVIEWS ──────────────────────────────────────────────── */}
+      <section id="reviews" className="py-12 px-6 md:px-12 pb-24">
         <div className="max-w-5xl mx-auto">
-          <p className="font-sans text-xs uppercase tracking-widest text-gold mb-6">Reviews</p>
+          <p className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-6">Reviews</p>
 
           {/* Rating summary */}
           {provider.averageRating > 0 && (
-            <div className="flex items-center gap-6 mb-12">
-              <span className="font-serif text-7xl text-gold font-light leading-none">
+            <div className="flex items-center gap-4 mb-10">
+              <span className="font-serif text-6xl font-semibold text-dark leading-none">
                 {provider.averageRating.toFixed(1)}
               </span>
               <div>
                 <Stars rating={provider.averageRating} />
-                <p className="font-sans text-xs text-muted mt-2">
+                <p className="font-sans text-xs text-muted mt-1">
                   {provider.totalReviews} review{provider.totalReviews !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -788,16 +792,16 @@ export default function ProviderProfile() {
           {reviews.length === 0 ? (
             <p className="font-sans text-sm text-muted">No reviews yet.</p>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {reviews.map(review => {
                 const name = review.author
                   ? `${review.author.firstName ?? ''} ${review.author.lastName?.[0] ?? ''}.`.trim()
                   : 'Anonymous';
                 return (
-                  <div key={review.id} className="bg-bg rounded-2xl border border-border p-6">
+                  <div key={review.id} className="bg-white border border-border rounded-md p-6">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
-                        <p className="font-sans text-sm font-medium text-dark">{name}</p>
+                        <p className="font-sans text-sm font-bold text-dark">{name}</p>
                         <p className="font-sans text-xs text-muted mt-0.5">
                           {new Date(review.createdAt).toLocaleDateString('en-CA', {
                             year: 'numeric', month: 'long', day: 'numeric',
@@ -807,10 +811,10 @@ export default function ProviderProfile() {
                       <Stars rating={review.overallRating} />
                     </div>
                     {review.title && (
-                      <p className="font-sans text-sm font-medium text-dark mb-1">{review.title}</p>
+                      <p className="font-sans text-sm font-bold text-dark mb-2">{review.title}</p>
                     )}
                     {review.content && (
-                      <p className="font-sans text-sm text-charcoal leading-relaxed">{review.content}</p>
+                      <p className="font-sans text-sm text-muted leading-loose">{review.content}</p>
                     )}
                   </div>
                 );
