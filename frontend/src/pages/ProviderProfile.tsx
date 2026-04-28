@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, MapPin, Clock, Globe, Instagram, ChevronDown } from 'lucide-react';
+import { Star, MapPin, Globe, Instagram, ChevronDown, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
+import { eventRequestsApi } from '../utils/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL
@@ -144,7 +145,26 @@ interface EstimatorState {
   result: EstimateResult | null;
   isCalculating: boolean;
   error: string | null;
+  // request fields
+  eventType: string;
+  specialRequests: string;
+  isSending: boolean;
+  requestSent: boolean;
+  requestError: string | null;
 }
+
+const EVENT_TYPES = [
+  'WEDDING', 'CORPORATE', 'BIRTHDAY', 'ANNIVERSARY', 'GRADUATION',
+  'BABY_SHOWER', 'BRIDAL_SHOWER', 'HOLIDAY', 'COCKTAIL_PARTY',
+  'DINNER_PARTY', 'BRUNCH', 'OTHER',
+] as const;
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  WEDDING: 'Wedding', CORPORATE: 'Corporate', BIRTHDAY: 'Birthday',
+  ANNIVERSARY: 'Anniversary', GRADUATION: 'Graduation', BABY_SHOWER: 'Baby Shower',
+  BRIDAL_SHOWER: 'Bridal Shower', HOLIDAY: 'Holiday', COCKTAIL_PARTY: 'Cocktail Party',
+  DINNER_PARTY: 'Dinner Party', BRUNCH: 'Brunch', OTHER: 'Other',
+};
 
 const defaultEstimator = (): EstimatorState => ({
   isOpen: false,
@@ -155,15 +175,23 @@ const defaultEstimator = (): EstimatorState => ({
   result: null,
   isCalculating: false,
   error: null,
+  eventType: '',
+  specialRequests: '',
+  isSending: false,
+  requestSent: false,
+  requestError: null,
 });
 
 // ── Package card with inline estimator ───────────────────────────────────────
-function PackageCard({ pkg, isAuthenticated, providerId }: {
+function PackageCard({ pkg, isAuthenticated, providerId, providerName }: {
   pkg: Package;
   isAuthenticated: boolean;
   providerId: string;
+  providerName: string;
 }) {
   const navigate = useNavigate();
+  const { token, user } = useAuth();
+  const isClient = isAuthenticated && user?.role === 'CLIENT';
   const [est, setEst] = useState<EstimatorState>(defaultEstimator());
   const SHOWN_ITEMS = 4;
 
@@ -204,12 +232,35 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
     }
   };
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async () => {
     if (!isAuthenticated) {
       navigate(`/login?redirect=/providers/${providerId}`);
       return;
     }
-    navigate('/create-request', { state: { providerId, packageId: pkg.id } });
+    if (!token || !isClient) return;
+
+    updateEst({ isSending: true, requestError: null });
+    try {
+      const body: Record<string, unknown> = {
+        providerProfileId: providerId,
+        packageId: pkg.id,
+        ...(est.eventType     ? { eventType: est.eventType }              : {}),
+        ...(est.eventDate     ? { eventDate: est.eventDate }              : {}),
+        ...(est.guestCount    ? { guestCount: Number(est.guestCount) }    : {}),
+        ...(est.durationHours ? { durationHours: Number(est.durationHours) } : {}),
+        ...(est.selectedAddOnIds.length > 0 ? { selectedAddOnIds: est.selectedAddOnIds } : {}),
+        ...(est.specialRequests ? { specialRequests: est.specialRequests } : {}),
+      };
+      const res = await eventRequestsApi.create(body, token);
+      const data = res as { success: boolean; message?: string };
+      if (data.success) {
+        updateEst({ requestSent: true, isSending: false });
+      } else {
+        updateEst({ requestError: data.message ?? 'Failed to send request', isSending: false });
+      }
+    } catch {
+      updateEst({ requestError: 'Network error — please try again', isSending: false });
+    }
   };
 
   const priceLabel = () => {
@@ -369,6 +420,39 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
             </div>
           )}
 
+          {/* Event type + special requests — CLIENT only */}
+          {isClient && (
+            <div className="space-y-3">
+              <div>
+                <label className="block font-sans text-xs uppercase tracking-widest text-muted mb-2">
+                  Event Type
+                </label>
+                <select
+                  value={est.eventType}
+                  onChange={e => updateEst({ eventType: e.target.value })}
+                  className="w-full border border-border rounded-md px-3 py-2.5 text-sm text-dark font-sans focus:outline-none focus:border-gold transition-colors bg-white"
+                >
+                  <option value="">Select event type…</option>
+                  {EVENT_TYPES.map(t => (
+                    <option key={t} value={t}>{EVENT_TYPE_LABELS[t]}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-sans text-xs uppercase tracking-widest text-muted mb-2">
+                  Special Requests <span className="normal-case tracking-normal font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={est.specialRequests}
+                  onChange={e => updateEst({ specialRequests: e.target.value })}
+                  placeholder="Anything the vendor should know…"
+                  rows={3}
+                  className="w-full border border-border rounded-md px-3 py-2.5 text-sm text-dark font-sans focus:outline-none focus:border-gold transition-colors resize-none"
+                />
+              </div>
+            </div>
+          )}
+
           <button
             onClick={calculate}
             disabled={est.isCalculating}
@@ -419,23 +503,67 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
                 <span>{fmt(est.result.depositAmount)}</span>
               </div>
 
-              <button
-                onClick={handleSendRequest}
-                className="w-full mt-4 bg-gold text-dark font-sans text-xs tracking-widest uppercase py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"
-              >
-                Send Request
-              </button>
+              {est.requestSent ? (
+                <div className="mt-4 flex flex-col items-center gap-2 py-4 text-center">
+                  <CheckCircle size={32} strokeWidth={1.5} className="text-gold" />
+                  <p className="font-serif text-2xl text-dark">Request sent!</p>
+                  <p className="font-sans text-sm text-muted">
+                    We'll notify you when {providerName} responds.
+                  </p>
+                  <Link
+                    to="/dashboard"
+                    className="font-sans text-xs text-gold hover:text-gold-dark transition-colors font-semibold mt-1"
+                  >
+                    View your requests →
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {est.requestError && (
+                    <p className="font-sans text-xs text-red mt-3">{est.requestError}</p>
+                  )}
+                  <button
+                    onClick={handleSendRequest}
+                    disabled={est.isSending}
+                    className="w-full mt-4 bg-gold text-dark font-sans text-xs tracking-widest uppercase py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none disabled:opacity-50"
+                  >
+                    {est.isSending ? 'Sending…' : 'Send Request'}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
           {/* Send request even without estimate */}
           {!est.result && (
-            <button
-              onClick={handleSendRequest}
-              className="font-sans text-xs text-gold hover:text-gold-dark transition-colors focus:outline-none underline"
-            >
-              Skip estimate and send request →
-            </button>
+            est.requestSent ? (
+              <div className="flex flex-col items-center gap-2 py-4 text-center">
+                <CheckCircle size={32} strokeWidth={1.5} className="text-gold" />
+                <p className="font-serif text-2xl text-dark">Request sent!</p>
+                <p className="font-sans text-sm text-muted">
+                  We'll notify you when {providerName} responds.
+                </p>
+                <Link
+                  to="/dashboard"
+                  className="font-sans text-xs text-gold hover:text-gold-dark transition-colors font-semibold mt-1"
+                >
+                  View your requests →
+                </Link>
+              </div>
+            ) : (
+              <>
+                {est.requestError && (
+                  <p className="font-sans text-xs text-red">{est.requestError}</p>
+                )}
+                <button
+                  onClick={handleSendRequest}
+                  disabled={est.isSending}
+                  className="font-sans text-xs text-gold hover:text-gold-dark transition-colors focus:outline-none underline disabled:opacity-50"
+                >
+                  {est.isSending ? 'Sending…' : 'Skip estimate and send request →'}
+                </button>
+              </>
+            )
           )}
         </div>
       )}
@@ -697,6 +825,7 @@ export default function ProviderProfile() {
                     pkg={pkg}
                     isAuthenticated={isAuthenticated}
                     providerId={id!}
+                    providerName={provider.businessName}
                   />
                 ))}
               </div>
