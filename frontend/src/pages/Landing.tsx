@@ -78,10 +78,10 @@ const vendorSteps = [
 
 // ── Shared whileInView transition ─────────────────────────────────────────────
 const inView = {
-  initial: { opacity: 0, y: 32 },
+  initial: { opacity: 0, y: 40 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
-  transition: { duration: 0.6, ease: 'easeOut' },
+  viewport: { once: true, amount: 0.15 },
+  transition: { duration: 0.7, ease: 'easeOut' },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -108,9 +108,9 @@ export default function Landing() {
 
           {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
             className="font-serif font-light text-6xl md:text-8xl text-dark leading-none"
           >
             Every great event<br />starts here.
@@ -118,9 +118,9 @@ export default function Landing() {
 
           {/* Subheadline */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.35 }}
             className="font-sans text-base md:text-lg text-muted max-w-lg mx-auto mt-6 leading-relaxed"
           >
             Browse curated vendors, see real package pricing, and book with confidence — all in one place.
@@ -128,9 +128,9 @@ export default function Landing() {
 
           {/* CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.5 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.55 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
             <Link
@@ -194,7 +194,7 @@ export default function Landing() {
           </motion.p>
           <motion.h2
             {...inView}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
             className="font-serif text-4xl text-dark text-center mb-16"
           >
             A smarter way to plan
@@ -203,7 +203,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
             {/* 01 */}
-            <motion.div {...inView} transition={{ duration: 0.6, ease: 'easeOut', delay: 0 }}>
+            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0 }}>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 01
               </span>
@@ -215,7 +215,7 @@ export default function Landing() {
             </motion.div>
 
             {/* 02 */}
-            <motion.div {...inView} transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}>
+            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 02
               </span>
@@ -227,7 +227,7 @@ export default function Landing() {
             </motion.div>
 
             {/* 03 */}
-            <motion.div {...inView} transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}>
+            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 03
               </span>
@@ -255,7 +255,7 @@ export default function Landing() {
           </motion.p>
           <motion.h2
             {...inView}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
             className="font-serif text-4xl text-dark text-center mb-10"
           >
             Simple for everyone
@@ -317,7 +317,7 @@ export default function Landing() {
           </motion.p>
           <motion.h2
             {...inView}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
             className="font-serif text-4xl text-dark text-center mb-16"
           >
             Find the right vendor for your event
@@ -327,10 +327,10 @@ export default function Landing() {
             {vendorTypes.map((v, i) => (
               <motion.div
                 key={v.type}
-                initial={{ opacity: 0, y: 32 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.5, ease: 'easeOut', delay: Math.min(i, 4) * 0.07 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.7, ease: 'easeOut', delay: Math.min(i, 4) * 0.1 }}
               >
                 <Link
                   to={`/providers?type=${v.type}`}
@@ -351,10 +351,10 @@ export default function Landing() {
       {/* ── SECTION 5: VENDOR CTA BANNER ────────────────────────────────────── */}
       <section className="bg-dark py-20">
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
           className="text-center px-6"
         >
           <h2 className="font-serif text-4xl text-white">Are you a vendor?</h2>
