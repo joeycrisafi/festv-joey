@@ -229,13 +229,16 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
   }[pkg.pricingModel];
 
   return (
-    <div className="bg-bg rounded-2xl border border-border p-6 mb-4 hover:border-gold transition-colors duration-200">
+    <div className="bg-bg rounded-2xl border border-border shadow-sm p-6 mb-4 hover:shadow-md hover:border-gold transition-all duration-200">
 
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="flex-1 min-w-0">
           <h4 className="font-serif text-lg text-dark">{pkg.name}</h4>
-          <p className="font-serif text-2xl text-dark mt-1">{priceLabel()}</p>
+          <p className="font-serif text-4xl text-dark font-light mt-4 mb-2">{priceLabel()}</p>
+          {pkg.minimumSpend != null && pkg.minimumSpend > pkg.basePrice && (
+            <p className="font-sans text-xs text-muted">Minimum spend applies</p>
+          )}
         </div>
         <span className="font-sans text-xs text-muted border border-border rounded-full px-3 py-1 flex-shrink-0">
           {pricingBadgeLabel}
@@ -246,16 +249,16 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
         <p className="font-sans text-sm text-muted mt-3 leading-relaxed">{pkg.description}</p>
       )}
 
-      {/* Meta row */}
-      <div className="flex flex-wrap gap-4 mt-3">
+      {/* Meta row — pill chips */}
+      <div className="flex flex-wrap gap-2 mt-4">
         {pkg.durationHours != null && (
-          <span className="flex items-center gap-1 font-sans text-xs text-muted">
-            <Clock size={12} />
-            Includes {pkg.durationHours} hour{pkg.durationHours !== 1 ? 's' : ''}
+          <span className="inline-flex items-center gap-1 bg-white border border-border rounded-full px-3 py-1 font-sans text-xs text-charcoal">
+            <Clock size={11} />
+            {pkg.durationHours} hour{pkg.durationHours !== 1 ? 's' : ''}
           </span>
         )}
         {(pkg.minGuests != null || pkg.maxGuests != null) && (
-          <span className="font-sans text-xs text-muted">
+          <span className="inline-flex items-center gap-1 bg-white border border-border rounded-full px-3 py-1 font-sans text-xs text-charcoal">
             {pkg.minGuests ?? 1}–{pkg.maxGuests ?? '∞'} guests
           </span>
         )}
@@ -263,7 +266,7 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
 
       {/* Included chips */}
       {pkg.included?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-3">
           {pkg.included.slice(0, SHOWN_ITEMS).map((item, i) => (
             <span key={i} className="font-sans text-xs bg-white border border-border rounded-full px-3 py-1 text-charcoal">
               {item}
@@ -280,7 +283,7 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
       {/* Estimator toggle */}
       <button
         onClick={() => updateEst({ isOpen: !est.isOpen })}
-        className="mt-5 flex items-center gap-2 border border-gold text-gold font-sans text-xs tracking-widest uppercase px-5 py-2.5 hover:bg-gold/5 transition-colors duration-200 focus:outline-none"
+        className="mt-6 w-full sm:w-auto flex items-center justify-center gap-2 bg-gold text-dark font-sans text-xs tracking-widest uppercase px-6 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"
       >
         Get a Price Estimate
         <ChevronDown
@@ -581,7 +584,7 @@ export default function ProviderProfile() {
       <div ref={heroRef}>
         {/* Banner */}
         <div
-          className="h-64 w-full bg-gradient-to-br from-dark to-charcoal"
+          className="w-full h-56 bg-gradient-to-br from-dark via-charcoal to-dark"
           style={provider.user?.bannerUrl ? {
             backgroundImage: `url(${provider.user.bannerUrl})`,
             backgroundSize: 'cover',
@@ -589,8 +592,8 @@ export default function ProviderProfile() {
           } : undefined}
         />
 
-        {/* Profile card */}
-        <div className="mx-4 md:mx-8 -mt-12 relative z-10 bg-white rounded-2xl shadow-sm border border-border p-6 md:p-8">
+        {/* Profile card — floats over banner */}
+        <div className="mx-6 md:mx-12 -mt-16 relative z-10 bg-white rounded-2xl shadow-md border border-border p-8">
           <div className="flex flex-col md:flex-row gap-6">
 
             {/* Avatar */}
@@ -606,41 +609,47 @@ export default function ProviderProfile() {
 
             {/* Centre */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="font-serif text-3xl text-dark leading-tight">
+                  <h1 className="font-serif text-4xl text-dark font-light leading-tight">
                     {provider.businessName}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
                     <ProviderTypeBadge type={provider.primaryType} size="sm" />
-                    {provider.averageRating > 0 && (
-                      <span className="flex items-center gap-1.5">
-                        <Star size={14} className="text-gold fill-gold" />
-                        <span className="font-sans text-sm text-dark">{provider.averageRating.toFixed(1)}</span>
-                        <span className="font-sans text-xs text-muted">
-                          ({provider.totalReviews} review{provider.totalReviews !== 1 ? 's' : ''})
-                        </span>
-                      </span>
-                    )}
                     {city && (
-                      <span className="flex items-center gap-1 font-sans text-xs text-muted">
-                        <MapPin size={12} />
-                        {city}{state ? `, ${state}` : ''}
-                      </span>
+                      <>
+                        <span className="text-muted text-xs">·</span>
+                        <span className="flex items-center gap-1 font-sans text-xs text-muted">
+                          <MapPin size={12} />
+                          {city}{state ? `, ${state}` : ''}
+                        </span>
+                      </>
+                    )}
+                    {provider.averageRating > 0 && (
+                      <>
+                        <span className="text-muted text-xs">·</span>
+                        <span className="flex items-center gap-1.5">
+                          <Star size={13} className="text-gold fill-gold" />
+                          <span className="font-sans text-xs text-dark">{provider.averageRating.toFixed(1)}</span>
+                          <span className="font-sans text-xs text-muted">
+                            ({provider.totalReviews})
+                          </span>
+                        </span>
+                      </>
                     )}
                   </div>
                   {provider.tagline && (
-                    <p className="font-sans text-sm text-muted mt-2">{provider.tagline}</p>
+                    <p className="font-sans text-sm text-muted italic mt-2">{provider.tagline}</p>
                   )}
                 </div>
 
-                {/* Request CTA */}
+                {/* Request CTA — top-right */}
                 <button
                   onClick={() => isAuthenticated
                     ? navigate('/create-request', { state: { providerId: id } })
                     : navigate(`/login?redirect=/providers/${id}`)
                   }
-                  className="flex-shrink-0 bg-gold text-dark font-sans text-xs tracking-widest uppercase px-6 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none self-start"
+                  className="flex-shrink-0 bg-gold text-dark font-sans text-xs tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none self-start"
                 >
                   Request This Vendor
                 </button>
@@ -650,7 +659,7 @@ export default function ProviderProfile() {
               {provider.languages && provider.languages.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {provider.languages.map(lang => (
-                    <span key={lang} className="font-sans text-xs border border-border rounded-full px-3 py-1 text-charcoal">
+                    <span key={lang} className="font-sans text-xs bg-bg border border-border rounded-full px-3 py-1 text-charcoal">
                       {lang}
                     </span>
                   ))}
@@ -661,20 +670,19 @@ export default function ProviderProfile() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-8 pb-24 mt-12 space-y-20">
-
-        {/* ── SECTION 3: PACKAGES ───────────────────────────────────────────── */}
-        <section id="packages">
+      {/* ── SECTION 3: PACKAGES (bg-white) ───────────────────────────────────── */}
+      <section id="packages" className="bg-white py-16 px-6 md:px-12">
+        <div className="max-w-5xl mx-auto">
           <p className="font-sans text-xs uppercase tracking-widest text-gold mb-3">
             Packages &amp; Pricing
           </p>
 
           {packageGroups.length === 0 ? (
-            <p className="font-sans text-sm text-muted">No packages listed yet.</p>
+            <p className="font-sans text-sm text-muted mt-4">No packages listed yet.</p>
           ) : (
             packageGroups.map(group => (
-              <div key={group.category} className="mb-10">
-                <h3 className="font-serif text-xl text-dark border-b border-border pb-2 mb-6">
+              <div key={group.category}>
+                <h3 className="font-serif text-2xl text-dark border-l-4 border-gold pl-4 mb-8 mt-12 first:mt-0">
                   {group.category}
                 </h3>
                 {group.packages.map(pkg => (
@@ -688,10 +696,12 @@ export default function ProviderProfile() {
               </div>
             ))
           )}
-        </section>
+        </div>
+      </section>
 
-        {/* ── SECTION 4: ABOUT ──────────────────────────────────────────────── */}
-        <section id="about">
+      {/* ── SECTION 4: ABOUT (bg-bg) ──────────────────────────────────────────── */}
+      <section id="about" className="bg-bg py-16 px-6 md:px-12">
+        <div className="max-w-5xl mx-auto">
           <p className="font-sans text-xs uppercase tracking-widest text-gold mb-6">About</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -700,7 +710,7 @@ export default function ProviderProfile() {
             <div className="md:col-span-2">
               {provider.businessDescription ? (
                 provider.businessDescription.split('\n\n').map((para, i) => (
-                  <p key={i} className="font-sans text-charcoal leading-relaxed mb-4">{para}</p>
+                  <p key={i} className="font-sans text-base text-charcoal leading-loose mb-4">{para}</p>
                 ))
               ) : (
                 <p className="font-sans text-muted text-sm">No description provided.</p>
@@ -708,7 +718,7 @@ export default function ProviderProfile() {
             </div>
 
             {/* Details card */}
-            <div className="bg-bg rounded-2xl border border-border p-6 self-start space-y-4">
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-6 self-start space-y-4">
               {provider.serviceRadius != null && (
                 <div>
                   <p className="font-sans text-xs uppercase tracking-widest text-muted mb-1">Service Radius</p>
@@ -752,21 +762,23 @@ export default function ProviderProfile() {
             </div>
 
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── SECTION 5: REVIEWS ────────────────────────────────────────────── */}
-        <section id="reviews">
+      {/* ── SECTION 5: REVIEWS (bg-white) ─────────────────────────────────────── */}
+      <section id="reviews" className="bg-white py-16 px-6 md:px-12">
+        <div className="max-w-5xl mx-auto">
           <p className="font-sans text-xs uppercase tracking-widest text-gold mb-6">Reviews</p>
 
           {/* Rating summary */}
           {provider.averageRating > 0 && (
-            <div className="flex items-center gap-4 mb-10">
-              <span className="font-serif text-5xl text-gold">
+            <div className="flex items-center gap-6 mb-12">
+              <span className="font-serif text-7xl text-gold font-light leading-none">
                 {provider.averageRating.toFixed(1)}
               </span>
               <div>
                 <Stars rating={provider.averageRating} />
-                <p className="font-sans text-xs text-muted mt-1">
+                <p className="font-sans text-xs text-muted mt-2">
                   {provider.totalReviews} review{provider.totalReviews !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -782,7 +794,7 @@ export default function ProviderProfile() {
                   ? `${review.author.firstName ?? ''} ${review.author.lastName?.[0] ?? ''}.`.trim()
                   : 'Anonymous';
                 return (
-                  <div key={review.id} className="bg-white rounded-2xl border border-border p-6">
+                  <div key={review.id} className="bg-bg rounded-2xl border border-border p-6">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
                         <p className="font-sans text-sm font-medium text-dark">{name}</p>
@@ -805,9 +817,9 @@ export default function ProviderProfile() {
               })}
             </div>
           )}
-        </section>
+        </div>
+      </section>
 
-      </div>
     </div>
   );
 }
