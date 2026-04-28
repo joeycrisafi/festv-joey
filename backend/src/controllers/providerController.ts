@@ -304,7 +304,7 @@ export const searchProviders = asyncHandler(async (req: AuthenticatedRequest, re
 
   // ── Step 1: Base filter ───────────────────────────────────────────────────
   const where: any = {
-    // verificationStatus: 'VERIFIED',  // TODO: uncomment before launch
+    verificationStatus: 'VERIFIED',
     packages: { some: packageFilter },
     OR: [
       { primaryType:    type },
