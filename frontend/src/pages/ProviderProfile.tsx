@@ -124,7 +124,9 @@ interface Review {
 }
 
 interface EstimateResult {
-  basePrice: number;
+  appliedPrice?: number;
+  packagePrice?: number;
+  basePrice?: number;
   addOnTotal: number;
   subtotal: number;
   tax: number;
@@ -392,7 +394,7 @@ function PackageCard({ pkg, isAuthenticated, providerId }: {
               )}
               <div className="flex justify-between font-sans text-sm">
                 <span className="text-muted">Package price</span>
-                <span className="text-dark">{fmt(est.result.basePrice)}</span>
+                <span className="text-dark">{fmt(est.result.appliedPrice ?? est.result.packagePrice ?? est.result.basePrice ?? 0)}</span>
               </div>
               {est.result.addOnTotal > 0 && (
                 <div className="flex justify-between font-sans text-sm">
