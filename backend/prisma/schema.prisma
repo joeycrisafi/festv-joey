@@ -266,6 +266,7 @@ enum PricingModel {
   PER_PERSON
   FLAT_RATE
   PER_HOUR
+  FLAT_PLUS_PER_PERSON
 }
 
 enum AddOnPricingType {
@@ -305,6 +306,7 @@ model Package {
   minGuests         Int?
   maxGuests         Int?
   durationHours     Float?
+  flatFee           Float?               // flat room/base fee for FLAT_PLUS_PER_PERSON
   weekdayPrice      Float?
   weekendPrice      Float?
   included          String[]

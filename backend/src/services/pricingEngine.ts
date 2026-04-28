@@ -254,6 +254,10 @@ export async function calculatePackagePrice(input: {
     case PricingModel.PER_HOUR:
       packagePrice = r2(basePrice * effectiveDuration);
       break;
+    case PricingModel.FLAT_PLUS_PER_PERSON:
+      // flatFee = room/base charge; basePrice = per-person food & beverage rate
+      packagePrice = r2((pkg.flatFee ?? 0) + (basePrice * guestCount));
+      break;
     default:
       packagePrice = r2(basePrice);
   }

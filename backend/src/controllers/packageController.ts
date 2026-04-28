@@ -76,7 +76,7 @@ export const createPackage = asyncHandler(async (req: AuthenticatedRequest, res:
 
   const {
     name, description, category, eventTypes = [],
-    pricingModel, basePrice, minimumSpend,
+    pricingModel, basePrice, flatFee, minimumSpend,
     minGuests, maxGuests, durationHours,
     weekdayPrice, weekendPrice, included = [], sortOrder,
   } = req.body;
@@ -99,6 +99,7 @@ export const createPackage = asyncHandler(async (req: AuthenticatedRequest, res:
       eventTypes:        Array.isArray(eventTypes) ? eventTypes : [],
       pricingModel:      pricingModel as PricingModel,
       basePrice:         parseFloat(basePrice),
+      flatFee:           flatFee != null ? parseFloat(flatFee) : undefined,
       minimumSpend:      minimumSpend != null ? parseFloat(minimumSpend) : undefined,
       minGuests:         minGuests != null ? parseInt(minGuests) : undefined,
       maxGuests:         maxGuests != null ? parseInt(maxGuests) : undefined,
@@ -165,7 +166,7 @@ export const updatePackage = asyncHandler(async (req: AuthenticatedRequest, res:
 
   const {
     name, description, category, eventTypes,
-    pricingModel, basePrice, minimumSpend,
+    pricingModel, basePrice, flatFee, minimumSpend,
     minGuests, maxGuests, durationHours,
     weekdayPrice, weekendPrice, included, sortOrder, isActive,
   } = req.body;
@@ -181,6 +182,7 @@ export const updatePackage = asyncHandler(async (req: AuthenticatedRequest, res:
   if (eventTypes  != null) data.eventTypes   = Array.isArray(eventTypes) ? eventTypes : [];
   if (pricingModel!= null) data.pricingModel = pricingModel as PricingModel;
   if (basePrice   != null) data.basePrice    = parseFloat(basePrice);
+  if (flatFee     != null) data.flatFee      = parseFloat(flatFee);
   if (minimumSpend!= null) data.minimumSpend = parseFloat(minimumSpend);
   if (minGuests   != null) data.minGuests    = parseInt(minGuests);
   if (maxGuests   != null) data.maxGuests    = parseInt(maxGuests);

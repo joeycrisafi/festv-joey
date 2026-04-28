@@ -169,8 +169,9 @@ interface PackageDraft {
   _id: string;
   name: string;
   category: string;
-  pricingModel: 'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR';
+  pricingModel: 'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR' | 'FLAT_PLUS_PER_PERSON';
   basePrice: string;
+  flatFee: string;
   minimumSpend: string;
   minGuests: string;
   maxGuests: string;
@@ -244,8 +245,9 @@ function generatePackages(primaryType: string, selectedEventTypes: string[]): Pa
     _id: uid(),
     name: t.name,
     category: t.category,
-    pricingModel: t.pricingModel as 'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR',
+    pricingModel: t.pricingModel as 'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR' | 'FLAT_PLUS_PER_PERSON',
     basePrice: '',
+    flatFee: '',
     minimumSpend: t.minimumSpend !== undefined ? String(t.minimumSpend) : '',
     minGuests: t.minGuests !== undefined ? String(t.minGuests) : '',
     maxGuests: t.maxGuests !== undefined ? String(t.maxGuests) : '',
@@ -778,11 +780,12 @@ function PackageCard({
   newItemInput: string;
   onNewItemInputChange: (v: string) => void;
 }) {
-  const pricingModels: Array<'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR'> = ['PER_PERSON', 'FLAT_RATE', 'PER_HOUR'];
+  const pricingModels: Array<'PER_PERSON' | 'FLAT_RATE' | 'PER_HOUR' | 'FLAT_PLUS_PER_PERSON'> = ['PER_PERSON', 'FLAT_RATE', 'PER_HOUR', 'FLAT_PLUS_PER_PERSON'];
   const pricingLabel: Record<string, string> = {
-    PER_PERSON: 'Per Person',
-    FLAT_RATE: 'Flat Rate',
-    PER_HOUR: 'Per Hour',
+    PER_PERSON:           'Per Person',
+    FLAT_RATE:            'Flat Rate',
+    PER_HOUR:             'Per Hour',
+    FLAT_PLUS_PER_PERSON: 'Flat + Per Person',
   };
 
   const addItem = () => {
@@ -859,30 +862,72 @@ function PackageCard({
         </div>
 
         {/* Prices */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Base Price (CAD $)</label>
-            <input
-              type="number"
-              min="0"
-              className={inputCls}
-              placeholder="0"
-              value={pkg.basePrice}
-              onChange={e => onPatch({ basePrice: e.target.value })}
-            />
+        {pkg.pricingModel === 'FLAT_PLUS_PER_PERSON' ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Flat room fee (CAD $)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className={inputCls}
+                  placeholder="e.g. 2000"
+                  value={pkg.flatFee}
+                  onChange={e => onPatch({ flatFee: e.target.value })}
+                />
+                <p className="font-sans text-xs text-muted mt-1">Room or venue rental charge</p>
+              </div>
+              <div>
+                <label className={labelCls}>Per person rate (CAD $)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className={inputCls}
+                  placeholder="e.g. 85"
+                  value={pkg.basePrice}
+                  onChange={e => onPatch({ basePrice: e.target.value })}
+                />
+                <p className="font-sans text-xs text-muted mt-1">Food & beverage per guest</p>
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Min spend (CAD $)</label>
+              <input
+                type="number"
+                min="0"
+                className={inputCls}
+                placeholder="Optional"
+                value={pkg.minimumSpend}
+                onChange={e => onPatch({ minimumSpend: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <label className={labelCls}>Min Spend (CAD $)</label>
-            <input
-              type="number"
-              min="0"
-              className={inputCls}
-              placeholder="Optional"
-              value={pkg.minimumSpend}
-              onChange={e => onPatch({ minimumSpend: e.target.value })}
-            />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Base Price (CAD $)</label>
+              <input
+                type="number"
+                min="0"
+                className={inputCls}
+                placeholder="0"
+                value={pkg.basePrice}
+                onChange={e => onPatch({ basePrice: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Min Spend (CAD $)</label>
+              <input
+                type="number"
+                min="0"
+                className={inputCls}
+                placeholder="Optional"
+                value={pkg.minimumSpend}
+                onChange={e => onPatch({ minimumSpend: e.target.value })}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Guest counts */}
         <div className="grid grid-cols-3 gap-3">
@@ -1176,8 +1221,12 @@ export default function VendorSetup() {
     setStepError('');
     if (!state.businessName || !state.city) return setStepError('Complete your business profile first');
     if (state.packages.length === 0) return setStepError('Add at least one package');
-    const zeroPrices = state.packages.filter(p => !p.basePrice || Number(p.basePrice) === 0);
-    if (zeroPrices.length > 0) return setStepError('Set a base price on all packages before submitting');
+    const zeroPrices = state.packages.filter(p =>
+      p.pricingModel === 'FLAT_PLUS_PER_PERSON'
+        ? (!p.flatFee || Number(p.flatFee) === 0) && (!p.basePrice || Number(p.basePrice) === 0)
+        : !p.basePrice || Number(p.basePrice) === 0
+    );
+    if (zeroPrices.length > 0) return setStepError('Set a price on all packages before submitting');
 
     setIsSubmitting(true);
     try {
@@ -1205,6 +1254,7 @@ export default function VendorSetup() {
           body: JSON.stringify({
             name: pkg.name, category: pkg.category, pricingModel: pkg.pricingModel,
             basePrice: Number(pkg.basePrice) || 0,
+            flatFee: pkg.flatFee ? Number(pkg.flatFee) : undefined,
             minimumSpend: pkg.minimumSpend ? Number(pkg.minimumSpend) : undefined,
             minGuests: pkg.minGuests ? Number(pkg.minGuests) : undefined,
             maxGuests: pkg.maxGuests ? Number(pkg.maxGuests) : undefined,
@@ -1648,6 +1698,7 @@ export default function VendorSetup() {
         category: 'General',
         pricingModel: 'FLAT_RATE',
         basePrice: '',
+        flatFee: '',
         minimumSpend: '',
         minGuests: '',
         maxGuests: '',
