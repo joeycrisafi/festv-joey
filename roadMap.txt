@@ -37,6 +37,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] make menu items selectable in planner request flow
 	-[ ] mobile responsiveness pass on all pages
 	-[x] flip vendor search to VERIFIED only before launch — searchProviders now filters verificationStatus=VERIFIED + requires active Package (commit 4c36388)
+	-[x] Framer Motion animations on Landing.tsx — hero animate-on-mount, all scroll sections whileInView, luxury feel (breathing not performing)
 
 
 ## Completed
@@ -95,6 +96,11 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] 20260423_z_ensure_notification_type migration — ensures NotificationType enum exists before 20260424 ALTER TYPE runs; fixes "type notificationtype does not exist" error on fresh DBs
 	-[x] /audit slash command — production health check: DB columns, stuck migrations, NotificationType enum, 4 API endpoints, migration drift, env var presence (Claude Code CLI only)
 	-[x] /start, /end-session, /debug slash commands — session workflow commands (Claude Code CLI only)
+	-[x] Event model added to backend — EventStatus enum, Event table, optional eventId FK on EventRequest (SET NULL), createEvent/getMyEvents/getEventById/updateEvent controllers, /events routes mounted (commit 0284866)
+	-[x] Event planning flow built in React — CreateEvent page (/events/new), EventDetail page (/events/:id), ClientDashboard My Events section, BrowseProviders eventId context banner, ProviderProfile eventId passthrough to event-requests, Landing CTAs updated (commit f593995)
+	-[x] Landing.tsx Framer Motion animations strengthened — hero y:40/0.8s, sections whileInView y:40/0.7s, amount:0.15, stagger 0.1 per card (commit 9378546)
+	-[x] 4 test vendor packages created on production (festv.org) — JJ Tavern (RESTO_VENUE), Lens & Light Studio (PHOTO_VIDEO), Montreal Beats DJ (ENTERTAINMENT), Florals by Sophie (FLORIST_DECOR), each with 2–3 packages
+	-[x] 4 test vendor profiles verified (verificationStatus=VERIFIED) via admin API — all 4 appear in /providers search
 	-[x] Test-account picker on signin.html — 5 dev accounts (🎉 planner, 📷 photographer, 🍽️ caterer, 🍸 bartender, 🎧 DJ), shared password Test1234!, autofills email + password on click
 	-[x] Backend seeder seedTestAccounts.ts — idempotent, refreshes password + ACTIVE status on every run
 	-[x] POST /api/v1/auth/seed-test-accounts endpoint — gated by ENABLE_TEST_ACCOUNTS=true; returns 404 in prod
