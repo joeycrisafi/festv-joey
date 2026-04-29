@@ -21,6 +21,7 @@ import { Response } from 'express';
 import prisma from '../config/database.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
+import { sendDepositConfirmed } from '../services/emailService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -195,6 +196,15 @@ export const markDepositPaid = asyncHandler(async (req: AuthenticatedRequest, re
     `Your deposit of ${usd(booking.depositAmount)} has been confirmed by ${profile.businessName}. Your booking is confirmed!`,
     { bookingId: booking.id },
   );
+
+  // Fire-and-forget deposit confirmation email to client
+  sendDepositConfirmed(
+    booking.client.email,
+    `${booking.client.firstName} ${booking.client.lastName}`.trim(),
+    profile.businessName,
+    booking.eventType,
+    booking.eventDate,
+  ).catch(() => {});
 
   res.json({ success: true, data: booking });
 });

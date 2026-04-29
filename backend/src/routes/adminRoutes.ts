@@ -3,6 +3,7 @@ import { Router, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { eventNotifier, ALL_MODELS } from '../services/eventNotifier.js';
+import { sendVendorApproved, sendVendorRejected } from '../services/emailService.js';
 
 const router = Router();
 
@@ -241,10 +242,13 @@ router.post('/providers/:id/verify', async (req: AuthenticatedRequest, res: Resp
 
     console.log(`✅ Provider verified: ${provider.businessName} (${provider.user.email})`);
 
-    res.json({ 
-      success: true, 
+    // Fire-and-forget approval email
+    sendVendorApproved(provider.user.email, provider.businessName).catch(() => {});
+
+    res.json({
+      success: true,
       data: provider,
-      message: 'Provider verified successfully' 
+      message: 'Provider verified successfully'
     });
   } catch (err: any) {
     console.error('Error verifying provider:', err);
@@ -287,6 +291,9 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
 
     console.log(`❌ Provider rejected: ${provider.businessName} (${provider.user.email})`);
     console.log(`   Reason: ${reason}`);
+
+    // Fire-and-forget rejection email
+    sendVendorRejected(provider.user.email, provider.businessName, reason.trim()).catch(() => {});
 
     res.json({
       success: true,

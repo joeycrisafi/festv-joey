@@ -20,6 +20,7 @@ import prisma from '../config/database.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { calculatePackagePrice } from '../services/pricingEngine.js';
+import { sendQuoteReceived, sendBookingConfirmed } from '../services/emailService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -182,7 +183,7 @@ export const autoGenerateQuote = asyncHandler(async (req: AuthenticatedRequest, 
     data:  { status: 'QUOTE_SENT' },
   });
 
-  // Notify client
+  // Notify client (in-app)
   const dateLabel = request.eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   await notify(
     request.client.id,
@@ -191,6 +192,22 @@ export const autoGenerateQuote = asyncHandler(async (req: AuthenticatedRequest, 
     `${profile.businessName} sent you a quote for ${request.eventType.toLowerCase().replace(/_/g, ' ')} on ${dateLabel} — $${result.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
     { quoteId: quote.id, eventRequestId: request.id },
   );
+
+  // Fire-and-forget email to client
+  prisma.user.findUnique({ where: { id: request.client.id }, select: { email: true } })
+    .then((u) => {
+      if (u) {
+        sendQuoteReceived(
+          u.email,
+          `${request.client.firstName} ${request.client.lastName}`.trim(),
+          profile.businessName,
+          request.eventType,
+          result.total,
+          expiresAt,
+        ).catch(() => {});
+      }
+    })
+    .catch(() => {});
 
   res.status(201).json({ success: true, data: quote });
 });
@@ -280,6 +297,22 @@ export const createManualQuote = asyncHandler(async (req: AuthenticatedRequest, 
     `${profile.businessName} sent you a quote for ${request.eventType.toLowerCase().replace(/_/g, ' ')} on ${dateLabel} — $${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
     { quoteId: quote.id, eventRequestId: request.id },
   );
+
+  // Fire-and-forget email to client
+  prisma.user.findUnique({ where: { id: request.client.id }, select: { email: true } })
+    .then((u) => {
+      if (u) {
+        sendQuoteReceived(
+          u.email,
+          `${request.client.firstName} ${request.client.lastName}`.trim(),
+          profile.businessName,
+          request.eventType,
+          total,
+          expiresAt,
+        ).catch(() => {});
+      }
+    })
+    .catch(() => {});
 
   res.status(201).json({ success: true, data: quote });
 });
@@ -453,7 +486,7 @@ export const acceptQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
     return [q, b];
   });
 
-  // Notify vendor
+  // Notify vendor (in-app)
   const client     = quote.eventRequest.client;
   const clientName = `${client.firstName} ${client.lastName}`.trim();
   const dep        = `$${quote.depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
@@ -465,6 +498,22 @@ export const acceptQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
     `${clientName} accepted your quote — deposit of ${dep} is pending`,
     { quoteId: quote.id, bookingId: booking.id },
   );
+
+  // Fire-and-forget booking confirmation email to client
+  prisma.user.findUnique({ where: { id: quote.eventRequest.clientId }, select: { email: true } })
+    .then((u) => {
+      if (u) {
+        sendBookingConfirmed(
+          u.email,
+          clientName,
+          quote.providerProfile!.businessName,
+          quote.eventRequest.eventType,
+          quote.eventDate,
+          quote.depositAmount,
+        ).catch(() => {});
+      }
+    })
+    .catch(() => {});
 
   res.json({ success: true, data: { quote: updatedQuote, booking } });
 });
@@ -584,6 +633,22 @@ export const reviseQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
     `${profile.businessName} sent you a revised quote (v${newQuote.version}) for ${newQuote.eventRequest.eventType.toLowerCase().replace(/_/g, ' ')} on ${dateLabel} — $${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
     { quoteId: newQuote.id, eventRequestId: original.eventRequestId },
   );
+
+  // Fire-and-forget email to client
+  prisma.user.findUnique({ where: { id: newQuote.eventRequest.client.id }, select: { email: true } })
+    .then((u) => {
+      if (u) {
+        sendQuoteReceived(
+          u.email,
+          `${newQuote.eventRequest.client.firstName} ${newQuote.eventRequest.client.lastName}`.trim(),
+          profile.businessName,
+          newQuote.eventRequest.eventType,
+          total,
+          expiresAt,
+        ).catch(() => {});
+      }
+    })
+    .catch(() => {});
 
   res.status(201).json({ success: true, data: newQuote });
 });

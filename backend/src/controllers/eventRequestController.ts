@@ -19,6 +19,7 @@ import prisma from '../config/database.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { calculatePackagePrice } from '../services/pricingEngine.js';
+import { sendNewRequest } from '../services/emailService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -96,8 +97,11 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
   const parsedDate = new Date(eventDate);
   if (isNaN(parsedDate.getTime())) throw new AppError('Invalid eventDate', 400);
 
-  // Confirm the target provider exists
-  const vendor = await prisma.providerProfile.findUnique({ where: { id: providerProfileId } });
+  // Confirm the target provider exists (include email for notification)
+  const vendor = await prisma.providerProfile.findUnique({
+    where:   { id: providerProfileId },
+    include: { user: { select: { email: true } } },
+  });
   if (!vendor) throw new NotFoundError('Provider profile');
 
   // Run pricing engine if a package was selected
@@ -154,6 +158,16 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
       data:    { eventRequestId: request.id },
     },
   });
+
+  // Fire-and-forget email to vendor
+  sendNewRequest(
+    vendor.user.email,
+    vendor.businessName,
+    clientName,
+    eventType,
+    parsedDate,
+    calculatedEstimate,
+  ).catch(() => {});
 
   res.status(201).json({ success: true, data: request });
 });
