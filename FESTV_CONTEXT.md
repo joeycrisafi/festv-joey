@@ -381,6 +381,9 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - Client Dashboard — My Events section (event cards with vendor booked count), quick actions, Plan a New Event CTA
 - CreateEvent — name/type/date/guests/notes form + vendor-type multi-select grid; POSTs to /events, saves vendor types to localStorage, navigates to EventDetail
 - EventDetail — event header with status badge, VendorRow components per vendor type (Browse CTA or request status + quote/booking links), total estimate, notes
+- QuoteDetail (`/quotes/:id`) — full quote breakdown, line items, accept/decline actions
+- BookingDetail (`/bookings/:id`) — booking summary, status, deposit info, vendor + client details
+- AdminProviderVerification (`/admin/providers`) — admin-gated, pending provider list, approve/reject with reason
 
 ### ✅ Backend Working
 - Full package pricing engine with seasonal + DOW rules
@@ -394,12 +397,9 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 
 ### 🟡 React Pages Partially Built / Scaffolded
 - EventRequestDetail — scaffolded
-- BookingDetail — scaffolded
-- AdminProviderVerification — scaffolded
 
 ### ❌ Not Yet Built (React)
-- Admin approval flow UI (backend routes exist: POST /admin/providers/:id/verify and /reject)
-- Quote detail page
+- EventRequestDetail — needs full wiring to new schema
 
 ### ❌ Not Started (Backend/Infra)
 - Stripe deposit payment
