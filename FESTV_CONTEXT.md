@@ -65,7 +65,8 @@ frontend/src/
 ├── components/
 │   ├── Layout.tsx           ← Nav shell (FESTV branded, dark footer)
 │   ├── ProviderTypeBadge.tsx ← Vendor type badge (5 canonical types, FESTV colors)
-│   └── ImageUpload.tsx      ← Reusable image uploader (full zone + compact pill mode; posts to /upload/logo|banner|package-image)
+│   ├── ImageUpload.tsx      ← Reusable image uploader (full zone + compact pill mode; posts to /upload/logo|banner|package-image)
+│   └── JessWidget.tsx       ← Floating chat widget (bottom-right); tool-use powered booking assistant
 ├── pages/
 │   ├── Landing.tsx          ← ✅ Built — hero, why FESTV, how it works, vendor types + Framer Motion animations
 │   ├── BrowseProviders.tsx  ← ✅ Built — filter sidebar + vendor cards grid; reads ?eventId= param, shows context banner
@@ -232,6 +233,37 @@ fontFamily: { sans: ['Montserrat'], serif: ['Cormorant Garamond'] }
 
 ---
 
+## Jess — Conversational Booking Assistant
+
+Jess is a floating chat widget (bottom-right on every page) powered by `claude-haiku-4-5`.
+
+### Architecture
+- **Frontend**: `frontend/src/components/JessWidget.tsx` — sends `{ messages: [{role, content}...], pageContext }` to `POST /api/v1/jess/chat`
+- **Backend**: `backend/src/controllers/jessController.ts` — builds system prompt + user context, runs tool-use loop (max 5 rounds), returns `{ message, links: [{label, href}] }`
+- **Auth**: token passed as `Authorization: Bearer` header — Jess can act as the signed-in user
+
+### Tools (server-side, transparent to user)
+| Tool | What it does |
+|------|-------------|
+| `search_vendors` | Prisma query on verified providers, returns up to 5 with packages + prices + profile URLs |
+| `get_price_estimate` | Calls `calculatePackagePrice()` directly — full breakdown inc. seasonal/DOW rules, tax, deposit |
+| `create_event_request` | Creates EventRequest row, fires in-app notification + Resend email to vendor |
+| `create_event` | Creates Event row, returns `/events/:id` URL |
+
+### Response format (backend → frontend)
+```json
+{ "success": true, "data": { "message": "Jess's reply", "links": [{"label": "View Dashboard", "href": "/dashboard"}] } }
+```
+Links render as gold pill buttons below the message bubble. Internal paths (`/`) navigate via React Router and close the widget; external URLs open in a new tab.
+
+### Key behaviour rules
+- Tool calls are silent — Jess never says "let me search" or "calling tool"
+- First `user` message in the array must be first (leading WELCOME bubble is stripped before API call)
+- `create_event_request` also fires `sendNewRequest` Resend email (same as regular controller)
+- Unauthenticated users get a sign-in prompt if they try to book
+
+---
+
 ## Vendor Setup Wizard (`/vendor/setup`) — 6 Steps
 
 The most important vendor-facing page. Guided, no blank screens, auto-saves to localStorage.
@@ -358,6 +390,7 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - verificationStatus filter re-enabled in search (VERIFIED only — commit 4c36388)
 - Cloudinary image uploads — logo, banner, package-image endpoints (`/upload/*`); `backend/src/middleware/upload.ts` + `uploadController.ts`
 - Transactional emails via Resend — `backend/src/services/emailService.ts`; 6 fire-and-forget functions wired into adminRoutes, eventRequestController, quoteController, bookingController
+- Jess conversational booking — `jessController.ts` has 4 Claude tool-use tools (search_vendors, get_price_estimate, create_event_request, create_event); tool loop runs server-side, Jess responds naturally
 
 ### 🟡 React Pages Partially Built / Scaffolded
 - EventRequestDetail — scaffolded
@@ -367,7 +400,6 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 ### ❌ Not Yet Built (React)
 - Admin approval flow UI (backend routes exist: POST /admin/providers/:id/verify and /reject)
 - Quote detail page
-- Jess AI widget (React component — backend route still works)
 
 ### ❌ Not Started (Backend/Infra)
 - Stripe deposit payment
@@ -405,6 +437,10 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 23. **`ImageUpload` component has a `compact` prop** — `compact={true}` renders a small backdrop-blur pill button (no upload zone, no preview). Used for inline hero edits (e.g. "Edit Cover Photo" on ProviderProfile). Default is full drag-and-drop zone.
 24. **Fire-and-forget email pattern** — all `emailService.ts` functions log on failure but never throw. Call as `sendXxx(...).catch(() => {})` and do NOT await. Email failure must never break an API response.
 25. **Email vendor lookup in `createEventRequest`** — the vendor `providerProfile.findUnique` now includes `{ user: { select: { email: true } } }` so the vendor's email is available for `sendNewRequest`. Client email lookups in quoteController use a separate `prisma.user.findUnique` inside a `.then()` chain to stay fire-and-forget.
+26. **Jess message format** — frontend sends `{ messages: [{role, content}...] }` NOT `{ message, conversationHistory }`. Backend returns `{ success, data: { message, links } }`. Read `data.data.message` and `data.data.links`.
+27. **Jess strips leading assistant messages** — the WELCOME bubble is role `assistant`. Before sending to Anthropic, the array is sliced from the first `user` message (`firstUserIdx`). Anthropic requires the first message to be `user`.
+28. **Jess tool loop max 5 rounds** — prevents runaway. Each round: call Anthropic → if `stop_reason === 'tool_use'`, execute all tool blocks in parallel → append `[assistant(tool_use), user(tool_results)]` → repeat. Final text block extracted from last response.
+29. **`pageContext` in Jess calls** — frontend sends `window.location.pathname` as `pageContext`. Backend appends it to the system prompt as `CURRENT PAGE: /path` so Jess knows where the user is.
 
 ---
 

@@ -27,7 +27,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 		-[x] vendorsetup Step 2: expanded service card has Category dropdown; collapsed card shows category label
 		-[x] vendorprofile: services grouped by category with show-more (>4 per group) + fixed SVG checkmark icon
 	-[ ] admin dashboard vendor approval flow — flip verificationStatus to VERIFIED (highest priority before launch)
-	-[ ] stripe integration, e-transfer auto request for security?
+	-[ ] stripe integration — deposit payment wired to booking (10% of total, PENDING_DEPOSIT → CONFIRMED flow is built, just needs Stripe checkout)
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
 	-[x] Cloudinary image uploads — logo, banner, package-image endpoints; ImageUpload React component (full zone + compact pill mode); integrated into VendorSetup Step 1 + ProviderProfile owner overlays
 	-[ ] wire vendor portfolio uploads to Cloudinary
@@ -35,6 +35,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] transactional email notifications via Resend — sendVendorApproved, sendVendorRejected, sendNewRequest, sendQuoteReceived, sendBookingConfirmed, sendDepositConfirmed; all fire-and-forget; wired into adminRoutes + 3 controllers
 	-[x] VendorPackages page (/vendor/packages) — inline edit, active toggle, confirm delete, seasonal/DOW rule management, package ImageUpload, add-ons section
 	-[x] VendorAvailability page (/vendor/availability) — 2-month calendar, batch save (diff local vs API), bulk actions, blocked ranges list
+	-[x] Jess conversational booking — 4 tool-use tools (search_vendors, get_price_estimate, create_event_request, create_event); fixed frontend/backend message mismatch + response parsing; link pill rendering with React Router navigation
 	-[ ] wire admin dashboard to admin routes (POST /admin/providers/:id/verify + /reject already exist; rejection no longer crashes — rejectionReason fix applied)
 	-[ ] add rejectionReason String? field to ProviderProfile schema + migration (currently returned in response JSON only)
 	-[ ] build menu item isAvailable toggle in vendor dashboard
