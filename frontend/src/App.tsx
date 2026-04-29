@@ -3,9 +3,9 @@ import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 
 // ── New vendor pages ──────────────────────────────────────────────────────────
-const VendorPackages    = () => <div className="p-8 font-sans text-charcoal">VendorPackages — coming soon</div>;
 const VendorAvailability = () => <div className="p-8 font-sans text-charcoal">VendorAvailability — coming soon</div>;
 import Landing from './pages/Landing';
+import VendorPackages from './pages/VendorPackages';
 import VendorSetup from './pages/VendorSetup';
 import Login from './pages/Login';
 import Register from './pages/Register';
