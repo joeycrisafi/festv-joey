@@ -4,6 +4,7 @@ import { Star, MapPin, Globe, Instagram, ChevronDown, CheckCircle } from 'lucide
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
+import ImageUpload from '../components/ImageUpload';
 import { eventRequestsApi } from '../utils/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ function Stars({ rating, count }: { rating: number; count?: number }) {
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Provider {
   id: string;
+  userId: string;
   businessName: string;
   primaryType: string;
   providerTypes: string[];
@@ -587,7 +589,7 @@ function PackageCard({ pkg, isAuthenticated, providerId, providerName, eventId }
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProviderProfile() {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -604,6 +606,10 @@ export default function ProviderProfile() {
   const [notFound, setNotFound]         = useState(false);
   const [showStickyNav, setShowStickyNav] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Live image URLs — updated immediately on upload without a page reload
+  const [liveLogoUrl, setLiveLogoUrl]     = useState<string | null>(null);
+  const [liveBannerUrl, setLiveBannerUrl] = useState<string | null>(null);
 
   // ── Scroll → sticky nav ────────────────────────────────────────────────────
   useEffect(() => {
@@ -635,6 +641,8 @@ export default function ProviderProfile() {
           return;
         }
         setProvider(providerData.data);
+        setLiveLogoUrl(providerData.data.logoUrl ?? null);
+        setLiveBannerUrl(providerData.data.bannerImageUrl ?? null);
 
         const packagesData = await packagesRes.json();
         if (packagesData.success) setPackageGroups(packagesData.data ?? []);
@@ -689,6 +697,13 @@ export default function ProviderProfile() {
   const city = provider.user?.city;
   const state = provider.user?.state;
 
+  // Is the logged-in user viewing their own profile?
+  const isOwner = isAuthenticated && user?.role === 'PROVIDER' && provider.userId === user.id;
+
+  // Resolved image URLs — live state wins over fetched data
+  const displayLogoUrl   = liveLogoUrl   ?? provider.logoUrl   ?? null;
+  const displayBannerUrl = liveBannerUrl ?? provider.bannerImageUrl ?? null;
+
   return (
     <div className="bg-bg min-h-screen">
 
@@ -727,14 +742,14 @@ export default function ProviderProfile() {
       <div
         ref={heroRef}
         className="relative h-96 bg-gradient-to-br from-dark via-charcoal to-dark overflow-hidden"
-        style={provider.user?.bannerUrl ? {
-          backgroundImage: `url(${provider.user.bannerUrl})`,
+        style={displayBannerUrl ? {
+          backgroundImage: `url(${displayBannerUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         } : undefined}
       >
         {/* Darkening overlay when a real banner image is used */}
-        {provider.user?.bannerUrl && (
+        {displayBannerUrl && (
           <div className="absolute inset-0" style={{ background: 'rgba(26,23,20,0.6)' }} />
         )}
         {/* Bottom gradient vignette */}
@@ -742,6 +757,18 @@ export default function ProviderProfile() {
           className="absolute inset-0"
           style={{ background: 'linear-gradient(to top, rgba(26,23,20,0.85) 0%, rgba(26,23,20,0.15) 55%, transparent 100%)' }}
         />
+
+        {/* Owner — "Edit Cover Photo" compact button (top-right corner) */}
+        {isOwner && (
+          <div className="absolute top-4 right-4 z-20">
+            <ImageUpload
+              onUpload={url => setLiveBannerUrl(url)}
+              endpoint="banner"
+              label="Edit Cover Photo"
+              compact
+            />
+          </div>
+        )}
 
         {/* Content — bottom of hero */}
         <motion.div
@@ -751,20 +778,33 @@ export default function ProviderProfile() {
         >
           <div className="flex items-end gap-5 min-w-0">
             {/* Avatar */}
-            {provider.logoUrl ? (
-              <img
-                src={provider.logoUrl}
-                alt={provider.businessName}
-                className="w-24 h-24 rounded-full object-cover flex-shrink-0 border-2 border-gold-light"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full flex-shrink-0 border-2 border-gold-light flex items-center justify-center"
-                style={{ background: 'rgba(196,160,106,0.15)' }}>
-                <span className="font-serif text-2xl text-gold-light">
-                  {provider.businessName.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
+            <div className="relative flex-shrink-0 group">
+              {displayLogoUrl ? (
+                <img
+                  src={displayLogoUrl}
+                  alt={provider.businessName}
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gold-light"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full border-2 border-gold-light flex items-center justify-center"
+                  style={{ background: 'rgba(196,160,106,0.15)' }}>
+                  <span className="font-serif text-2xl text-gold-light">
+                    {provider.businessName.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              {/* Owner: "Change Logo" compact overlay on avatar */}
+              {isOwner && (
+                <div className="absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <ImageUpload
+                    onUpload={url => setLiveLogoUrl(url)}
+                    endpoint="logo"
+                    label="Logo"
+                    compact
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Text */}
             <div className="min-w-0">

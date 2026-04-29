@@ -15,6 +15,7 @@ import jessRoutes from './jessRoutes';
 import favoriteRoutes from './favoriteRoutes';
 import packageRoutes, { addonRouter, availabilityRouter } from './packageRoutes';
 import eventRoutes from './eventRoutes';
+import uploadRoutes from './uploadRoutes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/packages', packageRoutes);
 router.use('/addons', addonRouter);
 router.use('/availability', availabilityRouter);
 router.use('/events', eventRoutes);
+router.use('/upload', uploadRoutes);
 
 export default router;

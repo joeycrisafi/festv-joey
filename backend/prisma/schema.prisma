@@ -310,6 +310,7 @@ model Package {
   flatFee           Float?               // flat room/base fee for FLAT_PLUS_PER_PERSON
   weekdayPrice      Float?
   weekendPrice      Float?
+  imageUrl          String?              // Cloudinary URL for package hero image
   included          String[]
   isActive          Boolean              @default(true)
   sortOrder         Int                  @default(0)

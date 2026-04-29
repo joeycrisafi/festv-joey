@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, Check,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ImageUpload from '../components/ImageUpload';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -215,6 +216,8 @@ interface SetupState {
   packagesGenerated: boolean;
   addOns: AddOnDraft[];
   blockedDates: string[];
+  logoUrl: string;
+  bannerImageUrl: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,6 +230,7 @@ const DEFAULT_STATE: SetupState = {
   languages: [], minBudget: '', maxBudget: '',
   primaryType: '', secondaryTypes: [],
   eventTypes: [],
+  logoUrl: '', bannerImageUrl: '',
   packages: [], packagesGenerated: false,
   addOns: [],
   blockedDates: [],
@@ -1187,6 +1191,8 @@ export default function VendorSetup() {
           maxBudget: state.maxBudget ? Number(state.maxBudget) : undefined,
           primaryType: state.primaryType,
           providerTypes,
+          logoUrl: state.logoUrl || undefined,
+          bannerImageUrl: state.bannerImageUrl || undefined,
         };
         const method = profileExists ? 'PUT' : 'POST';
         const res = await fetch(`${API_BASE}/providers/profile`, {
@@ -1248,6 +1254,8 @@ export default function VendorSetup() {
           minBudget: state.minBudget ? Number(state.minBudget) : undefined,
           maxBudget: state.maxBudget ? Number(state.maxBudget) : undefined,
           primaryType: state.primaryType, providerTypes,
+          logoUrl: state.logoUrl || undefined,
+          bannerImageUrl: state.bannerImageUrl || undefined,
         }),
       });
 
@@ -1488,6 +1496,32 @@ export default function VendorSetup() {
           value={state.businessName}
           onChange={e => patch({ businessName: e.target.value })}
         />
+      </div>
+
+      {/* Logo + banner uploads */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label className={labelCls}>Business Logo</label>
+          <ImageUpload
+            currentUrl={state.logoUrl || undefined}
+            onUpload={url => patch({ logoUrl: url })}
+            endpoint="logo"
+            label="Upload Logo"
+            aspectRatio="square"
+          />
+          <p className="font-sans text-xs text-muted mt-1">Square · JPG/PNG/WebP · max 2 MB</p>
+        </div>
+        <div>
+          <label className={labelCls}>Cover Photo</label>
+          <ImageUpload
+            currentUrl={state.bannerImageUrl || undefined}
+            onUpload={url => patch({ bannerImageUrl: url })}
+            endpoint="banner"
+            label="Upload Cover Photo"
+            aspectRatio="banner"
+          />
+          <p className="font-sans text-xs text-muted mt-1">Wide banner · JPG/PNG/WebP · max 5 MB</p>
+        </div>
       </div>
 
       {/* Contact info */}
