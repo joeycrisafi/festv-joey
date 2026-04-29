@@ -45,7 +45,7 @@ const plannerSteps = [
   },
   {
     title: 'Send a request',
-    desc: 'Pick a package, date, and guest count. Send your request in minutes.',
+    desc: 'Pick a package, date, and guest count. Create a free account and send your request in minutes.',
   },
   {
     title: 'Receive your quote',
