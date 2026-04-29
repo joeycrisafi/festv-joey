@@ -2,10 +2,12 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types/index.js';
 import Anthropic from '@anthropic-ai/sdk';
 import prisma from '../config/database.js';
+import { calculatePackagePrice } from '../services/pricingEngine.js';
+import { sendNewRequest } from '../services/emailService.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// ─── Jess's full knowledge base ───────────────────────────────────────────────
+// ─── System prompt ────────────────────────────────────────────────────────────
 
 const JESS_SYSTEM_PROMPT = `You are Jess, FESTV's virtual event planning hostess. FESTV is a premium Canadian event planning platform that connects event planners with local vendors.
 
@@ -40,119 +42,450 @@ VENDOR TYPES ON FESTV:
 - PHOTO_VIDEO: Photographers and videographers
 - FLORIST_DECOR: Florists, decorators, event stylists
 
-HOW THE PLANNER FLOW WORKS (step by step):
-1. Create an account → choose "I'm planning an event"
-2. Create an event on createevent.html: fill in event name, type, date, start/end time, guest count, budget range, city & province (required), and optionally a venue address if you already have one
-3. Browse vendors on browsevendors.html: filter by type, location, budget, guest count
-4. Click "View Profile" on a vendor you like → vendorprofile.html shows their full profile: services, menu, packages, photos, ratings
-5. Click "Request This Vendor" → select a service/package, add notes, send the request
-6. The vendor receives your request on their dashboard and sends you a quote with line items
-7. You review the quote on plannerquote.html — see line items, total, validity date
-8. Accept the quote → booking is confirmed. If it's a restaurant/venue, your event address auto-fills.
-9. Continue booking other vendors for your event (DJ, photographer, etc.)
-10. Manage everything from plannerdashboard.html
+HOW PRICING WORKS:
+Vendors create packages with structured pricing:
+- Per Person: price × guest count (e.g. $85/person × 150 guests = $12,750)
+- Flat Rate: fixed price regardless of guests (e.g. Full venue buyout $12,000)
+- Per Hour: price × hours (e.g. DJ $300/hr × 4 hours = $1,200)
+- Flat + Per Person: room rental fee + per person rate (e.g. $2,000 room + $85/person)
+Vendors can also set seasonal pricing rules (higher minimums in summer) and day-of-week rules (weekends cost more).
+Tax is 15%. Deposit is 10% of total to confirm a booking.
 
-HOW THE VENDOR FLOW WORKS:
-1. Create an account → choose "I'm a vendor"
-2. Complete vendor setup on vendorsetup.html: business name, type(s), description, service areas, pricing
-3. Add services/packages (name, price, description) from vendordashboard.html
-4. Add menu items if you're a caterer or restaurant
-5. Wait for verification (admin reviews your profile)
-6. Once visible in search, planners will find you and send requests
-7. On vendordashboard.html: see incoming requests, send quotes with line items, track bookings
+HOW THE BOOKING FLOW WORKS:
+1. Browse vendors at /providers — filter by type, city, guests, budget, event date
+2. Open a vendor profile and find a package you like
+3. Get a price estimate — enter date, guests, add-ons, see full breakdown
+4. Send a request — vendor responds with a quote (usually 24–48 hours)
+5. Accept the quote → booking created → pay deposit to confirm
+6. Manage everything from your dashboard at /dashboard
 
-PRICING MODELS:
-- Per person (caterers, venues): e.g. $85/person minimum 50 guests
-- Hourly (DJs, photographers): e.g. $150/hr minimum 4 hours
-- Flat fee: fixed price for the whole service
-- Custom quote: vendor sends a custom quote per request
-
-QUOTES:
-- Vendors create quotes from a request — add line items (name + price each)
-- Quotes have a validity period (default 30 days)
-- Planners can accept or decline
-- Accepting a quote creates a booking and notifies the vendor
-
-BOOKINGS:
-- After a quote is accepted, a booking is created
-- Both parties can see it in their dashboard
-- Venue/restaurant bookings auto-fill the event address
+FOR VENDORS:
+1. Register at /register and choose "I'm a vendor"
+2. Complete the 6-step setup wizard at /vendor/setup
+3. Manage packages at /vendor/packages (pricing models, seasonal rules, add-ons)
+4. Set availability at /vendor/availability (block dates you can't work)
+5. Submit for FESTV approval — usually 1–2 business days
+6. Once verified, you appear in search and start receiving requests
 
 EVENT TYPES SUPPORTED:
-Birthday, Wedding, Corporate, Anniversary, Graduation, Baby Shower, Bridal Shower, Bar/Bat Mitzvah, Quinceañera, Holiday Party, and Other
+WEDDING, BIRTHDAY, CORPORATE, ANNIVERSARY, GRADUATION, BABY_SHOWER, BRIDAL_SHOWER, BAR_MITZVAH, QUINCEANERA, HOLIDAY_PARTY, OTHER
 
-SERVICE STYLES (for catering):
-Buffet, Plated, Family Style, Cocktail, Food Stations, Food Truck
-
-TYPICAL TORONTO PRICING BENCHMARKS (approximate):
+TYPICAL PRICING BENCHMARKS (approximate):
 - Catering (full service): $65–$150/person
-- Restaurant venue buyout: $3,000–$15,000+
+- Restaurant/venue buyout: $3,000–$15,000+
 - DJ: $800–$2,500 for 4–6 hours
 - Photographer: $1,500–$4,000 for 8 hours
 - Florist/decor: $500–$5,000+ depending on scale
 
-PLATFORM PAGES:
-- plannerdashboard.html — planner home: active events, received quotes, confirmed bookings
-- browsevendors.html — browse and filter all vendors
-- createevent.html — create a new event (start here if you haven't already)
-- vendorprofile.html — individual vendor profile (add ?id=VENDOR_ID to URL)
-- plannerquote.html — view and respond to a quote (add ?quoteId=QUOTE_ID)
-- vendordashboard.html — vendor home: incoming requests, send quotes, manage profile
-- vendorsetup.html — complete/edit vendor profile
-- signin.html — sign in page
-- accounttype.html — choose planner or vendor when signing up
+━━━ TOOLS AVAILABLE ━━━
+You have live access to FESTV data. Use tools naturally — never narrate what you're doing, just respond with results.
 
-COMMON PLANNER QUESTIONS:
-Q: How do I find a caterer in Toronto?
-A: Go to Browse Vendors, filter by "Caterer" and set your city to Toronto. You can also filter by guest count and budget to narrow it down.
+- search_vendors: Use when someone asks to find a vendor, wants recommendations, or asks "who's good for X in Y city". Searches live verified vendors with real pricing.
+- get_price_estimate: Use when someone wants to know the actual cost for a specific package. Gives real breakdown including tax and deposit.
+- create_event_request: Use when someone says "book this", "send a request", or "I want to go with [vendor]". Always confirm vendor, package, date, guest count, and event type before calling this.
+- create_event: Use when someone wants to start planning an event from scratch. Creates the event, then help them find vendors.
 
-Q: Can a restaurant be both a venue and a caterer?
-A: Yes! On FESTV, restaurants can list as both RESTO_VENUE and CATERER — they'll appear in both searches.
-
-Q: What if I don't have a venue yet?
-A: No problem — when creating your event, just select "I'm looking for one." You only need your city and province. Once you book a restaurant/venue, your event address updates automatically.
-
-Q: How many vendors can I book for one event?
-A: As many as you need. Most events need 3–5: a venue, caterer, entertainment, photographer, and florist.
-
-Q: What's a good timeline for planning?
-A: Venue and catering: 3–6 months out. Entertainment and photography: 2–4 months. Florals: 4–8 weeks.
-
-COMMON VENDOR QUESTIONS:
-Q: How do I get more bookings?
-A: Make sure your profile is complete with photos, a clear description, and accurate pricing. Verified profiles appear higher in search.
-
-Q: What's a good quote strategy?
-A: Be specific with line items — planners trust detailed quotes more than lump sums. Include what's included and any minimums upfront.
-
-Q: How does verification work?
-A: After you complete your profile, the FESTV team reviews it. Verified vendors get a badge and appear first in search results.
+TOOL BEHAVIOUR RULES:
+- Never say "let me search" or "calling tool" or "I'm looking that up" — just respond with results as if you already knew them
+- After search_vendors: present results warmly, show real prices, offer to get an estimate or send a request
+- After get_price_estimate: share the breakdown conversationally ("So for 80 guests on a Saturday that comes to $X total — deposit is just $Y to lock it in")
+- After create_event_request: confirm warmly, tell them to expect a quote in 24–48 hours, link to their dashboard
+- After create_event: celebrate the event creation, then immediately start asking about vendors
+- If a tool returns an error or no results: say so gracefully and offer alternatives ("Hmm, I'm not finding anyone matching exactly that — want me to try a slightly wider search?")
+- If user is not signed in and tries to book: "Oh you'll need to be signed in for that one — but I can still show you options and pricing right now!" + link to sign in
 
 ━━━ FEATURES NOT YET AVAILABLE — NEVER SUGGEST THESE ━━━
-The following are not built yet. If asked, say it's "coming soon" and move on:
-- Payments / Stripe — no payment processing exists yet
-- Portfolio photo uploads — vendors cannot upload photos yet
-- Guest list / friends page — not functional yet
+- Stripe / payments — deposit flow UI exists but payment isn't wired yet. Say "coming soon"
 - In-app messaging between planners and vendors — not available yet
 - Reviews and ratings — not live yet
 - Mobile app — web only for now
 
 ━━━ LANGUAGE RULES — NEVER BREAK THESE ━━━
-- NEVER mention page filenames (like "signin.html", "createevent.html", "browsevendors.html") in your message text. Users don't know what those are.
-- Use plain English instead: "Sign In", "your dashboard", "Browse Vendors", "Create Event", "your profile page", etc.
-- You CAN use page filenames inside the "href" field of links — users never see those, only the button label matters.
-- Always write as if talking to a real person, not a developer.
+- NEVER mention technical terms like component names, route paths, or internal IDs in your spoken message text
+- Use plain English: "your dashboard", "Browse Vendors", "Create Event", "your profile", etc.
+- You CAN use paths like /providers, /dashboard in the "href" field of links — users never see those, only the label matters
+- Always write as if talking to a real person, not a developer
 
 ━━━ RESPONSE FORMAT ━━━
 You MUST always respond in this exact JSON format. No markdown. No preamble. Just JSON:
 {
   "message": "Your warm, concise response here.",
-  "links": [{"label": "Button label", "href": "page.html"}]
+  "links": [{"label": "Button label", "href": "/path"}]
 }
 
-Only include links when they're genuinely useful. Max 2 links per response. Never link to external sites. links can be [].`;
+Only include links when they're genuinely useful — e.g. a vendor profile, the dashboard, browse page. Max 2 links per response. Links must be FESTV-internal paths (start with /). links can be [].`;
 
-// ─── Build per-request user context ──────────────────────────────────────────
+// ─── Tool definitions ─────────────────────────────────────────────────────────
+
+const TOOLS: Anthropic.Tool[] = [
+  {
+    name: 'search_vendors',
+    description:
+      'Search for verified vendors on FESTV. Call this when the planner asks to find a vendor, wants recommendations, or needs to know who is available for their event.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        vendorType: {
+          type: 'string',
+          enum: ['RESTO_VENUE', 'CATERER', 'ENTERTAINMENT', 'PHOTO_VIDEO', 'FLORIST_DECOR'],
+          description: 'Type of vendor to search for',
+        },
+        city: {
+          type: 'string',
+          description: 'City to search in (e.g. "Toronto", "Montreal")',
+        },
+        guestCount: {
+          type: 'number',
+          description: 'Number of guests for the event',
+        },
+        eventDate: {
+          type: 'string',
+          description: 'Event date in YYYY-MM-DD format',
+        },
+        eventType: {
+          type: 'string',
+          description: 'Type of event (e.g. WEDDING, BIRTHDAY, CORPORATE)',
+        },
+        maxBudget: {
+          type: 'number',
+          description: 'Maximum total budget in dollars',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_price_estimate',
+    description:
+      'Get a real price estimate for a specific vendor package. Call this when the planner wants to know what a particular package will cost for their event.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        packageId: {
+          type: 'string',
+          description: 'The package ID to get an estimate for',
+        },
+        eventDate: {
+          type: 'string',
+          description: 'Event date in YYYY-MM-DD format',
+        },
+        guestCount: {
+          type: 'number',
+          description: 'Number of guests',
+        },
+        durationHours: {
+          type: 'number',
+          description: 'Duration in hours (for hourly packages)',
+        },
+        selectedAddOnIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional add-on IDs to include in the estimate',
+        },
+      },
+      required: ['packageId', 'eventDate', 'guestCount'],
+    },
+  },
+  {
+    name: 'create_event_request',
+    description:
+      'Send an event request to a vendor on behalf of the signed-in planner. Only call this after you have confirmed with the user: which vendor, which package, event type, date, and guest count.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        providerProfileId: {
+          type: 'string',
+          description: "The vendor's profile ID",
+        },
+        packageId: {
+          type: 'string',
+          description: 'The package ID being requested',
+        },
+        eventType: {
+          type: 'string',
+          description: 'Type of event',
+        },
+        eventDate: {
+          type: 'string',
+          description: 'Event date in YYYY-MM-DD format',
+        },
+        guestCount: {
+          type: 'number',
+          description: 'Number of guests',
+        },
+        specialRequests: {
+          type: 'string',
+          description: 'Any special requests or notes for the vendor',
+        },
+        eventId: {
+          type: 'string',
+          description: 'Optional: ID of an existing event to link this request to',
+        },
+      },
+      required: ['providerProfileId', 'eventType', 'eventDate', 'guestCount'],
+    },
+  },
+  {
+    name: 'create_event',
+    description:
+      "Create a new event for the signed-in planner. Call this when they want to start planning an event. After creating it, help them find vendors.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        name: {
+          type: 'string',
+          description: "Name of the event (e.g. \"Sarah's 30th Birthday\")",
+        },
+        eventType: {
+          type: 'string',
+          enum: [
+            'WEDDING', 'BIRTHDAY', 'CORPORATE', 'ANNIVERSARY', 'GRADUATION',
+            'BABY_SHOWER', 'BRIDAL_SHOWER', 'BAR_MITZVAH', 'QUINCEANERA',
+            'HOLIDAY_PARTY', 'OTHER',
+          ],
+          description: 'Type of event',
+        },
+        eventDate: {
+          type: 'string',
+          description: 'Event date in YYYY-MM-DD format',
+        },
+        guestCount: {
+          type: 'number',
+          description: 'Number of guests',
+        },
+        notes: {
+          type: 'string',
+          description: 'Optional notes about the event',
+        },
+      },
+      required: ['name', 'eventType', 'eventDate', 'guestCount'],
+    },
+  },
+];
+
+// ─── Tool executor ────────────────────────────────────────────────────────────
+
+async function executeTool(
+  name: string,
+  input: Record<string, any>,
+  user: AuthenticatedRequest['user'],
+): Promise<string> {
+  try {
+    switch (name) {
+      case 'search_vendors': {
+        const where: any = { verificationStatus: 'VERIFIED' };
+        if (input.vendorType) where.providerTypes = { has: input.vendorType };
+        if (input.city) where.city = { contains: input.city, mode: 'insensitive' };
+
+        // If guestCount provided, filter out packages that can't accommodate them
+        // (done at the package level below — vendors with no suitable package are still included
+        // but their packages array will reflect only the relevant ones)
+
+        const vendors = await prisma.providerProfile.findMany({
+          where,
+          include: {
+            packages: {
+              where: { isActive: true },
+              orderBy: { basePrice: 'asc' },
+              take: 4,
+              select: {
+                id: true,
+                name: true,
+                basePrice: true,
+                pricingModel: true,
+                category: true,
+                minGuests: true,
+                maxGuests: true,
+                durationHours: true,
+              },
+            },
+          },
+          take: 5,
+          orderBy: { averageRating: 'desc' },
+        });
+
+        if (vendors.length === 0) {
+          return JSON.stringify({
+            found: 0,
+            message: 'No verified vendors found matching those criteria. Try broadening the search (e.g. remove the city filter or try a different vendor type).',
+          });
+        }
+
+        return JSON.stringify({
+          found: vendors.length,
+          vendors: vendors.map((v) => ({
+            id: v.id,
+            profileUrl: `/providers/${v.id}`,
+            businessName: v.businessName,
+            primaryType: v.primaryType,
+            city: v.city,
+            averageRating: v.averageRating,
+            tagline: (v as any).tagline ?? null,
+            startingFrom: v.packages[0]?.basePrice ?? null,
+            packages: v.packages.map((p) => ({
+              id: p.id,
+              name: p.name,
+              basePrice: p.basePrice,
+              pricingModel: p.pricingModel,
+              category: p.category,
+              guestRange:
+                p.minGuests != null && p.maxGuests != null
+                  ? `${p.minGuests}–${p.maxGuests} guests`
+                  : null,
+              durationHours: p.durationHours,
+            })),
+          })),
+        });
+      }
+
+      case 'get_price_estimate': {
+        const result = await calculatePackagePrice({
+          packageId: String(input.packageId),
+          eventDate: new Date(input.eventDate),
+          guestCount: Number(input.guestCount),
+          durationHours: input.durationHours != null ? Number(input.durationHours) : undefined,
+          selectedAddOnIds: Array.isArray(input.selectedAddOnIds) ? input.selectedAddOnIds : [],
+        });
+
+        return JSON.stringify({
+          appliedPrice: result.appliedPrice,
+          addOnsTotal: result.addOnsTotal,
+          subtotal: result.subtotal,
+          tax: result.tax,
+          total: result.total,
+          depositAmount: result.depositAmount,
+          isOutOfParameters: result.isOutOfParameters,
+          outOfParameterReasons: result.outOfParameterReasons,
+        });
+      }
+
+      case 'create_event_request': {
+        if (!user) {
+          return JSON.stringify({
+            error: 'NOT_AUTHENTICATED',
+            message: 'User must be signed in to send a request.',
+          });
+        }
+
+        const vendor = await prisma.providerProfile.findUnique({
+          where: { id: String(input.providerProfileId) },
+          include: { user: { select: { email: true } } },
+        });
+        if (!vendor) return JSON.stringify({ error: 'Vendor not found' });
+
+        const parsedDate = new Date(input.eventDate);
+
+        // Run pricing engine if a package was provided
+        let calculatedEstimate: number | null = null;
+        let isOutOfParameters = false;
+        if (input.packageId) {
+          try {
+            const pricing = await calculatePackagePrice({
+              packageId: String(input.packageId),
+              eventDate: parsedDate,
+              guestCount: Number(input.guestCount),
+            });
+            calculatedEstimate = pricing.total;
+            isOutOfParameters = pricing.isOutOfParameters;
+          } catch {
+            // Proceed without estimate if pricing fails
+          }
+        }
+
+        const request = await prisma.eventRequest.create({
+          data: {
+            clientId: user.id,
+            providerProfileId: String(input.providerProfileId),
+            packageId: input.packageId ? String(input.packageId) : undefined,
+            eventId: input.eventId ? String(input.eventId) : undefined,
+            eventType: String(input.eventType),
+            eventDate: parsedDate,
+            guestCount: Number(input.guestCount),
+            selectedAddOnIds: [],
+            specialRequests: input.specialRequests ? String(input.specialRequests) : undefined,
+            calculatedEstimate,
+            isOutOfParameters,
+            status: 'PENDING',
+          },
+        });
+
+        // In-app notification to vendor
+        const clientName = `${user.firstName} ${user.lastName}`.trim();
+        const dateLabel = parsedDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        await prisma.notification.create({
+          data: {
+            userId: vendor.userId,
+            type: 'NEW_REQUEST',
+            title: 'New event request',
+            message: `${clientName} sent you a request for ${String(input.eventType).toLowerCase().replace(/_/g, ' ')} on ${dateLabel}`,
+            data: { eventRequestId: request.id },
+          },
+        });
+
+        // Fire-and-forget email to vendor
+        sendNewRequest(
+          vendor.user.email,
+          vendor.businessName,
+          clientName,
+          String(input.eventType),
+          parsedDate,
+          calculatedEstimate,
+        ).catch(() => {});
+
+        return JSON.stringify({
+          success: true,
+          requestId: request.id,
+          vendorName: vendor.businessName,
+          isOutOfParameters,
+          estimatedTotal: calculatedEstimate,
+          dashboardUrl: '/dashboard',
+        });
+      }
+
+      case 'create_event': {
+        if (!user) {
+          return JSON.stringify({
+            error: 'NOT_AUTHENTICATED',
+            message: 'User must be signed in to create an event.',
+          });
+        }
+
+        const event = await prisma.event.create({
+          data: {
+            clientId: user.id,
+            name: String(input.name),
+            eventType: String(input.eventType) as any,
+            eventDate: new Date(input.eventDate),
+            guestCount: Number(input.guestCount),
+            notes: input.notes ? String(input.notes) : undefined,
+            status: 'PLANNING',
+          },
+        });
+
+        return JSON.stringify({
+          success: true,
+          eventId: event.id,
+          name: event.name,
+          eventType: event.eventType,
+          eventDate: event.eventDate,
+          eventUrl: `/events/${event.id}`,
+        });
+      }
+
+      default:
+        return JSON.stringify({ error: `Unknown tool: ${name}` });
+    }
+  } catch (err: any) {
+    console.error(`[Jess tool error — ${name}]:`, err);
+    return JSON.stringify({ error: err.message ?? 'Tool execution failed' });
+  }
+}
+
+// ─── User context builder ─────────────────────────────────────────────────────
 
 async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
   if (!req.user) {
@@ -162,9 +495,8 @@ async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
   const { id, firstName } = req.user;
   const name = firstName || 'there';
 
-  // Check roles array first (users can have multiple roles)
   const roles: string[] = req.user.roles || (req.user.role ? [req.user.role] : []);
-  const isClient = roles.includes('CLIENT');
+  const isClient   = roles.includes('CLIENT');
   const isProvider = roles.includes('PROVIDER');
 
   const lines: string[] = [`CURRENT USER CONTEXT:`, `- Name: ${name}`];
@@ -172,16 +504,12 @@ async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
   if (isClient) {
     lines.push('- Role: Planner');
 
-    // Most recent non-pending event request
     const event = await prisma.eventRequest.findFirst({
       where: { clientId: id, status: { not: 'PENDING' } },
       orderBy: { createdAt: 'desc' },
       select: {
-        eventType: true,
-        eventDate: true,
-        guestCount: true,
-        specialRequests: true,
-        status: true,
+        eventType: true, eventDate: true, guestCount: true,
+        specialRequests: true, status: true,
       },
     });
 
@@ -189,13 +517,12 @@ async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
       const dateStr = event.eventDate
         ? new Date(event.eventDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
         : 'TBD';
-
       lines.push(`- Active event: ${event.eventType}`);
       lines.push(`- Date: ${dateStr} | Guests: ${event.guestCount}`);
       lines.push(`- Request status: ${event.status}`);
       if (event.specialRequests) lines.push(`- Special requests: ${event.specialRequests}`);
     } else {
-      lines.push('- No active events yet — has not created an event');
+      lines.push('- No active events yet');
     }
   }
 
@@ -211,20 +538,19 @@ async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
         verificationStatus: true,
         businessDescription: true,
         serviceAreas: true,
-        _count: { select: { menuItems: true, portfolioItems: true } }, // TODO: rewire — services removed
+        _count: { select: { menuItems: true, portfolioItems: true } },
       },
     });
 
     if (profile) {
-      const types = profile.providerTypes.join(', ') || 'not set';
+      const types    = profile.providerTypes.join(', ') || 'not set';
       const verified = profile.verificationStatus === 'VERIFIED' ? 'Yes' : 'No (pending)';
       lines.push(`- Business: ${profile.businessName} (${types})`);
       lines.push(`- Verified: ${verified}`);
-      lines.push(`- Profile completeness: ${profile._count.menuItems} menu items, ${profile._count.portfolioItems} portfolio photos`); // TODO: rewire — services count removed
       if (!profile.businessDescription) lines.push('- Missing: business description');
       if (!profile.serviceAreas || profile.serviceAreas.length === 0) lines.push('- Missing: service areas');
     } else {
-      lines.push('- Profile not set up yet — needs to complete vendorsetup.html');
+      lines.push('- Profile not set up yet');
     }
   }
 
@@ -243,14 +569,16 @@ interface ChatMessage {
 }
 
 export const chat = async (req: AuthenticatedRequest, res: Response) => {
-  const { messages, pageContext } = req.body as { messages: ChatMessage[]; pageContext?: string };
+  const { messages, pageContext } = req.body as {
+    messages: ChatMessage[];
+    pageContext?: string;
+  };
 
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ success: false, error: 'messages array is required' });
     return;
   }
 
-  // Validate message shapes
   for (const msg of messages) {
     if (!msg.role || !msg.content || typeof msg.content !== 'string') {
       res.status(400).json({ success: false, error: 'Each message needs role and content' });
@@ -263,32 +591,87 @@ export const chat = async (req: AuthenticatedRequest, res: Response) => {
   }
 
   const userContext = await buildUserContext(req);
-  const pageInfo = pageContext ? `\nCURRENT PAGE: ${pageContext}` : '';
+  const pageInfo    = pageContext ? `\nCURRENT PAGE: ${pageContext}` : '';
   const systemPrompt = `${JESS_SYSTEM_PROMPT}\n\n${userContext}${pageInfo}`;
 
-  let response;
-  try {
-    response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 400,
-      system: systemPrompt,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    });
-  } catch (err: any) {
-    console.error('[Jess] Anthropic API error:', err);
-    res.status(500).json({ success: false, error: 'Jess is unavailable right now. Please try again in a moment.' });
+  // Build Anthropic message array — must start with a user message
+  let apiMessages: Anthropic.MessageParam[] = messages
+    .slice(messages.findIndex((m) => m.role === 'user'))
+    .map((m) => ({ role: m.role, content: m.content }));
+
+  if (apiMessages.length === 0) {
+    res.status(400).json({ success: false, error: 'No user message found in messages array' });
     return;
   }
 
-  const raw = response.content[0].type === 'text' ? response.content[0].text : '';
-  // Strip any accidental markdown code fences
+  // ── Tool-use loop (max 5 rounds to prevent runaway) ────────────────────────
+  let finalResponse: Anthropic.Message | null = null;
+  const MAX_ROUNDS = 5;
+
+  try {
+    for (let round = 0; round < MAX_ROUNDS; round++) {
+      const response = await anthropic.messages.create({
+        model:      'claude-haiku-4-5',
+        max_tokens: 1000,
+        system:     systemPrompt,
+        tools:      TOOLS,
+        messages:   apiMessages,
+      });
+
+      finalResponse = response;
+
+      // If no tool calls, we have the final answer
+      if (response.stop_reason !== 'tool_use') break;
+
+      // Execute every tool call in parallel
+      const toolUseBlocks = response.content.filter(
+        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      );
+
+      const toolResults = await Promise.all(
+        toolUseBlocks.map(async (block) => ({
+          type:        'tool_result' as const,
+          tool_use_id: block.id,
+          content:     await executeTool(
+            block.name,
+            block.input as Record<string, any>,
+            req.user,
+          ),
+        })),
+      );
+
+      // Extend conversation with tool calls + results for next round
+      apiMessages = [
+        ...apiMessages,
+        { role: 'assistant' as const, content: response.content },
+        { role: 'user'      as const, content: toolResults },
+      ];
+    }
+  } catch (err: any) {
+    console.error('[Jess] Anthropic API error:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Jess is unavailable right now. Please try again in a moment.',
+    });
+    return;
+  }
+
+  if (!finalResponse) {
+    res.status(500).json({ success: false, error: 'No response generated' });
+    return;
+  }
+
+  // Extract the final text block
+  const textBlock = finalResponse.content.find(
+    (b): b is Anthropic.TextBlock => b.type === 'text',
+  );
+  const raw     = textBlock?.text ?? '';
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
   let parsed: { message: string; links?: { label: string; href: string }[] };
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    // Graceful fallback if Claude didn't follow JSON format
     parsed = { message: cleaned || raw, links: [] };
   }
 
@@ -296,7 +679,7 @@ export const chat = async (req: AuthenticatedRequest, res: Response) => {
     success: true,
     data: {
       message: parsed.message || raw,
-      links: Array.isArray(parsed.links) ? parsed.links : [],
+      links:   Array.isArray(parsed.links) ? parsed.links : [],
     },
   });
 };
