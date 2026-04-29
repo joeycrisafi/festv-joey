@@ -45,6 +45,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] mobile responsiveness pass on all pages
 	-[x] flip vendor search to VERIFIED only before launch — searchProviders now filters verificationStatus=VERIFIED + requires active Package (commit 4c36388)
 	-[x] Framer Motion animations on Landing.tsx — hero animate-on-mount, all scroll sections whileInView, luxury feel (breathing not performing)
+	-[x] FESTV favicon — dark bg (#1A1714), gold serif "F" (#C4A06A), SVG at frontend/public/favicon.svg; cache-busted with ?v=2; deployed to production
 
 
 ## Completed

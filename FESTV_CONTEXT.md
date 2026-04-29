@@ -50,6 +50,8 @@ FESTV is a luxury event-planning marketplace that connects event planners (clien
 - Database: PostgreSQL (`caterease-db`) on Render
 - Live URL: `festv.org`
 - **CRITICAL: Render deploys from `main` only. Push to `dev` does NOT deploy. Always merge dev → main to deploy.**
+- **`backend/public/react-dist/` is gitignored** — Render builds it fresh on every deploy from `frontend/`. Never commit the dist folder; source changes in `frontend/` are what matter.
+- **Vite build config** — `frontend/vite.config.ts` has `chunkSizeWarningLimit: 1000` (suppresses the 1MB chunk warning on the single-bundle build).
 
 ---
 
@@ -441,6 +443,8 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 27. **Jess strips leading assistant messages** — the WELCOME bubble is role `assistant`. Before sending to Anthropic, the array is sliced from the first `user` message (`firstUserIdx`). Anthropic requires the first message to be `user`.
 28. **Jess tool loop max 5 rounds** — prevents runaway. Each round: call Anthropic → if `stop_reason === 'tool_use'`, execute all tool blocks in parallel → append `[assistant(tool_use), user(tool_results)]` → repeat. Final text block extracted from last response.
 29. **`pageContext` in Jess calls** — frontend sends `window.location.pathname` as `pageContext`. Backend appends it to the system prompt as `CURRENT PAGE: /path` so Jess knows where the user is.
+30. **Favicon cache-bust** — `frontend/index.html` links `favicon.svg?v=2`. Increment the version query string whenever the favicon changes to force browsers to re-fetch. The SVG lives at `frontend/public/favicon.svg` (dark `#1A1714` bg, gold `#C4A06A` serif "F").
+31. **`react-dist/` is gitignored** — never try to commit build artifacts. Run `npm run build` from `frontend/` to generate locally; Render generates it on deploy.
 
 ---
 
