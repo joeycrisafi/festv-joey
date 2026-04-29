@@ -23,7 +23,8 @@ FESTV is a luxury event-planning marketplace that connects event planners (clien
 | bcryptjs | 2.4.3 | Password hashing (12 rounds) |
 | @anthropic-ai/sdk | 0.39.0 | Jess AI widget + PDF import |
 | Resend | 6.9.3 | Email delivery |
-| Multer + Sharp | — | File uploads + image processing |
+| Multer + multer-storage-cloudinary | — | Multipart file uploads → Cloudinary |
+| cloudinary | 1.x (NOT v2) | Image hosting — logo, banner, package images |
 | Socket.io | 4.7.4 | Real-time (configured, partially used) |
 | pdf-parse | 1.1.1 | PDF text extraction |
 
@@ -63,15 +64,19 @@ frontend/src/
 │   └── AuthContext.tsx      ← Auth state, login, logout, register
 ├── components/
 │   ├── Layout.tsx           ← Nav shell (FESTV branded, dark footer)
-│   └── ProviderTypeBadge.tsx ← Vendor type badge (5 canonical types, FESTV colors)
+│   ├── ProviderTypeBadge.tsx ← Vendor type badge (5 canonical types, FESTV colors)
+│   └── ImageUpload.tsx      ← Reusable image uploader (full zone + compact pill mode; posts to /upload/logo|banner|package-image)
 ├── pages/
 │   ├── Landing.tsx          ← ✅ Built — hero, why FESTV, how it works, vendor types + Framer Motion animations
 │   ├── BrowseProviders.tsx  ← ✅ Built — filter sidebar + vendor cards grid; reads ?eventId= param, shows context banner
 │   ├── ProviderProfile.tsx  ← ✅ Built — dark hero, packages, estimator, about, reviews; reads eventId from state/param
 │   ├── Login.tsx            ← ✅ Built — FESTV branded login card
 │   ├── Register.tsx         ← ✅ Built — role selector, vendor type pills, form
-│   ├── VendorSetup.tsx      ← ✅ Built — 6-step wizard (see below)
+│   ├── VendorSetup.tsx      ← ✅ Built — 6-step wizard (see below); Step 1 includes logo + banner ImageUpload
+│   ├── VendorPackages.tsx   ← ✅ Built — full package + add-on management; inline edit, active toggle, seasonal/DOW rules, ImageUpload
+│   ├── VendorAvailability.tsx ← ✅ Built — 2-month calendar date-blocking; batch save (diff local vs API), bulk actions
 │   ├── ProviderDashboard.tsx ← ✅ Built — vendor dashboard with requests, bookings, stats
+│   ├── ProviderProfile.tsx  ← ✅ Built — owner can edit logo + banner via compact ImageUpload overlays
 │   ├── ClientDashboard.tsx  ← ✅ Built — My Events section, vendor requests, quick actions
 │   ├── CreateEvent.tsx      ← ✅ Built — form: name/type/date/guests/notes + vendor-type multi-select; saves to /events
 │   ├── EventDetail.tsx      ← ✅ Built — event header, vendor rows (Browse CTA or status+link), total estimate, notes
@@ -92,8 +97,8 @@ frontend/src/
 /events/:id → EventDetail (CLIENT role)
 /provider/dashboard → ProviderDashboard (PROVIDER role)
 /vendor/setup → VendorSetup (PROVIDER role)
-/vendor/packages → VendorPackages (stub)
-/vendor/availability → VendorAvailability (stub)
+/vendor/packages → VendorPackages (PROVIDER role) ← full package + add-on manager
+/vendor/availability → VendorAvailability (PROVIDER role) ← calendar date-blocking
 /bookings/:id → BookingDetail
 /event-requests/:id → EventRequestDetail
 ... (other routes scaffolded)
@@ -110,7 +115,8 @@ This is the core of FESTV. Everything revolves around structured packages.
 - **SeasonalPricingRule** — date range overrides per package (startMonth/Day → endMonth/Day, priceOverride, minimumSpendOverride, multiplier)
 - **DayOfWeekPricingRule** — day of week overrides per package (days[], priceOverride, minimumSpendOverride)
 - **AddOn** — à la carte extras (pricingType: FLAT/PER_PERSON/PER_HOUR, isRequired, applicablePackageIds[])
-- **AvailabilityBlock** — vendor-managed date blocking
+- **AvailabilityBlock** — vendor-managed date blocking (startDate, endDate)
+- **Package.imageUrl** — optional Cloudinary URL for package hero image (added in migration 20260429_add_package_image_url)
 - **Event** — top-level planning object. Fields: id, clientId (FK→User), name, eventType (EventType enum), eventDate, guestCount, notes?, status (EventStatus: PLANNING|CONFIRMED|COMPLETED|CANCELLED, default PLANNING), requests[], createdAt, updatedAt. Indexes on clientId, eventDate, status.
 - **EventRequest** — planner's request (packageId, eventType, eventDate, guestCount, selectedAddOnIds, calculatedEstimate, isOutOfParameters, eventId? FK→Event SET NULL on delete)
 - **Quote** — auto-generated or manual, versioned (immutable history), addOns as JSON, adjustments as JSON
@@ -181,6 +187,7 @@ Event → vendor marks COMPLETED
 | `/notifications` | user notification feed |
 | `/jess` | Jess AI chat |
 | `/pdf-import` | PDF → Claude extracts services/menu |
+| `/upload` | `POST /upload/logo`, `/upload/banner`, `/upload/package-image` — Cloudinary uploads (requireProvider) |
 | `/admin` | admin operations (verify/reject vendors) |
 | `/verification` | email verification codes |
 
@@ -332,10 +339,12 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 ### ✅ React Pages Built
 - Landing page — hero, why FESTV, how it works (tabbed), vendor type cards, vendor CTA; Framer Motion animations throughout (hero animate-on-mount, sections whileInView)
 - Browse Vendors — filter sidebar, vendor cards, package-aware search; eventId context banner when browsing for a specific event
-- Vendor Profile — dark hero, sticky nav, packages grouped by category, inline price estimator, about, reviews; passes eventId through to event request creation
+- Vendor Profile — dark hero, sticky nav, packages grouped by category, inline price estimator, about, reviews; passes eventId through to event request creation; owner can edit logo + banner via compact ImageUpload overlays
 - Login — FESTV branded card
 - Register — role selector, vendor type pills, password strength
-- Vendor Setup — full 6-step wizard with auto-generated packages
+- Vendor Setup — full 6-step wizard with auto-generated packages; Step 1 has logo + banner ImageUpload
+- Vendor Packages (`/vendor/packages`) — full package manager: inline edit, active toggle, confirm delete, seasonal/DOW rule management, package ImageUpload, add-ons section
+- Vendor Availability (`/vendor/availability`) — 2-month calendar date blocking, batch save, bulk actions (block weekends, block next 30 days, clear all), blocked ranges list
 - Vendor Dashboard — requests, bookings, stats, quick actions
 - Client Dashboard — My Events section (event cards with vendor booked count), quick actions, Plan a New Event CTA
 - CreateEvent — name/type/date/guests/notes form + vendor-type multi-select grid; POSTs to /events, saves vendor types to localStorage, navigates to EventDetail
@@ -347,12 +356,12 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - FLAT_PLUS_PER_PERSON pricing model added
 - Event model — top-level planning object: createEvent, getMyEvents, getEventById, updateEvent (all requireClient)
 - verificationStatus filter re-enabled in search (VERIFIED only — commit 4c36388)
+- Cloudinary image uploads — logo, banner, package-image endpoints (`/upload/*`); `backend/src/middleware/upload.ts` + `uploadController.ts`
+- Transactional emails via Resend — `backend/src/services/emailService.ts`; 6 fire-and-forget functions wired into adminRoutes, eventRequestController, quoteController, bookingController
 
 ### 🟡 React Pages Partially Built / Scaffolded
 - EventRequestDetail — scaffolded
 - BookingDetail — scaffolded
-- VendorPackages — stub at /vendor/packages
-- VendorAvailability — stub at /vendor/availability
 - AdminProviderVerification — scaffolded
 
 ### ❌ Not Yet Built (React)
@@ -361,7 +370,6 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - Jess AI widget (React component — backend route still works)
 
 ### ❌ Not Started (Backend/Infra)
-- Cloudinary image uploads
 - Stripe deposit payment
 - SMS verification
 - OAuth (Google/Facebook)
@@ -392,3 +400,29 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 18. **eventId passthrough** — travels from BrowseProviders (`?eventId=` search param) → VendorCard → ProviderProfile via `location.state.eventId`. Also accepted as `?eventId=` fallback on ProviderProfile. Injected into `POST /event-requests` body to link the request to the Event.
 19. **Event route ordering** — `GET /events/me` must be registered BEFORE `GET /events/:id` in eventRoutes.ts or the static segment is swallowed by the wildcard.
 20. **`www.festv.org` vs `festv.org`** — always use `www.festv.org` for direct API calls. `festv.org` (no www) hits a CDN redirect that strips Authorization headers, causing 401s on protected routes.
+21. **Cloudinary URL is on `req.file.path`** — NOT `.location` (S3) or `.url`. Cast as `(req.file as any).path`.
+22. **`multer-storage-cloudinary@4.0.0` requires `cloudinary@^1.x`** — NOT v2. Import as `{ v2 as cloudinary } from 'cloudinary'`. `CloudinaryStorage` params must be typed as `any` to avoid TS conflicts.
+23. **`ImageUpload` component has a `compact` prop** — `compact={true}` renders a small backdrop-blur pill button (no upload zone, no preview). Used for inline hero edits (e.g. "Edit Cover Photo" on ProviderProfile). Default is full drag-and-drop zone.
+24. **Fire-and-forget email pattern** — all `emailService.ts` functions log on failure but never throw. Call as `sendXxx(...).catch(() => {})` and do NOT await. Email failure must never break an API response.
+25. **Email vendor lookup in `createEventRequest`** — the vendor `providerProfile.findUnique` now includes `{ user: { select: { email: true } } }` so the vendor's email is available for `sendNewRequest`. Client email lookups in quoteController use a separate `prisma.user.findUnique` inside a `.then()` chain to stay fire-and-forget.
+
+---
+
+## Required Env Vars (Render → caterease-api)
+
+| Variable | Used by |
+|----------|---------|
+| `DATABASE_URL` | Prisma |
+| `JWT_SECRET` | Access token signing |
+| `JWT_REFRESH_SECRET` | Refresh token signing |
+| `RESEND_API_KEY` | Email (verification + transactional) |
+| `ANTHROPIC_API_KEY` | Jess AI + PDF import |
+| `CLOUDINARY_CLOUD_NAME` | Image uploads |
+| `CLOUDINARY_API_KEY` | Image uploads |
+| `CLOUDINARY_API_SECRET` | Image uploads |
+| `CORS_ORIGIN` | CORS (set to `https://www.festv.org`) |
+| `ADMIN_EMAILS` | Comma-separated admin email list |
+| `ENABLE_TEST_ACCOUNTS` | `true` on dev service only — enables test account seeder |
+| `TWILIO_ACCOUNT_SID` | SMS verification (not yet active) |
+| `TWILIO_AUTH_TOKEN` | SMS verification (not yet active) |
+| `TWILIO_PHONE_NUMBER` | SMS verification (not yet active) |

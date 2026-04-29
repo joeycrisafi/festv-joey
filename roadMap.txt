@@ -29,8 +29,12 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] admin dashboard vendor approval flow — flip verificationStatus to VERIFIED (highest priority before launch)
 	-[ ] stripe integration, e-transfer auto request for security?
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
+	-[x] Cloudinary image uploads — logo, banner, package-image endpoints; ImageUpload React component (full zone + compact pill mode); integrated into VendorSetup Step 1 + ProviderProfile owner overlays
 	-[ ] wire vendor portfolio uploads to Cloudinary
 	-[ ] connect friends/guestlist page to API
+	-[x] transactional email notifications via Resend — sendVendorApproved, sendVendorRejected, sendNewRequest, sendQuoteReceived, sendBookingConfirmed, sendDepositConfirmed; all fire-and-forget; wired into adminRoutes + 3 controllers
+	-[x] VendorPackages page (/vendor/packages) — inline edit, active toggle, confirm delete, seasonal/DOW rule management, package ImageUpload, add-ons section
+	-[x] VendorAvailability page (/vendor/availability) — 2-month calendar, batch save (diff local vs API), bulk actions, blocked ranges list
 	-[ ] wire admin dashboard to admin routes (POST /admin/providers/:id/verify + /reject already exist; rejection no longer crashes — rejectionReason fix applied)
 	-[ ] add rejectionReason String? field to ProviderProfile schema + migration (currently returned in response JSON only)
 	-[ ] build menu item isAvailable toggle in vendor dashboard
@@ -118,5 +122,5 @@ Build Vendors, get to the point where we can book an event completely via etrans
 
 ## Known risks / open questions
 	- Vendor search currently returns ALL providers (not VERIFIED only) — flip before launch
-	- No Cloudinary yet — vendor profile images use avatarUrl from DB or Unsplash fallbacks
+	- Cloudinary is live for logo/banner/package images. Portfolio images still use avatarUrl from DB or Unsplash fallbacks — wire portfolio uploads next
 	- Stripe not connected — deposit flow UI is built but payment not wired yet
