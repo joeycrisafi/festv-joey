@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UtensilsCrossed, Wine, Music, Camera, Flower2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
 
 // ── Vendor type pills & cards ────────────────────────────────────────────────
 const vendorTypes = [
@@ -84,21 +84,41 @@ const inView = {
   transition: { duration: 0.8, ease: 'easeOut' },
 };
 
+// ── Hero animation variants ───────────────────────────────────────────────────
+const heroVariants = {
+  eyebrow:  { hidden: { opacity: 0, y: 20  }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut', delay: 0.05 } } },
+  headline: { hidden: { opacity: 0, y: 60  }, visible: { opacity: 1, y: 0, transition: { duration: 1.0, ease: 'easeOut', delay: 0.2  } } },
+  sub:      { hidden: { opacity: 0, y: 40  }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut', delay: 0.5  } } },
+  ctas:     { hidden: { opacity: 0, y: 30  }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut', delay: 0.8  } } },
+  pills:    { hidden: { opacity: 0         }, visible: { opacity: 1,        transition: { duration: 0.5, delay: 1.0 } } },
+  rule:     { hidden: { opacity: 0         }, visible: { opacity: 1,        transition: { duration: 0.5, delay: 1.1 } } },
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Landing() {
   const [activeTab, setActiveTab] = useState<'planner' | 'vendor'>('planner');
   const steps = activeTab === 'planner' ? plannerSteps : vendorSteps;
 
+  // useAnimation + useEffect guarantees animations fire AFTER mount,
+  // bypassing the framer-motion v12 WAAPI issue where initial is skipped.
+  const eyebrowCtrl  = useAnimation();
+  const headlineCtrl = useAnimation();
+  const subCtrl      = useAnimation();
+  const ctasCtrl     = useAnimation();
+  const pillsCtrl    = useAnimation();
+  const ruleCtrl     = useAnimation();
+
+  useEffect(() => {
+    eyebrowCtrl.start('visible');
+    headlineCtrl.start('visible');
+    subCtrl.start('visible');
+    ctasCtrl.start('visible');
+    pillsCtrl.start('visible');
+    ruleCtrl.start('visible');
+  }, [eyebrowCtrl, headlineCtrl, subCtrl, ctasCtrl, pillsCtrl, ruleCtrl]);
+
   return (
     <div className="overflow-x-hidden">
-
-      {/* ── FRAMER MOTION TEST ── remove once confirmed working ─────────────── */}
-      <motion.div
-        initial={{ scaleX: 0, originX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 2, ease: 'easeOut' }}
-        style={{ height: 4, background: '#C4A06A', transformOrigin: 'left' }}
-      />
 
       {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
       <section className="min-h-screen bg-bg flex flex-col items-center justify-start px-6">
@@ -106,9 +126,9 @@ export default function Landing() {
 
           {/* Eyebrow */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+            variants={heroVariants.eyebrow}
+            initial="hidden"
+            animate={eyebrowCtrl}
             className="font-sans text-xs tracking-widest uppercase text-gold mb-6"
           >
             The Luxury Event Planning Marketplace
@@ -116,9 +136,9 @@ export default function Landing() {
 
           {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.0, ease: 'easeOut', delay: 0.2 }}
+            variants={heroVariants.headline}
+            initial="hidden"
+            animate={headlineCtrl}
             className="font-serif font-light text-6xl md:text-8xl text-dark leading-none"
           >
             Every great event<br />starts here.
@@ -126,9 +146,9 @@ export default function Landing() {
 
           {/* Subheadline */}
           <motion.p
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.5 }}
+            variants={heroVariants.sub}
+            initial="hidden"
+            animate={subCtrl}
             className="font-sans text-base md:text-lg text-muted max-w-lg mx-auto mt-6 leading-relaxed"
           >
             Browse curated vendors, see real package pricing, and book with confidence — all in one place.
@@ -136,9 +156,9 @@ export default function Landing() {
 
           {/* CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.8 }}
+            variants={heroVariants.ctas}
+            initial="hidden"
+            animate={ctasCtrl}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
             <Link
@@ -163,9 +183,9 @@ export default function Landing() {
 
           {/* Vendor type pills */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
+            variants={heroVariants.pills}
+            initial="hidden"
+            animate={pillsCtrl}
             className="flex flex-wrap gap-3 justify-center mt-8"
           >
             {vendorTypes.map((v) => (
@@ -181,9 +201,9 @@ export default function Landing() {
 
           {/* Gold rule */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.9 }}
+            variants={heroVariants.rule}
+            initial="hidden"
+            animate={ruleCtrl}
             className="mt-12 w-16 border-t border-gold mx-auto"
           />
         </div>
