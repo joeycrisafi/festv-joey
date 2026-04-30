@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UtensilsCrossed, Wine, Music, Camera, Flower2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useInView } from '../hooks/useInView';
 
 // ── Vendor type pills & cards ────────────────────────────────────────────────
 const vendorTypes = [
@@ -76,18 +76,15 @@ const vendorSteps = [
   },
 ];
 
-// ── Shared whileInView transition ─────────────────────────────────────────────
-const inView = {
-  initial: { opacity: 0, y: 60 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.1 },
-  transition: { duration: 0.8, ease: 'easeOut' },
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Landing() {
   const [activeTab, setActiveTab] = useState<'planner' | 'vendor'>('planner');
   const steps = activeTab === 'planner' ? plannerSteps : vendorSteps;
+
+  const section2 = useInView();
+  const section3 = useInView();
+  const section4 = useInView();
+  const section5 = useInView();
 
   return (
     <div className="overflow-x-hidden">
@@ -153,27 +150,19 @@ export default function Landing() {
 
       {/* ── SECTION 2: WHY FESTV ────────────────────────────────────────────── */}
       <section className="bg-white py-24">
-        <div className="max-w-5xl mx-auto px-6">
-
-          {/* Section heading — each element gets its own motion wrapper */}
-          <motion.p
-            {...inView}
-            className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4"
-          >
+        <div
+          ref={section2.ref}
+          className={`max-w-5xl mx-auto px-6 section-hidden ${section2.isVisible ? 'section-visible' : ''}`}
+        >
+          <p className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4">
             Why FESTV
-          </motion.p>
-          <motion.h2
-            {...inView}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
-            className="font-serif text-4xl text-dark text-center mb-16"
-          >
+          </p>
+          <h2 className="font-serif text-4xl text-dark text-center mb-16">
             A smarter way to plan
-          </motion.h2>
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-
-            {/* 01 */}
-            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0 }}>
+            <div>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 01
               </span>
@@ -182,10 +171,9 @@ export default function Landing() {
                 Every vendor defines their packages with structured pricing rules. See real numbers before you
                 ever reach out — no "contact for pricing."
               </p>
-            </motion.div>
+            </div>
 
-            {/* 02 */}
-            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0.12 }}>
+            <div>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 02
               </span>
@@ -194,10 +182,9 @@ export default function Landing() {
                 Every vendor on FESTV is reviewed and approved before going live. You're browsing a curated
                 network, not a directory.
               </p>
-            </motion.div>
+            </div>
 
-            {/* 03 */}
-            <motion.div {...inView} transition={{ duration: 0.7, ease: 'easeOut', delay: 0.24 }}>
+            <div>
               <span className="font-serif text-5xl font-light" style={{ color: 'rgba(196,160,106,0.3)' }}>
                 03
               </span>
@@ -206,30 +193,23 @@ export default function Landing() {
                 Request, receive a quote, pay your deposit. The whole process is structured and transparent
                 from start to finish.
               </p>
-            </motion.div>
-
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── SECTION 3: HOW IT WORKS ─────────────────────────────────────────── */}
       <section className="bg-bg py-24">
-        <div className="max-w-4xl mx-auto px-6">
-
-          {/* Section heading — split into separate motion elements */}
-          <motion.p
-            {...inView}
-            className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4"
-          >
+        <div
+          ref={section3.ref}
+          className={`max-w-4xl mx-auto px-6 section-hidden ${section3.isVisible ? 'section-visible' : ''}`}
+        >
+          <p className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4">
             How It Works
-          </motion.p>
-          <motion.h2
-            {...inView}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
-            className="font-serif text-4xl text-dark text-center mb-10"
-          >
+          </p>
+          <h2 className="font-serif text-4xl text-dark text-center mb-10">
             Simple for everyone
-          </motion.h2>
+          </h2>
 
           {/* Tab toggle */}
           <div className="flex items-center justify-center gap-8 mb-16">
@@ -270,62 +250,44 @@ export default function Landing() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
       {/* ── SECTION 4: VENDOR TYPE SHOWCASE ────────────────────────────────── */}
       <section className="bg-white py-24">
-        <div className="max-w-6xl mx-auto px-6">
-
-          {/* Section heading — split into separate motion elements */}
-          <motion.p
-            {...inView}
-            className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4"
-          >
+        <div
+          ref={section4.ref}
+          className={`max-w-6xl mx-auto px-6 section-hidden ${section4.isVisible ? 'section-visible' : ''}`}
+        >
+          <p className="font-sans text-xs tracking-widest uppercase text-gold text-center mb-4">
             Explore Vendors
-          </motion.p>
-          <motion.h2
-            {...inView}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
-            className="font-serif text-4xl text-dark text-center mb-16"
-          >
+          </p>
+          <h2 className="font-serif text-4xl text-dark text-center mb-16">
             Find the right vendor for your event
-          </motion.h2>
+          </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {vendorTypes.map((v, i) => (
-              <motion.div
+            {vendorTypes.map((v) => (
+              <Link
                 key={v.type}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{ duration: 0.7, ease: 'easeOut', delay: Math.min(i, 4) * 0.1 }}
+                to={`/providers?type=${v.type}`}
+                className="bg-bg border border-border rounded-2xl p-6 flex flex-col hover:border-gold hover:shadow-sm transition-all duration-200 group"
               >
-                <Link
-                  to={`/providers?type=${v.type}`}
-                  className="bg-bg border border-border rounded-2xl p-6 flex flex-col hover:border-gold hover:shadow-sm transition-all duration-200 group"
-                >
-                  <v.Icon size={28} strokeWidth={1.5} className="text-gold" />
-                  <span className="font-serif text-lg text-dark mt-4 leading-snug">{v.label}</span>
-                  <span className="text-muted text-xs mt-2 leading-relaxed flex-1">{v.desc}</span>
-                  <span className="text-gold text-xs mt-4 font-sans group-hover:underline">Browse →</span>
-                </Link>
-              </motion.div>
+                <v.Icon size={28} strokeWidth={1.5} className="text-gold" />
+                <span className="font-serif text-lg text-dark mt-4 leading-snug">{v.label}</span>
+                <span className="text-muted text-xs mt-2 leading-relaxed flex-1">{v.desc}</span>
+                <span className="text-gold text-xs mt-4 font-sans group-hover:underline">Browse →</span>
+              </Link>
             ))}
           </div>
-
         </div>
       </section>
 
       {/* ── SECTION 5: VENDOR CTA BANNER ────────────────────────────────────── */}
       <section className="bg-dark py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-          className="text-center px-6"
+        <div
+          ref={section5.ref}
+          className={`text-center px-6 section-hidden ${section5.isVisible ? 'section-visible' : ''}`}
         >
           <h2 className="font-serif text-4xl text-white">Are you a vendor?</h2>
           <p className="text-muted text-base mt-4 max-w-lg mx-auto leading-relaxed">
@@ -337,7 +299,7 @@ export default function Landing() {
           >
             List Your Business
           </Link>
-        </motion.div>
+        </div>
       </section>
 
     </div>
