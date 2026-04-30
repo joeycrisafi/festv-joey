@@ -49,11 +49,11 @@ const plannerSteps = [
   },
   {
     title: 'Receive your quote',
-    desc: 'Vendors respond with a detailed quote based on your needs.',
+    desc: 'Vendors respond with a detailed quote. Review the full price breakdown and accept with one click.',
   },
   {
-    title: 'Confirm & celebrate',
-    desc: 'Accept the quote, pay your deposit, and get ready for your event.',
+    title: 'Pay & celebrate',
+    desc: 'Pay your deposit securely in-app to confirm your booking. Then sit back and enjoy your event.',
   },
 ];
 
