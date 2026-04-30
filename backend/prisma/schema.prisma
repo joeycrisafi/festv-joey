@@ -227,6 +227,10 @@ model ProviderProfile {
   // Relations
   packages                 Package[]
   addOns                   AddOn[]
+  // Stripe Connect
+  stripeAccountId          String?
+  stripeAccountStatus      String?            // PENDING | ACTIVE
+
   availabilityBlocks       AvailabilityBlock[]
   eventRequests            EventRequest[]
   portfolioItems           PortfolioItem[]
@@ -688,9 +692,11 @@ model Booking {
   tax               Float
   total             Float
   depositAmount     Float
-  depositPaidAt     DateTime?
-  status            BookingStatus   @default(PENDING_DEPOSIT)
-  vendorNotes       String?
+  depositPaidAt          DateTime?
+  stripeSessionId        String?
+  stripePaymentIntentId  String?
+  status                 BookingStatus   @default(PENDING_DEPOSIT)
+  vendorNotes            String?
   specialRequests   String?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

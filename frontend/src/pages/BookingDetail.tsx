@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -157,6 +157,8 @@ export default function BookingDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const isProvider = user?.role === 'PROVIDER';
   const isClient = user?.role === 'CLIENT';
@@ -183,6 +185,19 @@ export default function BookingDetail() {
     load();
   }, [id, token]);
 
+  // Handle Stripe Checkout return
+  useEffect(() => {
+    const paymentParam = searchParams.get('payment');
+    if (paymentParam === 'success') {
+      setToastMessage('Payment received! Your deposit is confirmed.');
+      // Optimistically update status
+      setStatus('DEPOSIT_PAID');
+      setBooking(prev => prev ? { ...prev, status: 'DEPOSIT_PAID' } : prev);
+    } else if (paymentParam === 'cancelled') {
+      setToastMessage('Payment cancelled — your booking is still saved.');
+    }
+  }, [searchParams]);
+
   // ── Action handlers ──────────────────────────────────────────────────────────
 
   const doAction = async (
@@ -207,6 +222,34 @@ export default function BookingDetail() {
       setActionError('Network error — please try again.');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const payDeposit = async () => {
+    if (!id || !token) return;
+    setPaymentLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api/v1`
+        : '/api/v1';
+      const res = await fetch(`${API_BASE}/stripe/checkout/deposit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId: id }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+      } else {
+        setActionError(data.error ?? 'Unable to start payment. Please try again.');
+        setPaymentLoading(false);
+      }
+    } catch {
+      setActionError('Network error — please try again.');
+      setPaymentLoading(false);
     }
   };
 
@@ -302,10 +345,11 @@ export default function BookingDetail() {
                 </p>
 
                 <button
-                  onClick={() => setToastMessage('Stripe payments coming soon — contact your vendor to arrange the deposit.')}
-                  className="w-full bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest py-4 rounded-md hover:bg-gold-dark transition-colors mt-6"
+                  onClick={payDeposit}
+                  disabled={paymentLoading}
+                  className="w-full bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest py-4 rounded-md hover:bg-gold-dark transition-colors mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Pay Deposit
+                  {paymentLoading ? 'Redirecting to payment…' : `Pay Deposit — ${fmt(booking.depositAmount)}`}
                 </button>
               </motion.div>
             </div>

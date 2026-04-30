@@ -2250,6 +2250,17 @@ export default function VendorSetup() {
           </div>
         )}
 
+        {/* Bank account / Stripe note */}
+        <div className="border border-gold/30 bg-gold/5 rounded-md p-4">
+          <p className="font-sans text-xs font-bold uppercase tracking-widest text-gold-dark mb-1">
+            Getting paid
+          </p>
+          <p className="font-sans text-xs text-charcoal leading-relaxed">
+            Once your profile is approved you'll be prompted to connect your bank account via Stripe.
+            Deposit payments from clients will land directly in your account — FESTV charges no platform fee.
+          </p>
+        </div>
+
         {/* Checklist */}
         <div>
           <label className={labelCls}>Submission Checklist</label>

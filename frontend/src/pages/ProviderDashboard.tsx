@@ -136,6 +136,8 @@ export default function ProviderDashboard() {
   const [stats,    setStats]    = useState<BookingStats>({ totalBookings: 0, confirmedBookings: 0, completedBookings: 0, totalRevenue: 0 });
   const [quotes,   setQuotes]   = useState<PendingQuote[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [stripeStatus, setStripeStatus] = useState<'ACTIVE' | 'PENDING' | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   // ── Fetch all data on mount ────────────────────────────────────────────────
   useEffect(() => {
@@ -153,8 +155,20 @@ export default function ProviderDashboard() {
       // Profile
       if (profileRes.status === 'fulfilled' && profileRes.value?.success) {
         const p = profileRes.value.data?.providerProfile ?? profileRes.value.data;
-        if (p) setProfile(p);
-        else navigate('/login');
+        if (p) {
+          setProfile(p);
+          // Fetch Stripe status after profile is known
+          fetch(`${API_BASE}/stripe/connect/status?profileId=${p.id}`, { headers })
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) {
+                setStripeStatus(d.data?.chargesEnabled ? 'ACTIVE' : (d.data?.stripeAccountId ? 'PENDING' : null));
+              }
+            })
+            .catch(() => {});
+        } else {
+          navigate('/login');
+        }
       } else {
         navigate('/login');
       }
@@ -188,6 +202,24 @@ export default function ProviderDashboard() {
       setLoading(false);
     });
   }, [token, navigate]);
+
+  const connectStripe = async () => {
+    if (!token || !profileId || stripeLoading) return;
+    setStripeLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/stripe/connect/onboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ profileId }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+      }
+    } catch {
+      setStripeLoading(false);
+    }
+  };
 
   const firstName = profile?.user?.firstName ?? user?.firstName ?? 'there';
 
@@ -241,6 +273,31 @@ export default function ProviderDashboard() {
           >
             Complete profile →
           </Link>
+        </div>
+      )}
+
+      {/* ── STRIPE CONNECT BANNER ────────────────────────────────────────── */}
+      {stripeStatus !== 'ACTIVE' && (
+        <div className="bg-gold/5 border-b border-gold/20 px-6 md:px-12 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="font-sans text-sm font-semibold text-charcoal">
+                {stripeStatus === 'PENDING' ? 'Stripe account pending' : 'Connect your bank account'}
+              </p>
+              <p className="font-sans text-xs text-muted mt-0.5">
+                {stripeStatus === 'PENDING'
+                  ? 'Complete your Stripe onboarding to receive deposit payments.'
+                  : 'Set up Stripe to receive deposit payments directly into your bank.'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={connectStripe}
+            disabled={stripeLoading}
+            className="font-sans text-xs font-semibold text-gold hover:text-gold-dark transition-colors flex-shrink-0 whitespace-nowrap disabled:opacity-60"
+          >
+            {stripeLoading ? 'Redirecting…' : stripeStatus === 'PENDING' ? 'Continue setup →' : 'Connect Stripe →'}
+          </button>
         </div>
       )}
 

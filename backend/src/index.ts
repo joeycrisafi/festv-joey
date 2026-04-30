@@ -30,6 +30,20 @@ async function runStartupMigrations() {
     if (!existing[0]?.exists) {
       await prisma.$executeRawUnsafe(`ALTER TYPE "NotificationType" ADD VALUE IF NOT EXISTS 'NEW_REQUEST'`);
     }
+    // Stripe fields on ProviderProfile
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "stripeAccountId" TEXT`
+    );
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "ProviderProfile" ADD COLUMN IF NOT EXISTS "stripeAccountStatus" TEXT`
+    );
+    // Stripe fields on Booking
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "stripeSessionId" TEXT`
+    );
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS "stripePaymentIntentId" TEXT`
+    );
     console.log('✅ Startup migrations OK');
   } catch (err) {
     console.error('⚠️  Startup migration warning (non-fatal):', err);
@@ -68,6 +82,9 @@ app.use(cors({
 
 // Request logging
 app.use(morgan('dev'));
+
+// Stripe webhook needs the raw body — must come before express.json()
+app.use('/api/v1/stripe/webhook', express.raw({ type: 'application/json' }));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
