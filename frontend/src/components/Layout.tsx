@@ -611,12 +611,12 @@ export default function Layout() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/create-request" className="text-muted hover:text-gold transition-colors">
-                    Create Request
+                  <Link to="/events/new" className="text-muted hover:text-gold transition-colors">
+                    Plan an Event
                   </Link>
                 </li>
                 <li>
-                  <Link to="/how-it-works" className="text-muted hover:text-gold transition-colors">
+                  <Link to="/" className="text-muted hover:text-gold transition-colors">
                     How It Works
                   </Link>
                 </li>
@@ -630,7 +630,7 @@ export default function Layout() {
               </h4>
               <ul className="space-y-2 text-sm font-sans">
                 <li>
-                  <Link to="/register?role=provider" className="text-muted hover:text-gold transition-colors">
+                  <Link to="/register?role=PROVIDER" className="text-muted hover:text-gold transition-colors">
                     Join as Vendor
                   </Link>
                 </li>
@@ -639,42 +639,24 @@ export default function Layout() {
                     Setup Your Profile
                   </Link>
                 </li>
-                <li>
-                  <Link to="/success-stories" className="text-muted hover:text-gold transition-colors">
-                    Success Stories
-                  </Link>
-                </li>
               </ul>
             </div>
 
-            {/* Company */}
-            <div>
-              <h4 className="font-sans font-semibold text-xs uppercase tracking-widest text-white mb-4">
-                Company
-              </h4>
-              <ul className="space-y-2 text-sm font-sans">
-                <li>
-                  <Link to="/about" className="text-muted hover:text-gold transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/contact" className="text-muted hover:text-gold transition-colors">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/privacy" className="text-muted hover:text-gold transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/terms" className="text-muted hover:text-gold transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {/* Admin — only shown to admin users */}
+            {canAccessPlanner(user?.email) && (
+              <div>
+                <h4 className="font-sans font-semibold text-xs uppercase tracking-widest text-white mb-4">
+                  Admin
+                </h4>
+                <ul className="space-y-2 text-sm font-sans">
+                  <li>
+                    <Link to="/admin/providers" className="text-muted hover:text-gold transition-colors">
+                      Verify Vendors
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="mt-12 pt-8 text-center text-sm font-sans text-muted"
