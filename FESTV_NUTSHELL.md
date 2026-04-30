@@ -61,24 +61,29 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - React frontend deployed (Landing, Browse, Vendor Profile, Login, Register, Vendor Setup, Vendor Dashboard, Client Dashboard, Admin Approval, Quote Detail, Booking Detail, Create Event, Event Detail, Event Request Detail, Vendor Packages, Vendor Availability)
 - Full pricing engine with seasonal + DOW rules (proven: Estelle Saturday July = $52,152.50 ✅)
 - **Auto-quote generation** — standard requests instantly get a Quote (SENT, 7-day expiry), EventRequest moves to QUOTE_SENT, client emailed. Out-of-parameters stays PENDING for vendor.
-- **API hardening** — reviews endpoint standardised to `{ data: [], meta: { stats, pagination } }`; EventRequest booking flattened onto all GET responses; pricingEngine UUID validation (400 before DB hit); CORS accepts both festv.org domains
+- **Stripe deposit payments** — Stripe Connect Express for vendor bank onboarding; Stripe Checkout Sessions for planner deposits; webhook auto-confirms bookings on payment; lazy init so server starts without keys. BookingDetail has "Pay Deposit" button wired to Checkout Session. ProviderDashboard shows Connect banner until account active.
+- **Favorites** — heart button on every vendor card (BrowseProviders + ProviderProfile hero/sticky nav); CLIENT only, optimistic toggle, toast for guests; Saved Vendors in ClientDashboard with real API, initials, city, unsave ×.
+- **API hardening** — reviews endpoint standardised to `{ data: [], meta: { stats, pagination } }`; EventRequest booking flattened onto all GET responses; pricingEngine UUID validation (400 before DB hit); CORS scoped to `/api` only (static assets served before CORS, fixes blank page).
 - Cloudinary image uploads (logo, banner, package images)
 - 6 transactional emails via Resend (vendor approved/rejected, new request, quote received, booking confirmed, deposit confirmed)
 - Jess with conversational booking (4 live tools, city filter fixed, packageId hallucination prevented)
 - 5 test vendors live and verified in production
 - Framer Motion v10 animations on Landing (hero + scroll reveals). Root cause of past failures: `AnimatePresence initial={false}` kills all child animations — removed from Layout.tsx.
 - Event grouping — "Plan an Event" as primary CTA
+- **Polished post-acceptance moments** — BookingDetail: spring-animated CheckCircle, serif confirmed headline, "What Happens Next" 3-step timeline. QuoteDetail: gold shimmer bar, deposit card, "Go to Booking →".
+- Zero TypeScript errors across all backend and frontend files.
 
 ---
 
 ## What's Still to Build
-1. **End-to-end flow test** — Jess → request → instant quote → accept → booking (verify on festv.org)
-2. Stripe — deposit payments (currently "contact vendor to arrange")
+1. **Stripe end-to-end test** — keys added to Render; verify real deposit payment planner → vendor
+2. **End-to-end flow test** — Jess → request → instant quote → accept → BookingDetail → Pay Deposit (verify on festv.org)
 3. Mobile responsiveness pass
-4. rejectionReason field in schema
-5. New production database before real launch (no test accounts)
-6. OAuth (Google/Facebook login)
-7. SMS verification
+4. Messaging frontend (messageController + routes live; no UI yet)
+5. rejectionReason field in schema
+6. New production database before real launch (no test accounts)
+7. OAuth (Google/Facebook login)
+8. SMS verification
 
 ---
 
@@ -97,7 +102,11 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - **`AnimatePresence initial={false}` kills all descendant animations** — Layout.tsx uses `<AnimatePresence mode="wait">` only, no `initial` prop.
 - **Jess city filter** — `city` is on `User`, not `ProviderProfile`. Filter: `where: { user: { city: { contains: ... } } }`
 - **pricingEngine rejects non-UUID packageIds** — throws 400 before any DB query. Pass real UUIDs from search results only.
-- **CORS covers both festv.org and www.festv.org** — derived automatically from `CORS_ORIGIN` env var in `backend/src/index.ts`
+- **CORS must be scoped to `/api` only** — global CORS intercepts static asset requests and returns 500 with `application/json` MIME type → blank page. Static files must be registered before CORS middleware.
+- **Render build command must NOT end with `npm run build`** — runs frontend Vite build twice; second pass uses `emptyOutDir:true` and can wipe `react-dist`.
+- **Stripe is lazy-initialized** — `getStripe()` not `stripe`. Server starts without `STRIPE_SECRET_KEY`; endpoints throw 500 if called without it.
+- **`favoritesApi` uses `providerId` in URL** — `DELETE /favorites/:providerId` not `/:favoriteId`.
+- **`getMyFavorites` response**: parse as `d?.data?.favorites` — not `d?.data` (which is the pagination wrapper object).
 
 ---
 

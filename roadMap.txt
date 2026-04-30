@@ -19,7 +19,8 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] clean up ghost migration row in caterease-db: DELETE FROM _prisma_migrations WHERE migration_name = '20260423_consolidate_provider_types' AND applied_steps_count = 0; (cosmetic only, not blocking)
 
  bigger:
-	-[ ] end-to-end flow test — Jess → request → instant quote → EventRequestDetail → accept → Booking → BookingDetail (verify all steps work on festv.org with real test accounts)
+	-[ ] end-to-end flow test — Jess → request → instant quote → EventRequestDetail → accept → Booking → BookingDetail → Pay Deposit via Stripe (verify all steps on festv.org with real test accounts)
+	-[ ] Stripe end-to-end test — keys added to Render, test actual deposit payment flow planner → vendor
 	-[ ] 0auth google/fb sign-in options
 	-[x] pdf reader (Jess AI PDF import — live in vendor setup)
 		-[x] PDF import: all 5 vendor extraction prompts include canonical `category` field per service
@@ -28,7 +29,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 		-[x] vendorsetup Step 2: expanded service card has Category dropdown; collapsed card shows category label
 		-[x] vendorprofile: services grouped by category with show-more (>4 per group) + fixed SVG checkmark icon
 	-[x] admin dashboard vendor approval flow — AdminProviderVerification.tsx built; flips verificationStatus to VERIFIED/REJECTED
-	-[ ] stripe integration — deposit payment wired to booking (10% of total, PENDING_DEPOSIT → CONFIRMED flow is built, just needs Stripe checkout)
+	-[x] stripe integration — full deposit payment flow: Stripe Connect Express for vendors (onboard + status), Stripe Checkout Sessions for planners, webhook auto-confirms bookings (DEPOSIT_PAID + notifications to both parties); lazy init so server starts without STRIPE_SECRET_KEY; schema columns added via idempotent startup migrations
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
 	-[x] Cloudinary image uploads — logo, banner, package-image endpoints; ImageUpload React component (full zone + compact pill mode); integrated into VendorSetup Step 1 + ProviderProfile owner overlays
 	-[ ] wire vendor portfolio uploads to Cloudinary
@@ -47,9 +48,19 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] build menu item isAvailable toggle in vendor dashboard
 	-[ ] make menu items selectable in planner request flow
 	-[ ] mobile responsiveness pass on all pages
+	-[ ] messaging frontend — messageController built + mounted at /messages; frontend not yet built
+	-[ ] new production database before real launch (no test accounts mixed with real data)
 	-[x] flip vendor search to VERIFIED only before launch — searchProviders now filters verificationStatus=VERIFIED + requires active Package (commit 4c36388)
 	-[x] Framer Motion animations on Landing.tsx — hero animate-on-mount, all scroll sections whileInView, luxury feel (breathing not performing)
 	-[x] FESTV favicon — dark bg (#1A1714), gold serif "F" (#C4A06A), SVG at frontend/public/favicon.svg; cache-busted with ?v=2; deployed to production
+	-[x] BookingDetail.tsx polished — spring-animated CheckCircle, "Your booking is confirmed!" serif headline, prominent deposit amount, "What Happens Next" 3-step timeline, Pay Deposit button → Stripe Checkout
+	-[x] QuoteDetail.tsx polished — gold shimmer bar animation on accepted state, deposit card, "Go to Booking →" button
+	-[x] Frontend TypeScript cleanup — 57 errors → 0 across 18 files
+	-[x] Backend TypeScript cleanup — all pre-existing errors fixed (favoriteController, messageController, adminRoutes, jessController, uploadController, authController, eventRequestController, validators, eventNotifier)
+	-[x] Favorites feature frontend — heart button on BrowseProviders vendor cards + ProviderProfile hero/sticky-nav (CLIENT only, optimistic toggle, toast for guests); ClientDashboard Saved Vendors wired to real API with initials, city, unsave ×; favoritesApi added to api.ts
+	-[x] CORS fix — scoped to /api only; static files served before CORS middleware; fixes blank page / 500 on JS+CSS assets caused by global CORS intercepting asset requests
+	-[x] Render build command fixed — removed trailing npm run build that was wiping react-dist via emptyOutDir:true on second pass
+	-[x] Render Build Filters — set to frontend/** + backend/** so frontend-only commits trigger redeploy
 
 
 ## Completed
@@ -135,6 +146,15 @@ Build Vendors, get to the point where we can book an event completely via etrans
 
 
 ## Known risks / open questions
-	- Vendor search currently returns ALL providers (not VERIFIED only) — flip before launch
 	- Cloudinary is live for logo/banner/package images. Portfolio images still use avatarUrl from DB or Unsplash fallbacks — wire portfolio uploads next
-	- Stripe not connected — deposit flow UI is built but payment not wired yet
+	- Stripe keys added to Render — end-to-end deposit payment not yet tested with real cards
+	- Messaging frontend not built — messageController + routes are live but there is no UI
+	- CORS_ORIGIN env var must be set on Render or API calls from festv.org fail (allowed set falls back to localhost only)
+
+## Deployment gotchas (hard-won)
+	- CORS must be scoped to /api only — global CORS returns 500 for JS/CSS asset requests → blank page
+	- Render build command must NOT end with npm run build — triggers second frontend build with emptyOutDir:true that wipes react-dist
+	- framer-motion must stay at v10 — v12 WAAPI bug skips initial state on mount
+	- AnimatePresence initial={false} kills ALL descendant animations — never use it
+	- Render Build Filters must include frontend/** or frontend-only commits don't trigger a deploy
+	- react-dist is gitignored — never commit build artifacts; Render generates on every deploy

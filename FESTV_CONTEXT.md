@@ -45,7 +45,8 @@ FESTV is a luxury event-planning marketplace that connects event planners (clien
 ### Deployment
 - Deployed on **Render** (`caterease-api` service, `prod` project)
 - GitHub: `festv-org/festv-joey`, deploys from `main` branch
-- Build command: `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
+- Build command (Render, Root Directory = `backend`): `cd ../frontend && npm install && npm run build && cd ../backend && npm install && npx prisma generate && npx prisma migrate deploy`
+  - **Do NOT add `npm run build` at the end** — the backend build script re-runs the frontend build with `emptyOutDir:true`, wiping `react-dist`
 - Start: `npm start` (runs `tsx src/index.ts`)
 - Database: PostgreSQL (`caterease-db`) on Render
 - Live URL: `festv.org`
@@ -194,6 +195,9 @@ Event → vendor marks COMPLETED
 | `/jess` | Jess AI chat |
 | `/pdf-import` | PDF → Claude extracts services/menu |
 | `/upload` | `POST /upload/logo`, `/upload/banner`, `/upload/package-image` — Cloudinary uploads (requireProvider) |
+| `/favorites` | CLIENT favorites — add/remove/check/list saved providers |
+| `/messages` | conversations + messages (controller built, routes mounted — messaging backend complete) |
+| `/stripe` | `POST /connect/onboard` (vendor Express account), `GET /connect/status`, `POST /checkout/deposit` (Checkout Session), `POST /webhook` (raw body, auto-confirms bookings) |
 | `/admin` | admin operations (verify/reject vendors) |
 | `/verification` | email verification codes |
 
@@ -378,19 +382,19 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 
 ### ✅ React Pages Built
 - Landing page — hero, why FESTV, how it works (tabbed), vendor type cards, vendor CTA; Framer Motion v10 animations throughout (hero animate-on-mount, sections whileInView)
-- Browse Vendors — filter sidebar, vendor cards, package-aware search; eventId context banner when browsing for a specific event
-- Vendor Profile — dark hero, sticky nav, packages grouped by category, inline price estimator, about, reviews; passes eventId through to event request creation; owner can edit logo + banner via compact ImageUpload overlays
+- Browse Vendors — filter sidebar, vendor cards, package-aware search; eventId context banner when browsing for a specific event; **heart/save button on each card** (CLIENT only, optimistic toggle, toast for guests)
+- Vendor Profile — dark hero, sticky nav, packages grouped by category, inline price estimator, about, reviews; passes eventId through to event request creation; owner can edit logo + banner via compact ImageUpload overlays; **heart button in hero and sticky nav** (CLIENT only, hidden for owner, checks initial state via API)
 - Login — FESTV branded card
 - Register — role selector, vendor type pills, password strength
 - Vendor Setup — full 6-step wizard with auto-generated packages; Step 1 has logo + banner ImageUpload
 - Vendor Packages (`/vendor/packages`) — full package manager: inline edit, active toggle, confirm delete, seasonal/DOW rule management, package ImageUpload, add-ons section
 - Vendor Availability (`/vendor/availability`) — 2-month calendar date blocking, batch save, bulk actions (block weekends, block next 30 days, clear all), blocked ranges list
-- Vendor Dashboard — requests, bookings, stats, quick actions
-- Client Dashboard — My Events section (event cards with vendor booked count), quick actions, Plan a New Event CTA
+- Vendor Dashboard — requests, bookings, stats, quick actions; **Stripe Connect banner** when account not yet active
+- Client Dashboard — My Events section (event cards with vendor booked count), quick actions, Plan a New Event CTA; **Saved Vendors sidebar** with initials avatar, city, unsave × button, wired to real API
 - CreateEvent — name/type/date/guests/notes form + vendor-type multi-select grid; POSTs to /events, saves vendor types to localStorage, navigates to EventDetail
 - EventDetail — event header with status badge, VendorRow components per vendor type (Browse CTA or request status + quote/booking links), total estimate, notes
-- QuoteDetail (`/quotes/:id`) — full quote breakdown, line items, accept/decline actions
-- BookingDetail (`/bookings/:id`) — booking summary, status, deposit info, vendor + client details
+- QuoteDetail (`/quotes/:id`) — full quote breakdown, line items, accept/decline actions; **polished accepted state**: gold shimmer bar animation, deposit card, "Go to Booking →" button
+- BookingDetail (`/bookings/:id`) — **polished confirmation experience**: spring-animated CheckCircle, "Your booking is confirmed!" serif headline, prominent deposit amount, "What Happens Next" 3-step timeline, Pay Deposit button wired to Stripe Checkout Session
 - EventRequestDetail (`/event-requests/:id`) — request summary card, vendor card with ProviderTypeBadge, quotes list, cancel button; CAD currency formatting
 - AdminProviderVerification (`/admin/providers`) — admin-gated, pending provider list, approve/reject with reason
 
@@ -404,13 +408,20 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - Transactional emails via Resend — `backend/src/services/emailService.ts`; 6 fire-and-forget functions wired into adminRoutes, eventRequestController, quoteController, bookingController
 - Jess conversational booking — `jessController.ts` has 4 Claude tool-use tools (search_vendors, get_price_estimate, create_event_request, create_event); tool loop runs server-side, Jess responds naturally; city filter fixed (User model), packageId hallucination prevented
 - Auto-quote on standard requests — `createEventRequest` now immediately creates a Quote (SENT, isAutoGenerated, 7-day expiry), moves EventRequest to QUOTE_SENT, and sends client email for any in-parameters request with a packageId
+- **Stripe integration** — `backend/src/config/stripe.ts` (lazy init, no crash without keys), `stripeController.ts` (Connect onboard + status, Checkout Session for deposits, webhook auto-confirms bookings + notifies both parties), raw body middleware scoped to webhook route only; schema columns added via idempotent startup migrations (`stripeAccountId`, `stripeAccountStatus` on ProviderProfile; `stripeSessionId`, `stripePaymentIntentId` on Booking)
+- **Favorites** — `favoriteController.ts` fully built and mounted at `/favorites`; full rewrite to match actual Prisma schema (`Favorite` has no `notes`/`provider` relation — uses separate providerProfile query)
+- **Messaging** — `messageController.ts` fully built and mounted at `/messages`; rewritten to match `Conversation.participants: String[]` schema
+- **TypeScript** — backend: zero errors after fixing favoriteController, messageController, adminRoutes (static import), jessController, uploadController, authController, eventRequestController, eventNotifier, validators; frontend: zero errors across all 18 files
+- **CORS fix** — scoped to `/api` only via `app.use('/api', corsMiddleware)`; static files served before CORS so JS/CSS assets never hit the CORS callback
 
-### ❌ Not Started (Backend/Infra)
-- Stripe deposit payment
+### ❌ Not Started / Still To Do
+- End-to-end Stripe payment test (keys added to Render — verify flow)
 - SMS verification
 - OAuth (Google/Facebook)
 - Mobile responsiveness pass
 - rejectionReason field in ProviderProfile schema
+- Messaging frontend (messageController built + mounted, frontend not yet built)
+- New production database before real launch (no test accounts mixed with real data)
 
 ---
 
@@ -453,6 +464,13 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 35. **Auto-quote flow** — `POST /event-requests` now auto-creates a Quote and sets status to QUOTE_SENT for standard (in-parameters) requests. The pricing result from the estimate call is reused — no second DB round-trip. Out-of-parameters requests stay PENDING.
 36. **`calculatePackagePrice` validates UUID before hitting DB** — throws 400 if `packageId` isn't a valid UUID. Prevents confusing 404s from hallucinated IDs (Jess or otherwise).
 37. **CORS covers both festv.org domains** — `backend/src/index.ts` uses a callback that adds both `https://festv.org` and `https://www.festv.org` to the allowed set regardless of which one `CORS_ORIGIN` is set to.
+38. **CORS must be scoped to `/api` only** — never register `app.use(cors(...))` globally. Global CORS intercepts static asset requests; if `CORS_ORIGIN` isn't set or the origin isn't in the allowed list, the CORS callback throws → Express error handler returns `application/json` 500 for your JS/CSS files → blank page.
+39. **Render build command must NOT end with `npm run build`** — the backend's `package.json` build script re-runs the full frontend build with `emptyOutDir: true`. Adding `npm run build` at the end of the Render build command triggers a second Vite build that wipes `react-dist` partway through (if anything fails) or simply doubles build time. Correct Render build command: `cd ../frontend && npm install && npm run build && cd ../backend && npm install && npx prisma generate && npx prisma migrate deploy`.
+40. **Stripe lazy init** — `backend/src/config/stripe.ts` exports `getStripe()` not a top-level `stripe` instance. The server starts cleanly without `STRIPE_SECRET_KEY`. Stripe endpoints return 500 if called without keys. Always call `getStripe()` inside controller functions, never at module level.
+41. **Stripe API version is `'2026-04-22.dahlia'`** — this is the version the installed `stripe` npm package requires. Using any other version string causes a TypeScript error. Never change it without upgrading the stripe package.
+42. **`InstanceType<typeof Stripe>` for Stripe type annotation** — `export const stripe: Stripe` causes TS2709 (can't use namespace as type); inferring type causes TS2742 (portability). The correct annotation is `InstanceType<typeof Stripe>`.
+43. **`favoritesApi` uses `providerId` (ProviderProfile ID) in URL** — both add and remove are `POST/DELETE /favorites/:providerId`. There is no separate `favoriteId` in the URL. The `Favorite` model stores `{ userId, providerId }` as a pair.
+44. **`getMyFavorites` response shape** — `{ data: { favorites: [], pagination: {} } }`. Parse as `d?.data?.favorites`. The old code used `d?.data ?? d?.favorites` which returned the `data` object (not the array) when the API was working correctly.
 
 ---
 
@@ -471,6 +489,8 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 | `CORS_ORIGIN` | CORS (set to `https://www.festv.org`) |
 | `ADMIN_EMAILS` | Comma-separated admin email list |
 | `ENABLE_TEST_ACCOUNTS` | `true` on dev service only — enables test account seeder |
+| `STRIPE_SECRET_KEY` | Stripe API secret key (lazy init — server starts without it, endpoints 500 if missing) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (for `/stripe/webhook` signature verification) |
 | `TWILIO_ACCOUNT_SID` | SMS verification (not yet active) |
 | `TWILIO_AUTH_TOKEN` | SMS verification (not yet active) |
 | `TWILIO_PHONE_NUMBER` | SMS verification (not yet active) |
