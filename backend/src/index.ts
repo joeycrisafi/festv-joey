@@ -43,9 +43,24 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-// CORS
+// CORS — always allow both apex and www regardless of which CORS_ORIGIN is set
+const corsOrigins = new Set<string>(['http://localhost:3000', 'http://localhost:5173']);
+if (config.cors.origin && config.cors.origin !== '*') {
+  corsOrigins.add(config.cors.origin);
+  // Ensure both www and non-www variants are covered
+  if (config.cors.origin.startsWith('https://www.')) {
+    corsOrigins.add(config.cors.origin.replace('https://www.', 'https://'));
+  } else if (config.cors.origin.startsWith('https://')) {
+    corsOrigins.add(config.cors.origin.replace('https://', 'https://www.'));
+  }
+}
+
 app.use(cors({
-  origin: config.cors.origin || '*',
+  origin: (origin, cb) => {
+    // Allow requests with no origin (curl, Postman, server-to-server)
+    if (!origin || corsOrigins.has(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
