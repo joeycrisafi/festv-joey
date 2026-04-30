@@ -61,6 +61,7 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - React frontend deployed (Landing, Browse, Vendor Profile, Login, Register, Vendor Setup, Vendor Dashboard, Client Dashboard, Admin Approval, Quote Detail, Booking Detail, Create Event, Event Detail, Event Request Detail, Vendor Packages, Vendor Availability)
 - Full pricing engine with seasonal + DOW rules (proven: Estelle Saturday July = $52,152.50 ✅)
 - **Auto-quote generation** — standard requests instantly get a Quote (SENT, 7-day expiry), EventRequest moves to QUOTE_SENT, client emailed. Out-of-parameters stays PENDING for vendor.
+- **API hardening** — reviews endpoint standardised to `{ data: [], meta: { stats, pagination } }`; EventRequest booking flattened onto all GET responses; pricingEngine UUID validation (400 before DB hit); CORS accepts both festv.org domains
 - Cloudinary image uploads (logo, banner, package images)
 - 6 transactional emails via Resend (vendor approved/rejected, new request, quote received, booking confirmed, deposit confirmed)
 - Jess with conversational booking (4 live tools, city filter fixed, packageId hallucination prevented)
@@ -88,13 +89,15 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - `appliedPrice` is the displayed price — not `basePrice`
 - `verificationStatus: 'VERIFIED'` filter is ACTIVE in production
 - Quotes are immutable — never update, always create new version
-- `EventRequest` has no direct booking relation — traverse via `quotes[0].booking`
-- Reviews API returns `{ data: { reviews[], stats, pagination } }` — parse as `data.reviews`
+- `EventRequest.booking` is flattened on all API responses — no need to traverse quotes
+- Reviews API: `{ data: reviews[], meta: { stats, pagination } }` — parse as `data.data` for the array
 - Both databases exist on Render — always use `caterease-db` not `festv_db`
 - React build outputs to `backend/public/react-dist/` — Express serves it as catch-all
 - **framer-motion must stay at v10** — v12 WAAPI bug skips `initial` state. Never upgrade.
 - **`AnimatePresence initial={false}` kills all descendant animations** — Layout.tsx uses `<AnimatePresence mode="wait">` only, no `initial` prop.
 - **Jess city filter** — `city` is on `User`, not `ProviderProfile`. Filter: `where: { user: { city: { contains: ... } } }`
+- **pricingEngine rejects non-UUID packageIds** — throws 400 before any DB query. Pass real UUIDs from search results only.
+- **CORS covers both festv.org and www.festv.org** — derived automatically from `CORS_ORIGIN` env var in `backend/src/index.ts`
 
 ---
 

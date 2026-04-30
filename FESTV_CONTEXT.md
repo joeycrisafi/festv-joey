@@ -420,9 +420,9 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 2. **Render deploys from `main` only** — push to dev does NOT deploy. Always merge dev → main.
 3. **Token key is `accessToken`** — NOT `token`. AuthContext uses `accessToken`.
 4. **verificationStatus filter temporarily removed** from searchProviders for dev testing. Must re-enable before launch: uncomment `verificationStatus: 'VERIFIED'` in providerController.ts searchProviders.
-5. **`EventRequest` has no direct `booking` relation** — traverse via `eventRequest.quotes[0].booking`.
+5. **`EventRequest.booking` is flattened in all API responses** — all GET event-request endpoints now include `booking: { id, status } | null` directly on the response object. The underlying Prisma model still has no direct relation; it's computed server-side from `quotes[0].booking`.
 6. **`ProviderProfile` has no `reviews` relation** — use `profile.totalReviews` (Int). Never `_count: { reviews }`.
-7. **Reviews API response shape**: `GET /reviews/provider/:id` returns `{ data: { reviews[], stats, pagination } }` — parse as `data.reviews`.
+7. **Reviews API response shape**: `GET /reviews/provider/:id` returns `{ data: reviews[], meta: { stats, pagination } }` — standard shape. Parse reviews as `data.data`, stats as `data.meta.stats`.
 8. **Package estimate response**: use `result.appliedPrice` (not `basePrice` or `packagePrice`) for the displayed price.
 9. **providerTypes[] always includes primaryType** — never send one without the other.
 10. **`getMyProfile` returns null not 404** for new vendors — handle gracefully.
@@ -435,7 +435,7 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 17. **localStorage key for event vendor types** — `festv_event_vendors_needed_${eventId}` stores the array of vendor type strings selected in CreateEvent. EventDetail reads this to render VendorRow components. Not stored in DB — client-side only.
 18. **eventId passthrough** — travels from BrowseProviders (`?eventId=` search param) → VendorCard → ProviderProfile via `location.state.eventId`. Also accepted as `?eventId=` fallback on ProviderProfile. Injected into `POST /event-requests` body to link the request to the Event.
 19. **Event route ordering** — `GET /events/me` must be registered BEFORE `GET /events/:id` in eventRoutes.ts or the static segment is swallowed by the wildcard.
-20. **`www.festv.org` vs `festv.org`** — always use `www.festv.org` for direct API calls. `festv.org` (no www) hits a CDN redirect that strips Authorization headers, causing 401s on protected routes.
+20. **`www.festv.org` vs `festv.org`** — CORS now accepts both. But for direct API calls always prefer `www.festv.org`; the apex domain hits a CDN redirect that may strip Authorization headers on some routes. Backend CORS derives both variants automatically from `CORS_ORIGIN` env var.
 21. **Cloudinary URL is on `req.file.path`** — NOT `.location` (S3) or `.url`. Cast as `(req.file as any).path`.
 22. **`multer-storage-cloudinary@4.0.0` requires `cloudinary@^1.x`** — NOT v2. Import as `{ v2 as cloudinary } from 'cloudinary'`. `CloudinaryStorage` params must be typed as `any` to avoid TS conflicts.
 23. **`ImageUpload` component has a `compact` prop** — `compact={true}` renders a small backdrop-blur pill button (no upload zone, no preview). Used for inline hero edits (e.g. "Edit Cover Photo" on ProviderProfile). Default is full drag-and-drop zone.
@@ -451,6 +451,8 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 33. **framer-motion must stay at v10** — v12 introduced WAAPI which commits the `animate` state synchronously on mount, permanently skipping `initial`. Locked to `^10.18.0` in `frontend/package.json`.
 34. **Jess `search_vendors` city field** — `city` lives on the `User` model, not `ProviderProfile`. Filter must use `where: { user: { city: { contains: input.city, mode: 'insensitive' } } }`.
 35. **Auto-quote flow** — `POST /event-requests` now auto-creates a Quote and sets status to QUOTE_SENT for standard (in-parameters) requests. The pricing result from the estimate call is reused — no second DB round-trip. Out-of-parameters requests stay PENDING.
+36. **`calculatePackagePrice` validates UUID before hitting DB** — throws 400 if `packageId` isn't a valid UUID. Prevents confusing 404s from hallucinated IDs (Jess or otherwise).
+37. **CORS covers both festv.org domains** — `backend/src/index.ts` uses a callback that adds both `https://festv.org` and `https://www.festv.org` to the allowed set regardless of which one `CORS_ORIGIN` is set to.
 
 ---
 
