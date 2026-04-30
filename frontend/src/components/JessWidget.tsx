@@ -135,9 +135,21 @@ export default function JessWidget() {
 
       const data = await res.json();
 
+      let messageText: string =
+        data?.data?.message ??
+        "Hmm, I'm having a little trouble connecting right now 😅 Give me a moment and try again!";
+
+      // Defensive: if the backend accidentally sends raw JSON as the message text, unwrap it
+      if (typeof messageText === 'string' && messageText.trim().startsWith('{')) {
+        try {
+          const inner = JSON.parse(messageText);
+          if (typeof inner.message === 'string') messageText = inner.message;
+        } catch { /* keep as-is */ }
+      }
+
       const reply: Message = {
         role:    'assistant',
-        content: data?.data?.message ?? "Hmm, I'm having a little trouble connecting right now 😅 Give me a moment and try again!",
+        content: messageText,
         links:   data?.data?.links ?? [],
       };
 

@@ -482,8 +482,12 @@ async function executeTool(
         return JSON.stringify({ error: `Unknown tool: ${name}` });
     }
   } catch (err: any) {
-    console.error(`[Jess tool error — ${name}]:`, err);
-    return JSON.stringify({ error: err.message ?? 'Tool execution failed' });
+    console.error(`[Jess tool error — ${name}]:`, err?.message ?? err, err?.stack ?? '');
+    return JSON.stringify({
+      error: err?.message ?? 'Tool execution failed',
+      tool: name,
+      suggestion: 'Let the user know something went wrong retrieving that info, and suggest they browse FESTV directly or rephrase their request.',
+    });
   }
 }
 
@@ -540,7 +544,6 @@ async function buildUserContext(req: AuthenticatedRequest): Promise<string> {
         verificationStatus: true,
         businessDescription: true,
         serviceAreas: true,
-        _count: { select: { menuItems: true, portfolioItems: true } },
       },
     });
 
@@ -670,10 +673,17 @@ export const chat = async (req: AuthenticatedRequest, res: Response) => {
   const raw     = textBlock?.text ?? '';
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
-  let parsed: { message: string; links?: { label: string; href: string }[] };
+  let parsed: { message: string; links?: { label: string; href: string }[] } | null = null;
   try {
     parsed = JSON.parse(cleaned);
   } catch {
+    // Try to find a JSON object anywhere in the response (e.g. Claude added preamble text)
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try { parsed = JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
+    }
+  }
+  if (!parsed || typeof parsed.message !== 'string') {
     parsed = { message: cleaned || raw, links: [] };
   }
 
