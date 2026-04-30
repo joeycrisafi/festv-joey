@@ -92,6 +92,14 @@ export default function Landing() {
   return (
     <div className="overflow-x-hidden">
 
+      {/* ── FRAMER MOTION TEST ── remove once confirmed working ─────────────── */}
+      <motion.div
+        initial={{ scaleX: 0, originX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 2, ease: 'easeOut' }}
+        style={{ height: 4, background: '#C4A06A', transformOrigin: 'left' }}
+      />
+
       {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
       <section className="min-h-screen bg-bg flex flex-col items-center justify-start px-6">
         <div className="w-full max-w-4xl mx-auto text-center" style={{ paddingTop: '20vh' }}>
