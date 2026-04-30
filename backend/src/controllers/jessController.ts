@@ -275,36 +275,70 @@ async function executeTool(
   try {
     switch (name) {
       case 'search_vendors': {
+        console.log('[Jess] search_vendors called with:', JSON.stringify(input));
+
+        // Normalise vendor type — Claude may pass natural language values
+        const typeMap: Record<string, string> = {
+          venue:         'RESTO_VENUE',
+          restaurant:    'RESTO_VENUE',
+          resto_venue:   'RESTO_VENUE',
+          caterer:       'CATERER',
+          catering:      'CATERER',
+          entertainment: 'ENTERTAINMENT',
+          dj:            'ENTERTAINMENT',
+          band:          'ENTERTAINMENT',
+          photo:         'PHOTO_VIDEO',
+          photography:   'PHOTO_VIDEO',
+          photographer:  'PHOTO_VIDEO',
+          photo_video:   'PHOTO_VIDEO',
+          florist:       'FLORIST_DECOR',
+          florist_decor: 'FLORIST_DECOR',
+          decor:         'FLORIST_DECOR',
+        };
+        const rawType = input.vendorType ?? input.type;
+        const normalizedType = rawType
+          ? (typeMap[String(rawType).toLowerCase()] ?? String(rawType).toUpperCase())
+          : null;
+
         const where: any = { verificationStatus: 'VERIFIED' };
-        if (input.vendorType) where.providerTypes = { has: input.vendorType };
-        if (input.city) where.city = { contains: input.city, mode: 'insensitive' };
+        if (normalizedType) where.providerTypes = { has: normalizedType };
+        if (input.city)     where.city = { contains: input.city, mode: 'insensitive' };
 
-        // If guestCount provided, filter out packages that can't accommodate them
-        // (done at the package level below — vendors with no suitable package are still included
-        // but their packages array will reflect only the relevant ones)
+        console.log('[Jess] search_vendors query where:', JSON.stringify(where));
 
-        const vendors = await prisma.providerProfile.findMany({
-          where,
-          include: {
-            packages: {
-              where: { isActive: true },
-              orderBy: { basePrice: 'asc' },
-              take: 4,
-              select: {
-                id: true,
-                name: true,
-                basePrice: true,
-                pricingModel: true,
-                category: true,
-                minGuests: true,
-                maxGuests: true,
-                durationHours: true,
+        let vendors: any[];
+        try {
+          vendors = await prisma.providerProfile.findMany({
+            where,
+            include: {
+              packages: {
+                where: { isActive: true },
+                orderBy: { basePrice: 'asc' },
+                take: 4,
+                select: {
+                  id: true,
+                  name: true,
+                  basePrice: true,
+                  pricingModel: true,
+                  category: true,
+                  minGuests: true,
+                  maxGuests: true,
+                  durationHours: true,
+                },
               },
             },
-          },
-          take: 5,
-          orderBy: { averageRating: 'desc' },
-        });
+            take: 5,
+            orderBy: { averageRating: 'desc' },
+          });
+          console.log('[Jess] search_vendors results count:', vendors.length);
+        } catch (err: any) {
+          console.error('[Jess] search_vendors Prisma error:', err?.message ?? err, err?.stack ?? '');
+          return JSON.stringify({
+            error: String(err?.message ?? err),
+            vendors: [],
+            suggestion: 'Tell the user the vendor search hit an error and suggest they browse /providers directly.',
+          });
+        }
 
         if (vendors.length === 0) {
           return JSON.stringify({
@@ -324,7 +358,7 @@ async function executeTool(
             averageRating: v.averageRating,
             tagline: (v as any).tagline ?? null,
             startingFrom: v.packages[0]?.basePrice ?? null,
-            packages: v.packages.map((p) => ({
+            packages: v.packages.map((p: any) => ({
               id: p.id,
               name: p.name,
               basePrice: p.basePrice,
