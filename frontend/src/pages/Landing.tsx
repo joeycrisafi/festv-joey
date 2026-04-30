@@ -78,10 +78,10 @@ const vendorSteps = [
 
 // ── Shared whileInView transition ─────────────────────────────────────────────
 const inView = {
-  initial: { opacity: 0, y: 40 },
+  initial: { opacity: 0, y: 60 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.15 },
-  transition: { duration: 0.7, ease: 'easeOut' },
+  viewport: { once: true, amount: 0.1 },
+  transition: { duration: 0.8, ease: 'easeOut' },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -108,9 +108,9 @@ export default function Landing() {
 
           {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
+            transition={{ duration: 1.0, ease: 'easeOut', delay: 0.2 }}
             className="font-serif font-light text-6xl md:text-8xl text-dark leading-none"
           >
             Every great event<br />starts here.
@@ -118,9 +118,9 @@ export default function Landing() {
 
           {/* Subheadline */}
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.35 }}
+            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.5 }}
             className="font-sans text-base md:text-lg text-muted max-w-lg mx-auto mt-6 leading-relaxed"
           >
             Browse curated vendors, see real package pricing, and book with confidence — all in one place.
@@ -128,9 +128,9 @@ export default function Landing() {
 
           {/* CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.55 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.8 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
             <Link
