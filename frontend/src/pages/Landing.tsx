@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UtensilsCrossed, Wine, Music, Camera, Flower2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { TestAnimation } from '../components/TestAnimation';
 
 // ── Vendor type pills & cards ────────────────────────────────────────────────
 const vendorTypes = [
@@ -92,9 +91,6 @@ export default function Landing() {
 
   return (
     <div className="overflow-x-hidden">
-
-      {/* ── DIAGNOSTIC — remove after testing ─────────────────────────────── */}
-      <TestAnimation />
 
       {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
       <section className="min-h-screen bg-bg flex flex-col items-center justify-start px-6">
