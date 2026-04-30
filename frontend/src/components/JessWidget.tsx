@@ -18,7 +18,7 @@ const API_BASE = import.meta.env.VITE_API_URL
 const WELCOME: Message = {
   role: 'assistant',
   content:
-    "Hi! 👋 I'm Jess — your personal event planning assistant. I can help you find vendors, get real pricing, and even send booking requests, all right here in chat. What are we planning? ✨",
+    "Oh hi!! 🌟 I'm SO glad you're here — I'm Jess, your personal event planning hostess! I've spent years in the Montreal event scene and I genuinely LOVE helping people plan unforgettable experiences. Whether you need a venue, a caterer, a DJ, or the whole dream — I've got you. So tell me... what are we planning? ✨🎉",
 };
 
 // ── Typing dots ───────────────────────────────────────────────────────────────
