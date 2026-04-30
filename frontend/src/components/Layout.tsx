@@ -571,7 +571,7 @@ export default function Layout() {
 
       {/* ── Main Content ──────────────────────────────────────────────────── */}
       <main className="flex-1">
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0 }}
