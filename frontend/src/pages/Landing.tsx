@@ -90,7 +90,7 @@ export default function Landing() {
   const steps = activeTab === 'planner' ? plannerSteps : vendorSteps;
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-x-hidden">
 
       {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
       <section className="min-h-screen bg-bg flex flex-col items-center justify-start px-6">
