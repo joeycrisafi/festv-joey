@@ -447,6 +447,7 @@ async function executeTool(
               packageId: String(input.packageId),
               eventDate: parsedDate,
               guestCount: Number(input.guestCount),
+              selectedAddOnIds: [],
             });
             calculatedEstimate = pricing.total;
             isOutOfParameters = pricing.isOutOfParameters;
@@ -461,7 +462,7 @@ async function executeTool(
             providerProfileId: String(input.providerProfileId),
             packageId: input.packageId ? String(input.packageId) : undefined,
             eventId: input.eventId ? String(input.eventId) : undefined,
-            eventType: String(input.eventType),
+            eventType: String(input.eventType) as any,
             eventDate: parsedDate,
             guestCount: Number(input.guestCount),
             selectedAddOnIds: [],

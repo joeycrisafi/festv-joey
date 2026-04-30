@@ -14,13 +14,13 @@ import { isDevAccess, isRealAdmin } from '../routes/adminRoutes.js';
 // Generate JWT tokens
 const generateTokens = (payload: TokenPayload): AuthTokens => {
   const accessToken = jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
+    expiresIn: config.jwt.expiresIn as any,
   });
-  
+
   const refreshToken = jwt.sign(
     { ...payload, tokenId: uuidv4() },
     config.jwt.refreshSecret,
-    { expiresIn: config.jwt.refreshExpiresIn }
+    { expiresIn: config.jwt.refreshExpiresIn as any }
   );
   
   return { accessToken, refreshToken };

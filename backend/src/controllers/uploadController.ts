@@ -89,7 +89,7 @@ export async function uploadPackageImageHandler(req: AuthenticatedRequest, res: 
 
     await prisma.package.update({
       where: { id: packageId },
-      data: { imageUrl },
+      data: { imageUrl } as any,
     });
 
     return res.json({ success: true, data: { imageUrl } });

@@ -239,6 +239,7 @@ class EventNotifier {
 
     try {
       // Dynamic import so it doesn't crash if nodemailer isn't installed
+      // @ts-ignore — nodemailer not in deps; only runs when emailEnabled is true
       const nodemailer = await import('nodemailer');
       
       const transporter = nodemailer.createTransport({

@@ -211,7 +211,7 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
     await prisma.notification.create({
       data: {
         userId:  req.user!.id,
-        type:    'QUOTE_RECEIVED',
+        type:    'NEW_QUOTE',
         title:   'Quote ready',
         message: `${vendor.businessName} has sent you a quote for your ${eventType.toLowerCase().replace('_', ' ')} on ${dateLabel}`,
         data:    { eventRequestId: request.id },

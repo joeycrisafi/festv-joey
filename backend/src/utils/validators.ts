@@ -195,6 +195,8 @@ export const createReviewSchema = z.object({
   content: z.string().min(10, 'Review must be at least 10 characters').max(2000),
 });
 
+export const updateReviewSchema = createReviewSchema.omit({ bookingId: true }).partial();
+
 export const providerResponseSchema = z.object({
   response: z.string().min(10).max(1000),
 });

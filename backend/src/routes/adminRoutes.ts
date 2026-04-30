@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { eventNotifier, ALL_MODELS } from '../services/eventNotifier.js';
 import { sendVendorApproved, sendVendorRejected } from '../services/emailService.js';
+import prisma from '../config/database.js';
 
 const router = Router();
 
@@ -84,10 +85,8 @@ router.put('/events/config', (req: AuthenticatedRequest, res: Response) => {
 // GET /admin/event-requests — All event requests with full pipeline data
 router.get('/event-requests', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
-    const requests = await db.eventRequest.findMany({
+    const requests = await prisma.eventRequest.findMany({
       include: {
         client: {
           select: { id: true, firstName: true, lastName: true, email: true, city: true, state: true, createdAt: true },
@@ -122,10 +121,8 @@ router.get('/event-requests', async (req: AuthenticatedRequest, res: Response) =
 // GET /admin/providers — All providers with full content (for dashboard graphs)
 router.get('/providers', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
-    const providers = await db.providerProfile.findMany({
+    const providers = await prisma.providerProfile.findMany({
       include: {
         user: {
           select: {
@@ -162,10 +159,8 @@ router.get('/providers', async (req: AuthenticatedRequest, res: Response) => {
 // GET /admin/providers/pending — Get all pending provider profiles
 router.get('/providers/pending', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
-    const pendingProviders = await db.providerProfile.findMany({
+    const pendingProviders = await prisma.providerProfile.findMany({
       where: { verificationStatus: 'PENDING' },
       include: {
         user: {
@@ -220,10 +215,8 @@ router.get('/providers/pending', async (req: AuthenticatedRequest, res: Response
 router.post('/providers/:id/verify', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
-    const provider = await db.providerProfile.update({
+    const provider = await prisma.providerProfile.update({
       where: { id },
       data: { 
         verificationStatus: 'VERIFIED',
@@ -261,8 +254,6 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ 
@@ -271,7 +262,7 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
       });
     }
 
-    const provider = await db.providerProfile.update({
+    const provider = await prisma.providerProfile.update({
       where: { id },
       data: {
         verificationStatus: 'REJECTED',
@@ -311,8 +302,6 @@ router.post('/providers/:id/reject', async (req: AuthenticatedRequest, res: Resp
 router.get('/providers/all', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { status } = req.query;
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
     
     const whereClause: any = {};
     
@@ -324,7 +313,7 @@ router.get('/providers/all', async (req: AuthenticatedRequest, res: Response) =>
       }
     }
 
-    const providers = await db.providerProfile.findMany({
+    const providers = await prisma.providerProfile.findMany({
       where: whereClause,
       include: {
         user: {
@@ -363,10 +352,8 @@ router.get('/providers/all', async (req: AuthenticatedRequest, res: Response) =>
 // GET /admin/users — All CLIENT users for graph visualization
 router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const prismaModule = await import('../config/database.js');
-    const db = prismaModule.default;
 
-    const users = await db.user.findMany({
+    const users = await prisma.user.findMany({
       select: {
         id: true, firstName: true, lastName: true, email: true,
         avatarUrl: true, city: true, state: true, createdAt: true, status: true,
