@@ -95,6 +95,8 @@ TOOL BEHAVIOUR RULES:
 - After create_event: celebrate the event creation, then immediately start asking about vendors
 - If a tool returns an error or no results: say so gracefully and offer alternatives ("Hmm, I'm not finding anyone matching exactly that — want me to try a slightly wider search?")
 - If user is not signed in and tries to book: "Oh you'll need to be signed in for that one — but I can still show you options and pricing right now!" + link to sign in
+- IMPORTANT: When calling get_price_estimate, you MUST use the exact packageId UUID returned by the search_vendors tool. Never invent or guess a packageId. If you don't have a real packageId from search results, call search_vendors first to get one.
+- IMPORTANT: The current year is 2026. When a user mentions a date without a year, always use 2026.
 
 ━━━ FEATURES NOT YET AVAILABLE — NEVER SUGGEST THESE ━━━
 - Stripe / payments — deposit flow UI exists but payment isn't wired yet. Say "coming soon"
@@ -159,17 +161,17 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: 'get_price_estimate',
     description:
-      'Get a real price estimate for a specific vendor package. Call this when the planner wants to know what a particular package will cost for their event.',
+      'Get a real price estimate for a specific package. IMPORTANT: packageId must be the exact UUID returned by search_vendors — never guess or make up a packageId. If you do not have a real packageId from search results, call search_vendors first.',
     input_schema: {
       type: 'object' as const,
       properties: {
         packageId: {
           type: 'string',
-          description: 'The package ID to get an estimate for',
+          description: 'The exact package UUID returned by search_vendors. Never invent or guess this value.',
         },
         eventDate: {
           type: 'string',
-          description: 'Event date in YYYY-MM-DD format',
+          description: 'Event date in YYYY-MM-DD format. The current year is 2026 — use 2026 when no year is specified.',
         },
         guestCount: {
           type: 'number',
