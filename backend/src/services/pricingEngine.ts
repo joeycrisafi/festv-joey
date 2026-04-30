@@ -129,6 +129,11 @@ export async function calculatePackagePrice(input: {
 }): Promise<PricingResult> {
   const { packageId, eventDate, guestCount, durationHours, selectedAddOnIds } = input;
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_REGEX.test(packageId)) {
+    throw new AppError('Invalid packageId — must be a valid UUID', 400);
+  }
+
   // ── Step 1: Fetch package ────────────────────────────────────────────────
 
   const pkg = await prisma.package.findUnique({

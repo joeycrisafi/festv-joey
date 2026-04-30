@@ -65,6 +65,7 @@ const REQUEST_INCLUDE_FULL = {
       total: true,
       version: true,
       createdAt: true,
+      booking: { select: { id: true, status: true } },
     },
     orderBy: { version: 'desc' as const },
   },
@@ -247,14 +248,14 @@ export const getMyRequestsAsClient = asyncHandler(async (req: AuthenticatedReque
         select: { id: true, businessName: true, primaryType: true, logoUrl: true, averageRating: true },
       },
       quotes: {
-        select: { id: true, status: true, total: true, version: true },
+        select: { id: true, status: true, total: true, version: true, booking: { select: { id: true, status: true } } },
         orderBy: { version: 'desc' },
       },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  res.json({ success: true, data: requests });
+  res.json({ success: true, data: requests.map(r => ({ ...r, booking: r.quotes?.[0]?.booking ?? null })) });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -275,14 +276,14 @@ export const getMyRequestsAsVendor = asyncHandler(async (req: AuthenticatedReque
         select: { id: true, firstName: true, lastName: true, city: true, avatarUrl: true },
       },
       quotes: {
-        select: { id: true, status: true, total: true, version: true },
+        select: { id: true, status: true, total: true, version: true, booking: { select: { id: true, status: true } } },
         orderBy: { version: 'desc' },
       },
     },
     orderBy: { createdAt: 'desc' },
   });
 
-  res.json({ success: true, data: requests });
+  res.json({ success: true, data: requests.map(r => ({ ...r, booking: r.quotes?.[0]?.booking ?? null })) });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -309,7 +310,8 @@ export const getEventRequestById = asyncHandler(async (req: AuthenticatedRequest
     throw new ForbiddenError('You do not have access to this event request');
   }
 
-  res.json({ success: true, data: request });
+  const booking = (request as any).quotes?.[0]?.booking ?? null;
+  res.json({ success: true, data: { ...request, booking } });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -395,7 +397,7 @@ export const getIncomingRequests = asyncHandler(async (req: AuthenticatedRequest
           select: { id: true, firstName: true, lastName: true, city: true, avatarUrl: true },
         },
         quotes: {
-          select: { id: true, status: true, total: true, version: true },
+          select: { id: true, status: true, total: true, version: true, booking: { select: { id: true, status: true } } },
           orderBy: { version: 'desc' },
           take: 1,
         },
@@ -409,7 +411,7 @@ export const getIncomingRequests = asyncHandler(async (req: AuthenticatedRequest
 
   res.json({
     success: true,
-    data:    requests,
+    data:    requests.map(r => ({ ...r, booking: r.quotes?.[0]?.booking ?? null })),
     meta:    {
       page,
       limit,

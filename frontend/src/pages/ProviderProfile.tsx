@@ -649,7 +649,7 @@ export default function ProviderProfile() {
 
         if (reviewsRes) {
           const reviewsData = await reviewsRes.json().catch(() => null);
-          if (reviewsData?.success) setReviews(reviewsData.data?.reviews ?? []);
+          if (reviewsData?.success) setReviews(reviewsData.data ?? []);
         }
       } catch (err) {
         console.error('[ProviderProfile] fetch error:', err);

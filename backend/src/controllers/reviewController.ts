@@ -166,8 +166,8 @@ export const getProviderReviews = async (req: AuthenticatedRequest, res: Respons
 
   res.json({
     success: true,
-    data: {
-      reviews,
+    data: reviews,
+    meta: {
       stats: {
         ratingDistribution: ratingDistribution.reduce((acc, curr) => {
           acc[curr.overallRating] = curr._count;
