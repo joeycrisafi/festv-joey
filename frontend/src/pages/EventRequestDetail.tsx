@@ -1,313 +1,334 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  DollarSign, 
-  MapPin,
-  ArrowLeft,
-  CheckCircle,
-  Star,
-  MessageSquare,
-  ChevronRight
-} from 'lucide-react';
+import { format } from 'date-fns';
+import { Clock, ArrowLeft, Users, Timer, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { eventRequestsApi } from '../utils/api';
+import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
 
-// Mock data
-const mockRequest = {
-  id: '1',
-  title: 'Smith Wedding Reception',
-  eventType: 'WEDDING',
-  description: 'Elegant wedding reception for 150 guests. Looking for high-quality catering with a focus on farm-to-table cuisine.',
-  guestCount: 150,
-  budgetMin: 5000,
-  budgetMax: 8000,
-  eventDate: '2025-03-15',
-  eventStartTime: '18:00',
-  eventEndTime: '23:00',
-  venueName: 'Grand Ballroom at The Plaza',
-  venueAddress: '123 Main Street',
-  venueCity: 'San Francisco',
-  venueState: 'CA',
-  venueZipCode: '94102',
-  status: 'SUBMITTED',
-  serviceStyle: 'PLATED',
-  createdAt: '2025-01-10',
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Quote {
+  id: string;
+  version: number;
+  status: string;
+  total: number;
+  depositAmount: number;
+  expiresAt?: string;
+}
+
+interface EventRequest {
+  id: string;
+  status: string;
+  eventType: string;
+  eventDate: string;
+  guestCount: number;
+  calculatedEstimate?: number;
+  isOutOfParameters: boolean;
+  specialRequests?: string;
+  package?: { name: string; pricingModel: string; durationHours?: number };
+  providerProfile: {
+    id: string;
+    businessName: string;
+    primaryType: string;
+    logoUrl?: string;
+    user?: { city?: string };
+  };
+  quotes: Quote[];
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const cad = (n: number) =>
+  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+
+const EVENT_TYPE_LABEL = (t: string) =>
+  t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+const PRICING_MODEL_LABEL: Record<string, string> = {
+  PER_PERSON:           'Per Person',
+  FLAT_RATE:            'Flat Rate',
+  PER_HOUR:             'Per Hour',
+  FLAT_PLUS_PER_PERSON: 'Flat + Per Person',
 };
 
-const mockQuotes = [
-  {
-    id: '1',
-    provider: {
-      id: '1',
-      businessName: 'Gourmet Delights Catering',
-      averageRating: 4.9,
-      totalReviews: 128,
-      isVerified: true,
-    },
-    totalAmount: 6750,
-    pricePerPerson: 45,
-    message: 'We would be honored to cater your special day! Our team specializes in elegant plated dinners and we can customize the menu to your preferences.',
-    validUntil: '2025-02-15',
-    status: 'SENT',
-  },
-  {
-    id: '2',
-    provider: {
-      id: '2',
-      businessName: 'Savory Moments Catering',
-      averageRating: 4.7,
-      totalReviews: 89,
-      isVerified: true,
-    },
-    totalAmount: 5950,
-    pricePerPerson: 39.67,
-    message: 'Congratulations on your upcoming wedding! We offer a comprehensive package that includes appetizers, main course, and dessert.',
-    validUntil: '2025-02-10',
-    status: 'SENT',
-  },
-  {
-    id: '3',
-    provider: {
-      id: '3',
-      businessName: 'Elite Events Catering',
-      averageRating: 4.8,
-      totalReviews: 156,
-      isVerified: false,
-    },
-    totalAmount: 7200,
-    pricePerPerson: 48,
-    message: 'We specialize in luxury wedding catering with white-glove service. Our package includes a dedicated event coordinator.',
-    validUntil: '2025-02-20',
-    status: 'SENT',
-  },
-];
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  PENDING:    { label: 'Awaiting Response', className: 'bg-gold/10 text-gold-dark' },
+  QUOTE_SENT: { label: 'Quote Received',    className: 'bg-blue-50 text-blue-700' },
+  ACCEPTED:   { label: 'Accepted',          className: 'bg-green/10 text-green' },
+  DECLINED:   { label: 'Declined',          className: 'bg-red/10 text-red' },
+  EXPIRED:    { label: 'Expired',           className: 'bg-muted/10 text-muted' },
+};
+
+const QUOTE_STATUS: Record<string, { label: string; className: string }> = {
+  PENDING:  { label: 'Pending',  className: 'bg-gold/10 text-gold-dark' },
+  ACCEPTED: { label: 'Accepted', className: 'bg-green/10 text-green' },
+  REJECTED: { label: 'Declined', className: 'bg-red/10 text-red' },
+  EXPIRED:  { label: 'Expired',  className: 'bg-muted/10 text-muted' },
+};
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function Skeleton() {
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-10 animate-pulse">
+      <div className="h-4 w-32 bg-border rounded mb-6" />
+      <div className="h-8 w-64 bg-border rounded mb-2" />
+      <div className="h-5 w-24 bg-border rounded mb-8" />
+      <div className="bg-white border border-border rounded-md p-8 space-y-4">
+        <div className="h-5 w-48 bg-border rounded" />
+        <div className="h-8 w-40 bg-border rounded" />
+        <div className="h-5 w-32 bg-border rounded" />
+      </div>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EventRequestDetail() {
-  const { id } = useParams();
-  const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const { token } = useAuth();
 
-  const handleAcceptQuote = (quoteId: string) => {
-    // In real app, this would call the API
-    alert(`Quote ${quoteId} accepted! Redirecting to booking...`);
+  const [request, setRequest]       = useState<EventRequest | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  const [cancelling, setCancelling] = useState(false);
+
+  useEffect(() => {
+    if (!id || !token) return;
+    (async () => {
+      try {
+        const res = await eventRequestsApi.getById(id, token) as any;
+        setRequest(res?.data ?? res);
+      } catch {
+        setError('Request not found.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id, token]);
+
+  const handleCancel = async () => {
+    if (!id || !token) return;
+    setCancelling(true);
+    try {
+      await eventRequestsApi.updateStatus(id, 'EXPIRED', token);
+      setRequest(prev => prev ? { ...prev, status: 'EXPIRED' } : prev);
+    } catch {
+      /* silent */
+    } finally {
+      setCancelling(false);
+    }
   };
 
+  if (loading) return <div className="bg-bg min-h-screen"><Skeleton /></div>;
+  if (error || !request) {
+    return (
+      <div className="bg-bg min-h-screen flex items-center justify-center">
+        <p className="font-sans text-muted">{error || 'Request not found.'}</p>
+      </div>
+    );
+  }
+
+  const statusCfg = STATUS_CONFIG[request.status] ?? STATUS_CONFIG.PENDING;
+  const vendor    = request.providerProfile;
+  const pkg       = request.package;
+  const initials  = vendor.businessName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+
   return (
-    <div className="py-8">
-      <div className="section-padding">
-        {/* Header */}
-        <div className="mb-8">
-          <Link 
-            to="/dashboard" 
-            className="flex items-center gap-2 text-stone-600 hover:text-stone-900 mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
-          </Link>
-          
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="font-display text-3xl font-bold text-stone-900">
-                  {mockRequest.title}
-                </h1>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  mockRequest.status === 'SUBMITTED'
-                    ? 'bg-amber-100 text-amber-700'
-                    : mockRequest.status === 'QUOTED'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-green-100 text-green-700'
-                }`}>
-                  {mockRequest.status}
-                </span>
-              </div>
-              <p className="text-stone-600">
-                Created on {new Date(mockRequest.createdAt).toLocaleDateString()}
-              </p>
-            </div>
+    <div className="bg-bg min-h-screen">
+      <div className="max-w-3xl mx-auto px-6 py-10">
+
+        {/* Back */}
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-1.5 text-gold text-xs font-sans uppercase tracking-widest hover:text-gold-dark transition-colors"
+        >
+          <ArrowLeft size={12} strokeWidth={2} />
+          Back to dashboard
+        </Link>
+
+        {/* Heading */}
+        <div className="mt-4 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p className="font-sans text-xs uppercase tracking-widest text-muted mb-1">
+              {EVENT_TYPE_LABEL(request.eventType)}
+            </p>
+            <h1 className="font-serif text-3xl text-dark leading-tight">
+              {vendor.businessName}
+            </h1>
           </div>
+          <span className={`font-sans text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full ${statusCfg.className}`}>
+            {statusCfg.label}
+          </span>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Event Details */}
-          <div className="lg:col-span-1">
-            <div className="card p-6 sticky top-24">
-              <h2 className="font-display text-lg font-semibold text-stone-900 mb-4">
-                Event Details
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-stone-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-500">Date</p>
-                    <p className="font-medium text-stone-900">
-                      {new Date(mockRequest.eventDate).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
+        {/* Request summary card */}
+        <div className="bg-white border border-border rounded-md p-8 mt-6 space-y-5">
 
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-stone-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-500">Time</p>
-                    <p className="font-medium text-stone-900">
-                      {mockRequest.eventStartTime} - {mockRequest.eventEndTime}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-stone-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-500">Guests</p>
-                    <p className="font-medium text-stone-900">{mockRequest.guestCount} people</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <DollarSign className="w-5 h-5 text-stone-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-500">Budget</p>
-                    <p className="font-medium text-stone-900">
-                      ${mockRequest.budgetMin.toLocaleString()} - ${mockRequest.budgetMax.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-stone-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-500">Venue</p>
-                    <p className="font-medium text-stone-900">{mockRequest.venueName}</p>
-                    <p className="text-sm text-stone-600">
-                      {mockRequest.venueAddress}<br />
-                      {mockRequest.venueCity}, {mockRequest.venueState} {mockRequest.venueZipCode}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {mockRequest.description && (
-                <div className="mt-6 pt-6 border-t border-stone-200">
-                  <h3 className="font-medium text-stone-900 mb-2">Description</h3>
-                  <p className="text-stone-600 text-sm">{mockRequest.description}</p>
-                </div>
-              )}
-
-              <div className="mt-6 pt-6 border-t border-stone-200">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-stone-500">Event Type</span>
-                  <span className="font-medium text-stone-900">{mockRequest.eventType}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm mt-2">
-                  <span className="text-stone-500">Service Style</span>
-                  <span className="font-medium text-stone-900">{mockRequest.serviceStyle}</span>
-                </div>
-              </div>
+          {pkg && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-sans font-semibold text-sm text-dark">{pkg.name}</span>
+              <span className="font-sans text-xs px-2 py-0.5 rounded-full bg-bg text-muted border border-border">
+                {PRICING_MODEL_LABEL[pkg.pricingModel] ?? pkg.pricingModel}
+              </span>
             </div>
+          )}
+
+          <div>
+            <p className="font-sans text-xs uppercase tracking-widest text-muted mb-1">Event Date</p>
+            <p className="font-serif text-2xl text-dark">
+              {format(new Date(request.eventDate), 'EEEE, MMMM d, yyyy')}
+            </p>
           </div>
 
-          {/* Quotes */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-xl font-semibold text-stone-900">
-                Quotes Received ({mockQuotes.length})
-              </h2>
+          <div className="flex items-center gap-6 text-sm font-sans text-charcoal flex-wrap">
+            <span className="flex items-center gap-1.5">
+              <Users size={14} className="text-muted" />
+              {request.guestCount} guests
+            </span>
+            {pkg?.durationHours && (
+              <span className="flex items-center gap-1.5">
+                <Timer size={14} className="text-muted" />
+                {pkg.durationHours}h
+              </span>
+            )}
+          </div>
+
+          {request.calculatedEstimate != null && (
+            <div>
+              <p className="font-sans text-xs uppercase tracking-widest text-muted mb-1">Estimated Total</p>
+              <p className="font-serif text-2xl text-gold-dark font-semibold">
+                Est. {cad(request.calculatedEstimate)}
+              </p>
             </div>
+          )}
 
-            {mockQuotes.length === 0 ? (
-              <div className="card p-12 text-center">
-                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-8 h-8 text-stone-400" />
-                </div>
-                <h3 className="font-semibold text-stone-900 mb-2">No quotes yet</h3>
-                <p className="text-stone-600">
-                  Providers are reviewing your request. You'll receive quotes soon!
-                </p>
-              </div>
+          {request.isOutOfParameters && (
+            <div className="bg-gold/10 border border-gold/30 rounded-md p-4">
+              <p className="font-sans text-sm text-gold-dark leading-relaxed">
+                This is a custom request — the vendor will review and respond with a personalised quote.
+              </p>
+            </div>
+          )}
+
+          {request.specialRequests && (
+            <div className="bg-bg rounded-md p-4">
+              <p className="font-sans text-xs uppercase tracking-widest text-muted mb-2">Special Requests</p>
+              <p className="font-sans text-sm text-charcoal italic leading-relaxed">
+                "{request.specialRequests}"
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Vendor */}
+        <div className="bg-white border border-border rounded-md p-6 mt-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden">
+            {vendor.logoUrl ? (
+              <img src={vendor.logoUrl} alt={vendor.businessName} className="w-full h-full object-cover" />
             ) : (
-              <div className="space-y-4">
-                {mockQuotes.map((quote) => (
-                  <div 
-                    key={quote.id} 
-                    className={`card p-6 transition-all ${
-                      selectedQuote === quote.id ? 'ring-2 ring-brand-500' : ''
-                    }`}
-                  >
-                    {/* Provider Info */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-brand-100 rounded-xl flex items-center justify-center">
-                          <span className="text-xl font-bold text-brand-600">
-                            {quote.provider.businessName[0]}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Link 
-                              to={`/providers/${quote.provider.id}`}
-                              className="font-semibold text-stone-900 hover:text-brand-600"
-                            >
-                              {quote.provider.businessName}
-                            </Link>
-                            {quote.provider.isVerified && (
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-stone-500">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span>{quote.provider.averageRating}</span>
-                            <span>({quote.provider.totalReviews} reviews)</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-stone-900">
-                          ${quote.totalAmount.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-stone-500">
-                          ${quote.pricePerPerson.toFixed(2)}/person
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Message */}
-                    <p className="text-stone-600 mb-4">{quote.message}</p>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-                      <p className="text-sm text-stone-500">
-                        Valid until {new Date(quote.validUntil).toLocaleDateString()}
-                      </p>
-                      <div className="flex gap-2">
-                        <Link 
-                          to={`/providers/${quote.provider.id}`}
-                          className="btn-secondary text-sm py-2"
-                        >
-                          View Profile
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Link>
-                        <button
-                          onClick={() => handleAcceptQuote(quote.id)}
-                          className="btn-primary text-sm py-2"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Accept Quote
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="w-full h-full bg-gold/10 flex items-center justify-center">
+                <span className="font-serif text-gold-dark font-semibold text-sm">{initials}</span>
               </div>
             )}
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-xl text-dark leading-tight">{vendor.businessName}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <ProviderTypeBadge type={vendor.primaryType} size="xs" />
+              {vendor.user?.city && (
+                <span className="flex items-center gap-1 font-sans text-xs text-muted">
+                  <MapPin size={10} />
+                  {vendor.user.city}
+                </span>
+              )}
+            </div>
+          </div>
+          <Link
+            to={`/providers/${vendor.id}`}
+            className="text-gold text-xs font-sans font-semibold uppercase tracking-widest hover:text-gold-dark transition-colors flex-shrink-0"
+          >
+            View Profile →
+          </Link>
         </div>
+
+        {/* Quotes */}
+        <div className="mt-8">
+          <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mb-4">
+            Quotes
+          </p>
+
+          {request.quotes.length > 0 ? (
+            <div className="space-y-3">
+              {request.quotes.map(quote => {
+                const qStatus = QUOTE_STATUS[quote.status] ?? QUOTE_STATUS.PENDING;
+                return (
+                  <div key={quote.id} className="bg-white border border-border rounded-md p-6">
+                    <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans text-sm font-semibold text-dark">
+                          Quote v{quote.version}
+                        </span>
+                        <span className={`font-sans text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${qStatus.className}`}>
+                          {qStatus.label}
+                        </span>
+                      </div>
+                      {quote.expiresAt && (
+                        <span className="font-sans text-xs text-muted">
+                          Expires {format(new Date(quote.expiresAt), 'MMM d, yyyy')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-end justify-between gap-4 flex-wrap">
+                      <div>
+                        <p className="font-sans text-xs uppercase tracking-widest text-muted mb-0.5">Total</p>
+                        <p className="font-serif text-2xl text-dark">{cad(quote.total)}</p>
+                        <p className="font-serif text-lg text-gold-dark mt-0.5">
+                          {cad(quote.depositAmount)} deposit
+                        </p>
+                      </div>
+                      <Link
+                        to={`/quotes/${quote.id}`}
+                        className="bg-gold text-dark px-4 py-2 rounded-md text-xs font-sans font-semibold uppercase tracking-widest hover:bg-gold-dark transition-colors"
+                      >
+                        View Quote →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-white border border-border rounded-md p-8 flex flex-col items-center text-center gap-3">
+              <Clock size={28} strokeWidth={1.5} className="text-muted" />
+              <p className="font-serif text-lg text-muted">Waiting for vendor response</p>
+              <p className="font-sans text-xs text-muted leading-relaxed max-w-xs">
+                Your request has been sent. The vendor will respond shortly.
+              </p>
+              <p className="font-sans text-xs text-muted">
+                {request.isOutOfParameters
+                  ? 'Custom requests may take 24–48 hours.'
+                  : 'Standard requests typically receive an instant quote.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Cancel */}
+        {request.status === 'PENDING' && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="font-sans text-xs text-muted hover:text-red transition-colors disabled:opacity-50"
+            >
+              {cancelling ? 'Cancelling…' : 'Cancel Request'}
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
