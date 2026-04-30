@@ -372,13 +372,35 @@ async function executeTool(
       }
 
       case 'get_price_estimate': {
-        const result = await calculatePackagePrice({
-          packageId: String(input.packageId),
-          eventDate: new Date(input.eventDate),
-          guestCount: Number(input.guestCount),
-          durationHours: input.durationHours != null ? Number(input.durationHours) : undefined,
-          selectedAddOnIds: Array.isArray(input.selectedAddOnIds) ? input.selectedAddOnIds : [],
-        });
+        console.log('[Jess] get_price_estimate called with:', JSON.stringify(input));
+
+        if (!input.packageId) {
+          return JSON.stringify({ error: 'packageId is required — get the package ID from search_vendors results first.' });
+        }
+        if (!input.eventDate) {
+          return JSON.stringify({ error: 'eventDate is required in YYYY-MM-DD format.' });
+        }
+        if (!input.guestCount) {
+          return JSON.stringify({ error: 'guestCount is required.' });
+        }
+
+        let result: any;
+        try {
+          result = await calculatePackagePrice({
+            packageId: String(input.packageId),
+            eventDate: new Date(input.eventDate),
+            guestCount: Number(input.guestCount),
+            durationHours: input.durationHours != null ? Number(input.durationHours) : undefined,
+            selectedAddOnIds: Array.isArray(input.selectedAddOnIds) ? input.selectedAddOnIds : [],
+          });
+          console.log('[Jess] get_price_estimate result: total=', result.total, 'isOutOfParameters=', result.isOutOfParameters);
+        } catch (err: any) {
+          console.error('[Jess] get_price_estimate error:', err?.message ?? err, err?.stack ?? '');
+          return JSON.stringify({
+            error: err?.message ?? 'Pricing engine failed',
+            suggestion: 'Tell the user you could not calculate the price and suggest they visit the vendor profile directly to use the estimator.',
+          });
+        }
 
         return JSON.stringify({
           appliedPrice: result.appliedPrice,
