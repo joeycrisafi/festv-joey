@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { format, parseISO, isPast } from 'date-fns';
 import { CheckCircle, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { quotesApi } from '../utils/api';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
@@ -99,6 +100,26 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
   DINNER_PARTY: 'Dinner Party', BRUNCH: 'Brunch', OTHER: 'Other',
 };
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-dark text-bg font-sans text-xs px-5 py-3 rounded-md shadow-lg"
+    >
+      {message}
+    </motion.div>
+  );
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 function Skeleton() {
@@ -128,6 +149,7 @@ function Skeleton() {
 export default function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
   const { token, user } = useAuth();
+  const navigate = useNavigate();
 
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [status, setStatus] = useState<QuoteStatus | null>(null);
@@ -138,6 +160,7 @@ export default function QuoteDetail() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [acceptedBookingId, setAcceptedBookingId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isClient = user?.role === 'CLIENT';
 
@@ -270,6 +293,53 @@ export default function QuoteDetail() {
             </span>
           </div>
         </div>
+
+        {/* ── Accepted state ────────────────────────────────────────────────── */}
+        {accepted && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-10 px-8 bg-white border border-gold/30 rounded-md mt-6 overflow-hidden relative"
+          >
+            {/* Gold shimmer bar */}
+            <motion.div
+              initial={{ scaleX: 0, originX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="h-0.5 bg-gradient-to-r from-gold via-gold-light to-gold mb-8 rounded-full"
+            />
+
+            <CheckCircle size={48} className="text-gold mx-auto" />
+            <p className="font-serif text-3xl text-dark mt-4">Quote accepted!</p>
+            <p className="font-sans text-sm text-muted mt-2">
+              You're one step away from confirming your booking.
+            </p>
+
+            <div className="bg-gold/5 border border-gold/20 rounded-md p-6 mt-6">
+              <p className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-2">
+                Deposit Due
+              </p>
+              <p className="font-serif text-4xl text-gold-dark">{fmt(quote.depositAmount)}</p>
+              <p className="font-sans text-xs text-muted mt-1">
+                Pay this to lock in your date with {vendor.businessName}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                if (acceptedBookingId) {
+                  navigate(`/bookings/${acceptedBookingId}`);
+                } else {
+                  navigate('/dashboard');
+                }
+              }}
+              className="mt-6 bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-gold-dark transition-colors"
+            >
+              Go to Booking →
+            </button>
+          </motion.div>
+        )}
 
         {/* ── Quote Summary Card ────────────────────────────────────────────── */}
         <div className="bg-white border border-border rounded-md p-8 mt-6">
@@ -428,38 +498,6 @@ export default function QuoteDetail() {
             </div>
           )}
 
-          {/* ── Accepted confirmation ─────────────────────────────────────────── */}
-          {accepted && (
-            <div className="mt-6 flex flex-col items-center gap-3 py-6 text-center border-t border-border">
-              <CheckCircle size={40} strokeWidth={1.5} className="text-gold" />
-              <p className="font-serif text-2xl text-dark">Booking confirmed!</p>
-              <p className="font-sans text-sm text-muted">
-                Pay your deposit to lock in the date.
-              </p>
-              <div className="bg-gold/10 border border-gold/30 rounded-md px-6 py-3 mt-1">
-                <p className="font-sans text-xs uppercase tracking-widest text-gold-dark mb-0.5">
-                  Deposit due
-                </p>
-                <p className="font-serif text-3xl text-gold-dark">{fmt(quote.depositAmount)}</p>
-              </div>
-              {acceptedBookingId ? (
-                <Link
-                  to={`/bookings/${acceptedBookingId}`}
-                  className="mt-2 bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-gold-dark transition-colors"
-                >
-                  Go to My Booking
-                </Link>
-              ) : (
-                <Link
-                  to="/dashboard"
-                  className="mt-2 font-sans text-xs text-gold hover:text-gold-dark font-semibold transition-colors"
-                >
-                  Go to My Bookings →
-                </Link>
-              )}
-            </div>
-          )}
-
           {/* Declined state message */}
           {currentStatus === 'REJECTED' && !accepted && (
             <p className="mt-5 font-sans text-xs text-center text-muted">
@@ -486,6 +524,11 @@ export default function QuoteDetail() {
         )}
 
       </div>
+
+      {/* Toast */}
+      {toastMessage && (
+        <Toast message={toastMessage} onDone={() => setToastMessage(null)} />
+      )}
     </div>
   );
 }

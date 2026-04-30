@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
+import { CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { bookingsApi } from '../utils/api';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
@@ -99,6 +101,26 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
   DINNER_PARTY: 'Dinner Party', BRUNCH: 'Brunch', OTHER: 'Other',
 };
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-dark text-bg font-sans text-xs px-5 py-3 rounded-md shadow-lg"
+    >
+      {message}
+    </motion.div>
+  );
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 function Skeleton() {
@@ -134,6 +156,7 @@ export default function BookingDetail() {
   const [notFound, setNotFound] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isProvider = user?.role === 'PROVIDER';
   const isClient = user?.role === 'CLIENT';
@@ -236,6 +259,148 @@ export default function BookingDetail() {
             {badge.label}
           </span>
         </div>
+
+        {/* ── CLIENT: PENDING_DEPOSIT — Confirmation hero ───────────────────── */}
+        {isClient && currentStatus === 'PENDING_DEPOSIT' && (
+          <>
+            <div className="text-center py-12 px-8 bg-white border border-border rounded-md mt-6">
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
+              >
+                <CheckCircle size={64} className="text-gold mx-auto" />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <p className="font-serif text-4xl text-dark font-light mt-4">
+                  Your booking is confirmed!
+                </p>
+                <p className="font-serif text-2xl text-muted mt-2">
+                  {format(parseISO(booking.eventDate), 'EEEE, MMMM d')} · {booking.guestCount} guests
+                </p>
+                {vendor && (
+                  <p className="font-sans text-sm text-muted mt-1">
+                    with {vendor.businessName}
+                  </p>
+                )}
+
+                <div className="w-16 border-t border-gold mx-auto my-8" />
+
+                <p className="font-sans text-sm text-muted">
+                  To lock in your date, pay your deposit
+                </p>
+                <p className="font-serif text-4xl text-gold-dark font-light mt-2">
+                  {fmt(booking.depositAmount)}
+                </p>
+                <p className="font-sans text-xs text-muted mt-1">
+                  10% of {fmt(booking.total)}
+                </p>
+
+                <button
+                  onClick={() => setToastMessage('Stripe payments coming soon — contact your vendor to arrange the deposit.')}
+                  className="w-full bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest py-4 rounded-md hover:bg-gold-dark transition-colors mt-6"
+                >
+                  Pay Deposit
+                </button>
+              </motion.div>
+            </div>
+
+            {/* What happens next */}
+            <div className="bg-white border border-border rounded-md p-8 mt-4">
+              <p className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-8">
+                What Happens Next
+              </p>
+              <div className="space-y-0">
+                {/* Step 1 */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center flex-shrink-0">
+                      <span className="font-sans text-xs font-bold text-dark">1</span>
+                    </div>
+                    <div className="w-px flex-1 bg-border mt-2" />
+                  </div>
+                  <div className="pb-8">
+                    <p className="font-sans text-sm font-bold text-dark">Pay your deposit</p>
+                    <p className="font-sans text-xs text-muted mt-0.5">
+                      Secure your date with a {fmt(booking.depositAmount)} deposit
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center flex-shrink-0">
+                      <span className="font-sans text-xs font-bold text-muted">2</span>
+                    </div>
+                    <div className="w-px flex-1 bg-border mt-2" />
+                  </div>
+                  <div className="pb-8">
+                    <p className="font-sans text-sm font-bold text-muted">Booking confirmed</p>
+                    <p className="font-sans text-xs text-muted mt-0.5">
+                      Your vendor will confirm once the deposit is received
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center flex-shrink-0">
+                      <span className="font-sans text-xs font-bold text-muted">3</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-sans text-sm font-bold text-muted">Enjoy your event</p>
+                    <p className="font-sans text-xs text-muted mt-0.5">
+                      {eventLabel} on {format(parseISO(booking.eventDate), 'MMMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cancel option */}
+            <div className="mt-4">
+              <button
+                onClick={() =>
+                  doAction(
+                    bookingsApi.cancel,
+                    'CANCELLED',
+                    'Are you sure you want to cancel this booking? This cannot be undone.',
+                  )
+                }
+                disabled={actionLoading}
+                className="w-full border border-red text-red font-sans text-xs font-bold uppercase tracking-widest py-3 rounded-md hover:bg-red/5 transition-colors disabled:opacity-50"
+              >
+                {actionLoading ? 'Cancelling…' : 'Cancel Booking'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── CLIENT: CONFIRMED ────────────────────────────────────────────────── */}
+        {isClient && (currentStatus === 'CONFIRMED' || currentStatus === 'IN_PROGRESS') && (
+          <div className="text-center py-10 px-8 bg-white border border-border rounded-md mt-6">
+            <CheckCircle size={48} className="text-green mx-auto" />
+            <p className="font-serif text-3xl text-dark mt-4">You're all set!</p>
+            <p className="font-sans text-sm text-muted mt-2">
+              {eventLabel}{vendor ? ` with ${vendor.businessName}` : ''} on{' '}
+              {format(parseISO(booking.eventDate), 'MMMM d, yyyy')}
+            </p>
+            <button
+              onClick={() => setToastMessage('Calendar integration coming soon!')}
+              className="mt-6 border border-gold text-gold-dark font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-gold/5 transition-colors"
+            >
+              Add to Calendar
+            </button>
+          </div>
+        )}
 
         {/* ── Booking Summary Card ─────────────────────────────────────────── */}
         <div className="bg-white border border-border rounded-md p-8 mt-6">
@@ -451,53 +616,32 @@ export default function BookingDetail() {
             </div>
           )}
 
-          {/* ── CLIENT ACTIONS ─────────────────────────────────────────────── */}
-          {isClient && (
-            <div className="mt-6 space-y-3">
-              {currentStatus === 'PENDING_DEPOSIT' && (
-                <div className="bg-gold/10 border border-gold/30 rounded-md p-5">
-                  <p className="font-sans text-xs font-bold uppercase tracking-widest text-gold-dark mb-3">
-                    Pay your deposit to confirm this booking
-                  </p>
-                  <p className="font-serif text-3xl text-gold-dark mb-1">{fmt(booking.depositAmount)}</p>
-                  <p className="font-sans text-xs text-muted">
-                    Contact your vendor to arrange deposit payment.
-                  </p>
-                </div>
-              )}
-
-              {currentStatus === 'CONFIRMED' && (
-                <div className="bg-green/10 border border-green/30 rounded-md p-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green text-xs font-bold">✓</span>
-                  </div>
-                  <p className="font-sans text-sm text-green">
-                    Your booking is confirmed. See you on{' '}
-                    {format(parseISO(booking.eventDate), 'MMMM d')}!
-                  </p>
-                </div>
-              )}
-
-              {(currentStatus === 'PENDING_DEPOSIT' || currentStatus === 'DEPOSIT_PAID') && (
-                <button
-                  onClick={() =>
-                    doAction(
-                      bookingsApi.cancel,
-                      'CANCELLED',
-                      'Are you sure you want to cancel this booking? This cannot be undone.',
-                    )
-                  }
-                  disabled={actionLoading}
-                  className="w-full border border-red text-red font-sans text-xs font-bold uppercase tracking-widest py-3 rounded-md hover:bg-red/5 transition-colors disabled:opacity-50"
-                >
-                  {actionLoading ? 'Cancelling…' : 'Cancel Booking'}
-                </button>
-              )}
+          {/* ── CLIENT ACTIONS (non-PENDING_DEPOSIT) ───────────────────────── */}
+          {isClient && currentStatus === 'DEPOSIT_PAID' && (
+            <div className="mt-6">
+              <button
+                onClick={() =>
+                  doAction(
+                    bookingsApi.cancel,
+                    'CANCELLED',
+                    'Are you sure you want to cancel this booking? This cannot be undone.',
+                  )
+                }
+                disabled={actionLoading}
+                className="w-full border border-red text-red font-sans text-xs font-bold uppercase tracking-widest py-3 rounded-md hover:bg-red/5 transition-colors disabled:opacity-50"
+              >
+                {actionLoading ? 'Cancelling…' : 'Cancel Booking'}
+              </button>
             </div>
           )}
         </div>
 
       </div>
+
+      {/* Toast */}
+      {toastMessage && (
+        <Toast message={toastMessage} onDone={() => setToastMessage(null)} />
+      )}
     </div>
   );
 }
