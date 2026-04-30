@@ -1,4 +1,5 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import JessWidget from './JessWidget';
 import { useState } from 'react';
 import {
@@ -22,6 +23,7 @@ import { canAccessPlanner } from '../pages/Planner';
 
 export default function Layout() {
   const { isAuthenticated, user, logout, switchRole, hasRole } = useAuth();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -569,7 +571,17 @@ export default function Layout() {
 
       {/* ── Main Content ──────────────────────────────────────────────────── */}
       <main className="flex-1">
-        <Outlet />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
