@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import stripe from '../config/stripe.js';
+import { getStripe } from '../config/stripe.js';
 import prisma from '../config/database.js';
 import { config } from '../config/index.js';
 import { AuthenticatedRequest } from '../types/index.js';
@@ -27,7 +27,7 @@ export const createConnectAccount = asyncHandler(async (req: AuthenticatedReques
   let stripeAccountId = (profile as any).stripeAccountId as string | null;
 
   if (!stripeAccountId) {
-    const account = await stripe.accounts.create({
+    const account = await getStripe().accounts.create({
       type: 'express',
       country: 'CA',
       capabilities: {
@@ -47,7 +47,7 @@ export const createConnectAccount = asyncHandler(async (req: AuthenticatedReques
   const returnUrl = `${config.frontendUrl}/provider/dashboard?stripe=success`;
   const refreshUrl = `${config.frontendUrl}/provider/dashboard?stripe=refresh`;
 
-  const accountLink = await stripe.accountLinks.create({
+  const accountLink = await getStripe().accountLinks.create({
     account: stripeAccountId,
     refresh_url: refreshUrl,
     return_url: returnUrl,
@@ -79,7 +79,7 @@ export const getConnectStatus = asyncHandler(async (req: AuthenticatedRequest, r
   let chargesEnabled = false;
   if (row?.stripeAccountId) {
     try {
-      const acct = await stripe.accounts.retrieve(row.stripeAccountId);
+      const acct = await getStripe().accounts.retrieve(row.stripeAccountId);
       chargesEnabled = acct.charges_enabled;
       if (chargesEnabled && row.stripeAccountStatus !== 'ACTIVE') {
         await prisma.$executeRawUnsafe(
@@ -140,7 +140,7 @@ export const createDepositCheckout = asyncHandler(async (req: AuthenticatedReque
 
   const depositCents = Math.round(booking.depositAmount * 100);
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'payment',
     currency: 'cad',
     line_items: [
@@ -196,7 +196,7 @@ export const handleWebhook = async (req: Request, res: Response): Promise<void> 
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, config.stripe.webhookSecret);
+    event = getStripe().webhooks.constructEvent(req.body, sig, config.stripe.webhookSecret);
   } catch (err: any) {
     console.error('Stripe webhook signature verification failed:', err.message);
     res.status(400).json({ error: `Webhook Error: ${err.message}` });
