@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  MapPin, 
+  Calendar,
+  Users,
+  DollarSign,
+  MapPin,
   Clock,
-  ChefHat,
   CheckCircle,
   ArrowLeft,
   ArrowRight
@@ -85,13 +84,6 @@ export default function CreateEventRequest() {
       console.log('Create response:', response);
       
       if ((response as any).success && (response as any).data?.id) {
-        // Submit the request - data contains the event request directly
-        const requestId = (response as any).data.id;
-        console.log('Submitting request ID:', requestId);
-        
-        const submitResponse = await eventRequestsApi.submit(requestId, token);
-        console.log('Submit response:', submitResponse);
-        
         navigate('/dashboard');
       } else {
         console.error('Unexpected response structure:', response);

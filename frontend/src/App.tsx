@@ -25,7 +25,7 @@ import ProviderMenu from './pages/ProviderMenu';
 import ProviderBookings from './pages/ProviderBookings';
 import ProviderQuotes from './pages/ProviderQuotes';
 import ProviderEarnings from './pages/ProviderEarnings';
-import Planner, { canAccessPlanner } from './pages/Planner';
+import Planner from './pages/Planner';
 import EventDashboard from './pages/EventDashboard';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AccountVerify from './pages/AccountVerify';

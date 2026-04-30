@@ -26,7 +26,7 @@ export default function EventRequestsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -35,7 +35,7 @@ export default function EventRequestsList() {
       if (!token) return;
       
       try {
-        const response = await eventRequestsApi.getMyRequests(token);
+        const response = await eventRequestsApi.getMyRequestsAsClient(token);
         if ((response as any).success) {
           let requests = (response as any).data || [];
           
@@ -276,7 +276,7 @@ export default function EventRequestsList() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={() => !selectionMode && handleTouchStart(request.id)}
                 onTouchEnd={handleTouchEnd}
-                onClick={(e) => {
+                onClick={() => {
                   if (selectionMode) {
                     if (canDelete(request)) {
                       toggleSelection(request.id);

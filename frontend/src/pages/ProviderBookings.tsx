@@ -4,13 +4,9 @@ import {
   ArrowLeft,
   Calendar,
   Users,
-  DollarSign,
   Clock,
-  CheckCircle,
-  XCircle,
   MapPin,
   ChevronRight,
-  Filter,
   Phone,
   Mail,
   MessageSquare

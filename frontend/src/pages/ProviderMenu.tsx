@@ -9,8 +9,6 @@ import {
   X,
   Camera,
   Image as ImageIcon,
-  DollarSign,
-  ChevronDown,
   CheckCircle,
   AlertCircle,
   ArrowLeft
@@ -96,7 +94,7 @@ const emptyItem = (): Omit<MenuItem, 'id'> => ({
 });
 
 export default function ProviderMenu() {
-  const { user } = useAuth();
+  useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -370,13 +368,6 @@ export default function ProviderMenu() {
       ...prev,
       pricingTiers: prev.pricingTiers?.filter((_, i) => i !== index) || [],
     }));
-  };
-
-  const calculateMaxPrice = () => {
-    if (!usePricingTiers || !formData.pricingTiers || formData.pricingTiers.length === 0) {
-      return formData.price;
-    }
-    return Math.max(...formData.pricingTiers.map(t => t.pricePerUnit));
   };
 
   // Get unique categories from items

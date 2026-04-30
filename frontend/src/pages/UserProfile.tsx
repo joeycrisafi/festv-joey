@@ -1,30 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  User as UserIcon, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Briefcase, 
-  Edit2, 
-  Save, 
-  X, 
-  Camera, 
-  Upload, 
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  Edit2,
+  Save,
+  X,
+  Camera,
+  Upload,
   Trash2,
   CheckCircle,
   Shield,
-  Star,
   Plus,
-  DollarSign,
   Image as ImageIcon,
-  ChevronDown,
-  AlertCircle,
   Layers
 } from 'lucide-react';
 import { usersApi, providersApi, menuItemsApi } from '../utils/api';
-import { Link } from 'react-router-dom';
 
 // ── Menu Item types ──
 interface PricingTier {
@@ -86,7 +81,7 @@ const emptyItem = (): Omit<MenuItem, 'id'> => ({
 });
 
 export default function UserProfile() {
-  const { user, refreshUser } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +93,7 @@ export default function UserProfile() {
   const [savingImages, setSavingImages] = useState(false);
   
   // Provider states
-  const [providerProfile, setProviderProfile] = useState<any>(null);
+  const [, setProviderProfile] = useState<any>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -195,7 +190,7 @@ export default function UserProfile() {
   const handleRemoveBanner = async () => {
     try {
       setSavingImages(true);
-      await usersApi.updateBanner(null);
+      await usersApi.updateBanner(null, token || '');
       setBannerPreview(null);
       await refreshUser();
       setSuccess('Banner removed');
@@ -212,10 +207,10 @@ export default function UserProfile() {
       setSavingImages(true);
       setError(null);
       if (avatarPreview !== (user?.avatarUrl || null)) {
-        await usersApi.updateAvatar(avatarPreview || '');
+        await usersApi.updateAvatar(avatarPreview || '', token || '');
       }
       if (bannerPreview !== (user?.bannerUrl || null)) {
-        await usersApi.updateBanner(bannerPreview);
+        await usersApi.updateBanner(bannerPreview, token || '');
       }
       await refreshUser();
       setSuccess('Profile images updated!');
@@ -232,7 +227,7 @@ export default function UserProfile() {
     e.preventDefault();
     setError(null); setSuccess(null); setIsSaving(true);
     try {
-      await usersApi.updateProfile(formData);
+      await usersApi.updateProfile(formData, token || '');
       await refreshUser();
       setSuccess('Profile updated successfully!');
       setIsEditing(false);

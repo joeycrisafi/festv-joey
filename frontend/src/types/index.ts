@@ -63,6 +63,8 @@ export interface User {
   country?: string;
   createdAt: string;
   lastLoginAt?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   providerProfiles?: ProviderProfileSummary[];
 }
 

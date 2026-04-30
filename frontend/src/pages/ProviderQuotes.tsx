@@ -5,14 +5,11 @@ import {
   Send,
   Calendar,
   Users,
-  DollarSign,
   Clock,
   CheckCircle,
   XCircle,
   Eye,
   ChevronRight,
-  Filter,
-  MoreVertical,
   Edit,
   Trash2
 } from 'lucide-react';

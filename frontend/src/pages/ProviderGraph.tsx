@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────
 interface ProviderData {
@@ -49,16 +49,6 @@ const TYPE_EMOJI: Record<string, string> = {
 const OFFERING_COLORS: Record<string, string> = {
   services: '#3b82f6', pricingLevels: '#8b5cf6', menuItems: '#e94560',
   cuisineTypes: '#f59e0b', eventThemes: '#ec4899', equipmentOfferings: '#10b981', portfolioItems: '#14b8a6',
-};
-
-const OFFERING_EMOJI: Record<string, string> = {
-  services: '🔧', pricingLevels: '📊', menuItems: '🍽️',
-  cuisineTypes: '🌮', eventThemes: '🎨', equipmentOfferings: '🎪', portfolioItems: '📸',
-};
-
-const OFFERING_LABELS: Record<string, string> = {
-  services: 'Services', pricingLevels: 'Pricing Tiers', menuItems: 'Menu Items',
-  cuisineTypes: 'Cuisines', eventThemes: 'Themes', equipmentOfferings: 'Equipment', portfolioItems: 'Portfolio',
 };
 
 // ── Geometry helpers ────────────────────────────────────────────
@@ -495,7 +485,7 @@ export default function ProviderGraph({ token }: ProviderGraphProps) {
             const cy = Math.min(...typeNodes.map(n => n.y - n.r)) - 14;
             return (
               <text key={type} x={cx} y={cy} fontSize={10} fontWeight={700}
-                fill={`${TYPE_COLORS[type] || '#6b7280'}80`} textAnchor="middle" textTransform="uppercase" letterSpacing="0.06em">
+                fill={`${TYPE_COLORS[type] || '#6b7280'}80`} textAnchor="middle" style={{ textTransform: 'uppercase' }} letterSpacing="0.06em">
                 {TYPE_EMOJI[type]} {type.replace(/_/g, ' ')} ({members.length})
               </text>
             );

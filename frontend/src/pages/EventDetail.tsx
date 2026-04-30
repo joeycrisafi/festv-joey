@@ -101,7 +101,7 @@ function SkeletonRow() {
 function VendorRow({
   vendorType,
   eventId,
-  eventType,
+  eventType: _eventType,
   request,
 }: {
   vendorType: string;
@@ -114,9 +114,6 @@ function VendorRow({
   const { label, Icon, browseLabel } = meta;
 
   const latestQuote = request?.quotes?.[0];
-  const bookingId = latestQuote?.status === 'ACCEPTED'
-    ? undefined // booking id not returned here — navigate via request
-    : undefined;
 
   return (
     <div className="bg-white border border-border rounded-md p-5 flex items-center gap-4">

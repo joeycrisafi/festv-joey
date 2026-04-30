@@ -89,8 +89,6 @@ function pipelineProgress(er: EventRequestData): number {
 function EventFlowDetail({ er, onBack }: { er: EventRequestData; onBack: () => void }) {
   const progress = pipelineProgress(er);
   const statusColor = STATUS_COLORS[er.status] || '#6b7280';
-  const acceptedQuote = er.quotes.find(q => q.status === 'ACCEPTED');
-
   // Build flow nodes
   // Center column: Client → Request → Booking → Payment → Review
   // Left wing: Preferences (cuisines, themes, services, dietary, equipment)

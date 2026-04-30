@@ -19,27 +19,7 @@ const fmt = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-function Initials({ name, size = 20 }: { name: string; size?: number }) {
-  const parts = name.trim().split(/\s+/);
-  const letters =
-    parts.length >= 2
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : name.slice(0, 2).toUpperCase();
-  return (
-    <div
-      className="rounded-full flex items-center justify-center flex-shrink-0"
-      style={{
-        width: size,
-        height: size,
-        background: 'rgba(196,160,106,0.12)',
-      }}
-    >
-      <span className="font-serif text-gold" style={{ fontSize: size * 0.3 }}>
-        {letters}
-      </span>
-    </div>
-  );
-}
+
 
 function Stars({ rating, count }: { rating: number; count?: number }) {
   return (

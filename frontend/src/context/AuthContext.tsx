@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem('accessToken')
   );
-  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
+  const [, setRefreshToken] = useState<string | null>(() =>
     localStorage.getItem('refreshToken')
   );
   const [isLoading, setIsLoading] = useState(true);

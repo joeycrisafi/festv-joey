@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { canAccessPlanner } from '../pages/Planner';
 
 export default function Layout() {
-  const { isAuthenticated, user, logout, switchRole, hasRole } = useAuth();
+  const { isAuthenticated, user, logout, switchRole } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);

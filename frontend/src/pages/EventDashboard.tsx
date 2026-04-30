@@ -253,7 +253,7 @@ function SchemaView() {
           {groups.map(g => (
             <g key={g.id} opacity={!selected || SCHEMA_NODES.some(n => n.group === g.id && isHighlighted(n.id)) ? 1 : 0.25}>
               <rect x={g.x} y={g.y} width={g.w} height={g.h} rx={12} fill={`${g.color}06`} stroke={`${g.color}20`} strokeWidth={1} />
-              <text x={g.x + 8} y={g.y + 16} fontSize={10} fontWeight={700} fill={`${g.color}60`} textTransform="uppercase" letterSpacing="0.06em">{g.label}</text>
+              <text x={g.x + 8} y={g.y + 16} fontSize={10} fontWeight={700} fill={`${g.color}60`} style={{ textTransform: 'uppercase' }} letterSpacing="0.06em">{g.label}</text>
             </g>
           ))}
 
@@ -367,7 +367,7 @@ export default function EventDashboard() {
   const [modelFilter, setModelFilter] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [tab, setTab] = useState<'schema' | 'providers' | 'clients' | 'feed' | 'settings'>('schema');
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!token) return;

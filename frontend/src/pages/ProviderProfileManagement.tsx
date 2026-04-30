@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Upload, 
-  X, 
+  Upload,
+  X,
   Plus,
   Edit2,
   Trash2,
@@ -11,7 +11,6 @@ import {
   Camera,
   Image as ImageIcon,
   DollarSign,
-  Users,
   Star,
   MapPin,
   Briefcase
@@ -54,7 +53,7 @@ const DIETARY_OPTIONS = [
 ];
 
 export default function ProviderProfileManagement() {
-  const { user } = useAuth();
+  useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,7 +94,7 @@ export default function ProviderProfileManagement() {
         return;
       }
       
-      const profiles = await providersApi.getMyProfiles(token);
+      const profiles = await providersApi.getMyProfiles(token) as any;
       if (profiles.data && profiles.data.length > 0) {
         const currentProfile = profiles.data[0];
         setProfile(currentProfile);

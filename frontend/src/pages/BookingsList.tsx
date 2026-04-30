@@ -26,7 +26,7 @@ export default function BookingsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -35,7 +35,7 @@ export default function BookingsList() {
       if (!token) return;
       
       try {
-        const response = await bookingsApi.getClientBookings(token);
+        const response = await bookingsApi.getMyBookingsAsClient(token);
         if ((response as any).success) {
           let bookingsList = (response as any).data || [];
           
@@ -305,7 +305,7 @@ export default function BookingsList() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={() => !selectionMode && handleTouchStart(booking.id)}
                 onTouchEnd={handleTouchEnd}
-                onClick={(e) => {
+                onClick={() => {
                   if (selectionMode) {
                     if (canDelete(booking)) {
                       toggleSelection(booking.id);
@@ -352,7 +352,7 @@ export default function BookingsList() {
                     <div className="flex items-center gap-4 text-sm text-stone-500 mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {format(new Date(booking.eventDate), 'MMM d, yyyy')}
+                        {format(new Date((booking as any).eventDate ?? (booking as any).eventRequest?.eventDate ?? ''), 'MMM d, yyyy')}
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4" />
