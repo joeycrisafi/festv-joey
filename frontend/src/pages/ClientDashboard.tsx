@@ -13,7 +13,7 @@ import {
   CalendarPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { eventRequestsApi, quotesApi, bookingsApi, apiFetch, eventsApi } from '../utils/api';
+import { eventRequestsApi, quotesApi, bookingsApi, apiFetch, eventsApi, favoritesApi } from '../utils/api';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ interface BookingItem {
 
 interface FavoriteItem {
   id: string;
-  provider?: ProviderInfo;
+  providerId: string;
   providerProfile?: ProviderInfo;
 }
 
@@ -197,7 +197,7 @@ export default function ClientDashboard() {
 
       if (favRes.status === 'fulfilled') {
         const d = favRes.value as any;
-        const arr = d?.data ?? d?.favorites ?? [];
+        const arr = d?.data?.favorites ?? d?.data ?? d?.favorites ?? [];
         setFavorites(Array.isArray(arr) ? arr : []);
       }
 
@@ -254,8 +254,19 @@ export default function ClientDashboard() {
     ['PENDING_DEPOSIT', 'DEPOSIT_PAID', 'CONFIRMED', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(b.status)
   );
 
-  const providerOf = (item: FavoriteItem): ProviderInfo | undefined =>
-    item.provider ?? item.providerProfile;
+  const handleUnsave = async (providerId: string) => {
+    if (!token) return;
+    setFavorites(prev => prev.filter(f => f.providerId !== providerId));
+    try {
+      await favoritesApi.removeFavorite(providerId, token);
+    } catch {
+      // Revert on error
+      apiFetch<any>('/favorites', { token }).then((res: any) => {
+        const arr = res?.data?.favorites ?? res?.data ?? res?.favorites ?? [];
+        if (Array.isArray(arr)) setFavorites(arr);
+      }).catch(() => {});
+    }
+  };
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -737,32 +748,38 @@ export default function ClientDashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                {favorites.slice(0, 3).map((fav) => {
-                  const p = providerOf(fav);
+              <div className="space-y-3">
+                {favorites.slice(0, 5).map((fav) => {
+                  const p = fav.providerProfile;
                   if (!p) return null;
+                  const initials = p.businessName.trim().split(/\s+/).length >= 2
+                    ? (p.businessName.trim().split(/\s+/)[0][0] + p.businessName.trim().split(/\s+/).slice(-1)[0][0]).toUpperCase()
+                    : p.businessName.slice(0, 2).toUpperCase();
                   return (
-                    <div key={fav.id} className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-sans text-sm text-charcoal">{p.businessName}</p>
-                        {p.primaryType && (
-                          <div className="mt-1">
-                            <ProviderTypeBadge type={p.primaryType} size="sm" />
-                          </div>
-                        )}
+                    <div key={fav.id} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                        style={{ background: 'rgba(196,160,106,0.12)' }}>
+                        <span className="font-serif text-xs text-gold">{initials}</span>
                       </div>
-                      <Link
-                        to={`/providers/${p.id}`}
-                        className="font-sans text-xs text-gold hover:text-gold-dark font-semibold flex-shrink-0 transition-colors"
-                      >
-                        View →
+                      <Link to={`/providers/${fav.providerId}`} className="flex-1 min-w-0 hover:text-gold-dark transition-colors">
+                        <p className="font-sans text-sm text-charcoal truncate">{p.businessName}</p>
+                        {p.city && (
+                          <p className="font-sans text-xs text-muted truncate">{p.city}</p>
+                        )}
                       </Link>
+                      <button
+                        onClick={() => handleUnsave(fav.providerId)}
+                        className="text-muted hover:text-red transition-colors flex-shrink-0 focus:outline-none"
+                        aria-label="Remove from saved"
+                      >
+                        <span className="font-sans text-sm leading-none">×</span>
+                      </button>
                     </div>
                   );
                 })}
-                {favorites.length > 3 && (
+                {favorites.length > 5 && (
                   <p className="font-sans text-xs text-muted pt-1">
-                    +{favorites.length - 3} more saved
+                    +{favorites.length - 5} more saved
                   </p>
                 )}
               </div>

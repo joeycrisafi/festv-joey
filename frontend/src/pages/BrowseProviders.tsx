@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Star, CalendarDays } from 'lucide-react';
+import { MapPin, Star, CalendarDays, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProviderTypeBadge, providerTypeConfig } from '../components/ProviderTypeBadge';
+import { useAuth } from '../context/AuthContext';
+import { favoritesApi } from '../utils/api';
 
 // ── Currency formatter ────────────────────────────────────────────────────────
 const formatPrice = (n: number) =>
@@ -117,6 +119,7 @@ function SkeletonCard() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function BrowseProviders() {
   const [searchParams] = useSearchParams();
+  const { user, token } = useAuth();
 
   // Optional event context passed from EventDetail
   const eventId   = searchParams.get('eventId');
@@ -134,6 +137,52 @@ export default function BrowseProviders() {
 
   const [providers, setProviders] = useState<ProviderCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // ── Load favorites for CLIENT users ──────────────────────────────────────
+  useEffect(() => {
+    if (!token || user?.role !== 'CLIENT') return;
+    favoritesApi.getMyFavorites(token).then((res: any) => {
+      const items: any[] = res?.data?.favorites ?? res?.data ?? res?.favorites ?? [];
+      setFavoritedIds(new Set(items.map((f: any) => f.providerId)));
+    }).catch(() => {});
+  }, [token, user?.role]);
+
+  // ── Toast helper ──────────────────────────────────────────────────────────
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2500);
+  };
+
+  // ── Toggle favorite ───────────────────────────────────────────────────────
+  const toggleFavorite = async (providerId: string) => {
+    if (!token || user?.role !== 'CLIENT') {
+      showToast('Sign in to save vendors');
+      return;
+    }
+    const wasFavorited = favoritedIds.has(providerId);
+    // Optimistic
+    setFavoritedIds(prev => {
+      const next = new Set(prev);
+      wasFavorited ? next.delete(providerId) : next.add(providerId);
+      return next;
+    });
+    try {
+      if (wasFavorited) {
+        await favoritesApi.removeFavorite(providerId, token);
+      } else {
+        await favoritesApi.addFavorite(providerId, token);
+      }
+    } catch {
+      // Revert
+      setFavoritedIds(prev => {
+        const next = new Set(prev);
+        wasFavorited ? next.add(providerId) : next.delete(providerId);
+        return next;
+      });
+    }
+  };
 
   // ── Fetch on applied change ───────────────────────────────────────────────
   // The API requires exactly one `type` param per request.
@@ -217,6 +266,17 @@ export default function BrowseProviders() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen">
+      {/* Toast */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-dark text-white font-sans text-xs px-5 py-3 rounded-md shadow-lg pointer-events-none"
+          >
+            {toastMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── SIDEBAR ───────────────────────────────────────────────────────── */}
       <motion.aside
@@ -415,7 +475,12 @@ export default function BrowseProviders() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i, 5) * 0.07, duration: 0.4 }}
                 >
-                  <VendorCard provider={p} eventId={eventId} />
+                  <VendorCard
+                    provider={p}
+                    eventId={eventId}
+                    isFavorited={favoritedIds.has(p.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -428,12 +493,35 @@ export default function BrowseProviders() {
 }
 
 // ── Vendor card sub-component ─────────────────────────────────────────────────
-function VendorCard({ provider: p, eventId }: { provider: ProviderCard; eventId?: string | null }) {
+function VendorCard({
+  provider: p,
+  eventId,
+  isFavorited,
+  onToggleFavorite,
+}: {
+  provider: ProviderCard;
+  eventId?: string | null;
+  isFavorited: boolean;
+  onToggleFavorite: (providerId: string) => void;
+}) {
   return (
-    <div className="bg-white rounded-2xl border border-border p-6 hover:border-gold hover:shadow-sm transition-all duration-200 flex flex-col">
+    <div className="relative bg-white rounded-2xl border border-border p-6 hover:border-gold hover:shadow-sm transition-all duration-200 flex flex-col">
+
+      {/* Heart / save button — top right */}
+      <button
+        onClick={(e) => { e.preventDefault(); onToggleFavorite(p.id); }}
+        className="absolute top-4 right-4 z-10 p-1 focus:outline-none transition-colors"
+        aria-label={isFavorited ? 'Unsave vendor' : 'Save vendor'}
+      >
+        <Heart
+          size={18}
+          strokeWidth={1.5}
+          className={isFavorited ? 'fill-gold text-gold' : 'text-muted hover:text-gold'}
+        />
+      </button>
 
       {/* Top row: avatar + name + badge */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-7">
         <Initials name={p.businessName} />
         <div className="flex-1 min-w-0">
           <h3 className="font-serif text-lg text-dark leading-snug truncate">{p.businessName}</h3>

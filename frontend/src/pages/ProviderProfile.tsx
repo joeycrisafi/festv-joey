@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { Star, MapPin, Globe, Instagram, ChevronDown, CheckCircle } from 'lucide-react';
+import { Star, MapPin, Globe, Instagram, ChevronDown, CheckCircle, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
 import ImageUpload from '../components/ImageUpload';
-import { eventRequestsApi } from '../utils/api';
+import { eventRequestsApi, favoritesApi } from '../utils/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL
@@ -569,7 +569,7 @@ function PackageCard({ pkg, isAuthenticated, providerId, providerName, eventId }
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProviderProfile() {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -590,6 +590,7 @@ export default function ProviderProfile() {
   // Live image URLs — updated immediately on upload without a page reload
   const [liveLogoUrl, setLiveLogoUrl]     = useState<string | null>(null);
   const [liveBannerUrl, setLiveBannerUrl] = useState<string | null>(null);
+  const [isFavorited, setIsFavorited]     = useState(false);
 
   // ── Scroll → sticky nav ────────────────────────────────────────────────────
   useEffect(() => {
@@ -640,6 +641,30 @@ export default function ProviderProfile() {
     };
     fetchAll();
   }, [id]);
+
+  // ── Check favorite status ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!id || !token || user?.role !== 'CLIENT') return;
+    favoritesApi.checkFavorite(id, token).then((res: any) => {
+      setIsFavorited(res?.data?.isFavorited ?? false);
+    }).catch(() => {});
+  }, [id, token, user?.role]);
+
+  // ── Toggle favorite ───────────────────────────────────────────────────────
+  const toggleFavorite = async () => {
+    if (!token || user?.role !== 'CLIENT') return;
+    const prev = isFavorited;
+    setIsFavorited(!prev);
+    try {
+      if (prev) {
+        await favoritesApi.removeFavorite(id!, token);
+      } else {
+        await favoritesApi.addFavorite(id!, token);
+      }
+    } catch {
+      setIsFavorited(prev);
+    }
+  };
 
   // ── Scroll to anchor ───────────────────────────────────────────────────────
   const scrollTo = (anchor: string) => {
@@ -706,15 +731,32 @@ export default function ProviderProfile() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => isAuthenticated
-              ? navigate('/create-request', { state: { providerId: id } })
-              : navigate(`/login?redirect=/providers/${id}`)
-            }
-            className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-6 py-2 hover:bg-gold hover:text-dark transition-colors duration-200 focus:outline-none"
-          >
-            Request This Vendor
-          </button>
+          <div className="flex items-center gap-2">
+            {!isOwner && isAuthenticated && user?.role === 'CLIENT' && (
+              <button
+                onClick={toggleFavorite}
+                className="p-2 border border-gold/40 hover:border-gold transition-colors focus:outline-none"
+                aria-label={isFavorited ? 'Unsave vendor' : 'Save vendor'}
+              >
+                <Heart
+                  size={14}
+                  strokeWidth={1.5}
+                  className={isFavorited ? 'fill-gold text-gold' : 'text-gold/60 hover:text-gold'}
+                />
+              </button>
+            )}
+            {!isOwner && (
+              <button
+                onClick={() => isAuthenticated
+                  ? navigate('/create-request', { state: { providerId: id } })
+                  : navigate(`/login?redirect=/providers/${id}`)
+                }
+                className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-6 py-2 hover:bg-gold hover:text-dark transition-colors duration-200 focus:outline-none"
+              >
+                Request This Vendor
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -835,16 +877,33 @@ export default function ProviderProfile() {
             </div>
           </div>
 
-          {/* Request CTA */}
-          <button
-            onClick={() => isAuthenticated
-              ? navigate('/create-request', { state: { providerId: id } })
-              : navigate(`/login?redirect=/providers/${id}`)
-            }
-            className="flex-shrink-0 bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none self-end"
-          >
-            Request This Vendor
-          </button>
+          {/* Request CTA + save button */}
+          <div className="flex items-end gap-3 flex-shrink-0 self-end">
+            {!isOwner && isAuthenticated && user?.role === 'CLIENT' && (
+              <button
+                onClick={toggleFavorite}
+                className="p-2.5 border border-white/30 hover:border-gold transition-colors focus:outline-none"
+                aria-label={isFavorited ? 'Unsave vendor' : 'Save vendor'}
+              >
+                <Heart
+                  size={18}
+                  strokeWidth={1.5}
+                  className={isFavorited ? 'fill-gold text-gold' : 'text-white/70 hover:text-gold'}
+                />
+              </button>
+            )}
+            {!isOwner && (
+              <button
+                onClick={() => isAuthenticated
+                  ? navigate('/create-request', { state: { providerId: id } })
+                  : navigate(`/login?redirect=/providers/${id}`)
+                }
+                className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"
+              >
+                Request This Vendor
+              </button>
+            )}
+          </div>
         </motion.div>
       </div>
 

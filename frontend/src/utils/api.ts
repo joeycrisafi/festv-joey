@@ -349,6 +349,26 @@ export const eventsApi = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Favorites
+// ─────────────────────────────────────────────────────────────────────────────
+export const favoritesApi = {
+  getMyFavorites: (token: string) =>
+    apiFetch('/favorites', { token }),
+
+  addFavorite: (providerId: string, token: string) =>
+    apiFetch(`/favorites/${providerId}`, { method: 'POST', token }),
+
+  removeFavorite: (providerId: string, token: string) =>
+    apiFetch(`/favorites/${providerId}`, { method: 'DELETE', token }),
+
+  checkFavorite: (providerId: string, token: string) =>
+    apiFetch(`/favorites/${providerId}/check`, { token }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notifications
+// ─────────────────────────────────────────────────────────────────────────────
 export const notificationsApi = {
   getAll: (token: string) =>
     apiFetch('/notifications', { token }),
