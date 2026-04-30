@@ -275,8 +275,6 @@ async function executeTool(
   try {
     switch (name) {
       case 'search_vendors': {
-        console.log('[Jess] search_vendors called with:', JSON.stringify(input));
-
         // Normalise vendor type — Claude may pass natural language values
         const typeMap: Record<string, string> = {
           venue:         'RESTO_VENUE',
@@ -302,15 +300,14 @@ async function executeTool(
 
         const where: any = { verificationStatus: 'VERIFIED' };
         if (normalizedType) where.providerTypes = { has: normalizedType };
-        if (input.city)     where.city = { contains: input.city, mode: 'insensitive' };
-
-        console.log('[Jess] search_vendors query where:', JSON.stringify(where));
+        if (input.city)     where.user = { city: { contains: input.city, mode: 'insensitive' } };
 
         let vendors: any[];
         try {
           vendors = await prisma.providerProfile.findMany({
             where,
             include: {
+              user: { select: { city: true, state: true } },
               packages: {
                 where: { isActive: true },
                 orderBy: { basePrice: 'asc' },
@@ -330,7 +327,6 @@ async function executeTool(
             take: 5,
             orderBy: { averageRating: 'desc' },
           });
-          console.log('[Jess] search_vendors results count:', vendors.length);
         } catch (err: any) {
           console.error('[Jess] search_vendors Prisma error:', err?.message ?? err, err?.stack ?? '');
           return JSON.stringify({
@@ -354,7 +350,8 @@ async function executeTool(
             profileUrl: `/providers/${v.id}`,
             businessName: v.businessName,
             primaryType: v.primaryType,
-            city: v.city,
+            city: v.user?.city ?? null,
+            state: v.user?.state ?? null,
             averageRating: v.averageRating,
             tagline: (v as any).tagline ?? null,
             startingFrom: v.packages[0]?.basePrice ?? null,
