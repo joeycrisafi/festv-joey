@@ -67,11 +67,10 @@ app.use('/api/v1/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files — served BEFORE CORS middleware so asset requests are never
-// intercepted by the CORS callback (which would 500 on unrecognised origins)
+// Static files — registered BEFORE CORS so asset requests bypass the CORS
+// callback entirely (avoids 500s when CORS_ORIGIN env var isn't set).
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Serve React build (primary frontend)
 app.use(express.static(path.join(__dirname, '../public/react-dist'), {
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) {
@@ -79,10 +78,9 @@ app.use(express.static(path.join(__dirname, '../public/react-dist'), {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
     }
-  }
+  },
 }));
 
-// Serve legacy HTML assets (images, CSS, etc. from old public/)
 app.use(express.static(path.join(process.cwd(), 'public'), {
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) {
@@ -90,20 +88,20 @@ app.use(express.static(path.join(process.cwd(), 'public'), {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
     }
-  }
+  },
 }));
 
-// Health check endpoint (no CORS needed)
+// Health check (no CORS needed)
 app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: config.env
+    environment: config.env,
   });
 });
 
-// CORS — scoped to /api only so static asset requests are never affected.
-// Always allow both apex and www regardless of which CORS_ORIGIN is set.
+// CORS — scoped to /api only so static asset requests are never intercepted.
+// Always covers both apex and www regardless of which CORS_ORIGIN is set.
 const corsOrigins = new Set<string>(['http://localhost:3000', 'http://localhost:5173']);
 if (config.cors.origin && config.cors.origin !== '*') {
   corsOrigins.add(config.cors.origin);
