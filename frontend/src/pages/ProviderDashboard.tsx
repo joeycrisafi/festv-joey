@@ -249,8 +249,13 @@ export default function ProviderDashboard() {
     );
   }
 
-  const isVerified = profile?.verificationStatus === 'VERIFIED';
-  const profileId  = profile?.id ?? '';
+  if (!profile) {
+    navigate('/vendor/setup', { replace: true });
+    return null;
+  }
+
+  const isVerified = profile.verificationStatus === 'VERIFIED';
+  const profileId  = profile.id;
 
   return (
     <div className="bg-bg min-h-screen">
