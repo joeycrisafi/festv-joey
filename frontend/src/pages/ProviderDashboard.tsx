@@ -167,11 +167,13 @@ export default function ProviderDashboard() {
             })
             .catch(() => {});
         } else {
-          navigate('/login');
+          // New vendor — no profile created yet. Send to the setup wizard.
+          navigate('/vendor/setup', { replace: true });
+          return;
         }
-      } else {
-        navigate('/login');
       }
+      // If the profile fetch returned non-success (e.g. 403 from PENDING_VERIFICATION),
+      // render the dashboard in empty state rather than navigating away — the user IS authenticated.
 
       // Requests
       if (reqRes.status === 'fulfilled' && reqRes.value?.success) {
