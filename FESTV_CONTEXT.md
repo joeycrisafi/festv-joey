@@ -413,6 +413,8 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - **Messaging** — `messageController.ts` fully built and mounted at `/messages`; rewritten to match `Conversation.participants: String[]` schema
 - **TypeScript** — backend: zero errors after fixing favoriteController, messageController, adminRoutes (static import), jessController, uploadController, authController, eventRequestController, eventNotifier, validators; frontend: zero errors across all 18 files
 - **CORS fix** — scoped to `/api` only via `app.use('/api', corsMiddleware)`; static files served before CORS so JS/CSS assets never hit the CORS callback
+- **ProviderDashboard null-profile redirect** — if profile is null after loading (new vendor, or PENDING_VERIFICATION 403), dashboard redirects to `/vendor/setup` with `replace:true`. No flash loop.
+- **Admin write-guard** — `requireAdminEmail` in `adminRoutes.ts` now blocks non-`isRealAdmin` accounts from `POST`/`PATCH`/`DELETE`. Test accounts (`test-*@festv.app`) get GET-only DEV access; write operations require a real admin email from `ADMIN_EMAILS`.
 
 ### ❌ Not Started / Still To Do
 - End-to-end Stripe payment test (keys added to Render — verify flow)
@@ -471,6 +473,9 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 42. **`InstanceType<typeof Stripe>` for Stripe type annotation** — `export const stripe: Stripe` causes TS2709 (can't use namespace as type); inferring type causes TS2742 (portability). The correct annotation is `InstanceType<typeof Stripe>`.
 43. **`favoritesApi` uses `providerId` (ProviderProfile ID) in URL** — both add and remove are `POST/DELETE /favorites/:providerId`. There is no separate `favoriteId` in the URL. The `Favorite` model stores `{ userId, providerId }` as a pair.
 44. **`getMyFavorites` response shape** — `{ data: { favorites: [], pagination: {} } }`. Parse as `d?.data?.favorites`. The old code used `d?.data ?? d?.favorites` which returned the `data` object (not the array) when the API was working correctly.
+45. **Quote model uses `total`, not `totalAmount`** — the Prisma `Quote` schema has a field named `total` (Float). There is no `totalAmount` field. The `ProviderDashboard` "Awaiting Response" section and any other UI reading quotes must use `q.total`, not `q.totalAmount`.
+46. **`ProviderDashboard` null profile guard** — after `loading` is false, a null `profile` means the vendor has no ProviderProfile yet (new account) or the fetch was blocked (PENDING_VERIFICATION). The component immediately calls `navigate('/vendor/setup', { replace: true })` and returns `null`. Never render the dashboard shell with a null profile.
+47. **Test accounts for E2E testing** — use `test-*@festv.app` accounts (password `Test1234!`), not `festvtest123+*@gmail.com`. The `@gmail.com` accounts are created as `PENDING_VERIFICATION` with no way to verify without inbox access. The `@festv.app` accounts are pre-seeded as `ACTIVE` with full profiles. Available: `test-client`, `test-photographer`, `test-caterer`, `test-bartender`, `test-dj`.
 
 ---
 

@@ -19,6 +19,10 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] clean up ghost migration row in caterease-db: DELETE FROM _prisma_migrations WHERE migration_name = '20260423_consolidate_provider_types' AND applied_steps_count = 0; (cosmetic only, not blocking)
 
  bigger:
+	-[x] Full API diagnostic run against production (festv.org) — auth, browse, price estimate, event request + auto-quote, quote flow, vendor dashboard, Jess all confirmed working end-to-end (2026-05-01)
+	-[x] ProviderDashboard infinite flash loop fixed — null profile (new vendor or PENDING_VERIFICATION) now redirects to /vendor/setup with replace:true instead of /login → infinite bounce
+	-[x] ProviderDashboard "Awaiting Response" quote amounts fixed — was reading q.totalAmount (doesn't exist on Quote model); corrected to q.total
+	-[x] Admin write-guard added — test-*@festv.app accounts restricted to GET-only on /admin routes; POST/PATCH/DELETE now require real admin credentials (ADMIN_EMAILS)
 	-[ ] end-to-end flow test — Jess → request → instant quote → EventRequestDetail → accept → Booking → BookingDetail → Pay Deposit via Stripe (verify all steps on festv.org with real test accounts)
 	-[ ] Stripe end-to-end test — keys added to Render, test actual deposit payment flow planner → vendor
 	-[ ] 0auth google/fb sign-in options
