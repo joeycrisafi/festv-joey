@@ -37,6 +37,10 @@ function requireAdminEmail(req: AuthenticatedRequest, res: Response, next: NextF
   if (!isDevAccess(req.user.email)) {
     return res.status(403).json({ success: false, error: 'Insufficient permissions' });
   }
+  // Test accounts (test-*@festv.app) get read-only DEV access — no write operations.
+  if (req.method !== 'GET' && !isRealAdmin(req.user.email)) {
+    return res.status(403).json({ success: false, error: 'Write operations require real admin credentials' });
+  }
   next();
 }
 

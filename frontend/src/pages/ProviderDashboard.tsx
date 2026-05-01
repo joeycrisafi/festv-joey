@@ -90,7 +90,7 @@ interface BookingStats {
 
 interface PendingQuote {
   id: string;
-  totalAmount: number;
+  total: number;
   expiresAt?: string | null;
   eventRequest?: {
     eventType?: string | null;
@@ -612,7 +612,7 @@ export default function ProviderDashboard() {
                             View
                           </Link>
                         </div>
-                        <p className="font-serif text-lg text-gold-dark mt-1">{fmt(q.totalAmount)}</p>
+                        <p className="font-serif text-lg text-gold-dark mt-1">{fmt(q.total)}</p>
                         {daysLeft !== null && (
                           <p className="font-sans text-xs text-muted mt-0.5">
                             {daysLeft === 0
