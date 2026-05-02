@@ -75,6 +75,7 @@ model User {
   refreshTokens        RefreshToken[]
   verificationCodes    VerificationCode[]
   events               Event[]
+  portfolioPosts       PortfolioPost[]     @relation("UserPortfolioPosts")
 
   @@index([email])
   @@index([role])
@@ -241,6 +242,7 @@ model ProviderProfile {
   eventThemes              EventTheme[]
   equipmentOfferings       Equipment[]
   availability             Availability[]
+  portfolioTags            PortfolioVendorTag[]
 
   @@index([userId])
   @@index([verificationStatus])
@@ -329,6 +331,7 @@ model Package {
   eventRequests     EventRequest[]
   quotes            Quote[]
   bookings          Booking[]
+  portfolioPosts    PortfolioPost[]
 
   @@index([providerProfileId])
   @@index([isActive])
@@ -401,6 +404,11 @@ model AvailabilityBlock {
 // ============================================
 // PORTFOLIO & MEDIA  (unchanged)
 // ============================================
+
+enum PostType {
+  VENDOR_POST
+  PLANNER_POST
+}
 
 enum MediaType {
   IMAGE
@@ -518,9 +526,10 @@ model Event {
   eventDate   DateTime
   guestCount  Int
   notes       String?
-  status      EventStatus    @default(PLANNING)
-  requests    EventRequest[]
-  createdAt   DateTime       @default(now())
+  status          EventStatus    @default(PLANNING)
+  requests        EventRequest[]
+  portfolioPosts  PortfolioPost[]
+  createdAt       DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   @@index([clientId])
@@ -927,4 +936,63 @@ model MenuItemPricingTier {
 
   @@index([menuItemId])
   @@index([minQuantity])
+}
+
+// ============================================
+// PORTFOLIO POSTS  (feed-based, linked packages + events)
+// ============================================
+
+model PortfolioPost {
+  id         String   @id @default(uuid())
+  authorId   String
+  author     User     @relation("UserPortfolioPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  type       PostType
+  caption    String?  @db.Text
+  imageUrls  String[]
+  createdAt  DateTime @default(now())
+
+  packageId  String?
+  package    Package? @relation(fields: [packageId], references: [id])
+  addOnIds   String[]
+
+  eventId    String?
+  event      Event?   @relation(fields: [eventId], references: [id])
+
+  vendorTags PortfolioVendorTag[]
+  likes      PortfolioLike[]
+  saves      PortfolioSave[]
+
+  @@index([authorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PortfolioVendorTag {
+  id         String          @id @default(uuid())
+  postId     String
+  post       PortfolioPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  bookingId  String
+
+  @@index([postId])
+  @@index([providerId])
+}
+
+model PortfolioLike {
+  userId    String
+  postId    String
+  post      PortfolioPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@id([userId, postId])
+}
+
+model PortfolioSave {
+  userId    String
+  postId    String
+  post      PortfolioPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@id([userId, postId])
 }

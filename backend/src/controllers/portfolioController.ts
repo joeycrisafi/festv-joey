@@ -7,6 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/index.js';
+import { z } from 'zod';
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -380,9 +381,213 @@ export const toggleLikePortfolioItem = asyncHandler(async (req: AuthenticatedReq
     where: { id },
     data: { likeCount: { increment: 1 } },
   });
-  
+
   res.json({
     success: true,
     message: 'Liked successfully',
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PortfolioPost feed — new social feed model (separate from PortfolioItem)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const createPostSchema = z.object({
+  type: z.enum(['VENDOR_POST', 'PLANNER_POST']),
+  caption: z.string().max(2000).optional(),
+  imageUrls: z.array(z.string().url()).min(1).max(10),
+  packageId: z.string().uuid().optional(),
+  addOnIds: z.array(z.string()).optional(),
+  eventId: z.string().uuid().optional(),
+  vendorTags: z.array(z.object({
+    providerId: z.string().uuid(),
+    bookingId: z.string().uuid(),
+  })).optional(),
+});
+
+const POST_INCLUDE = {
+  author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } },
+  package: { select: { id: true, name: true } },
+  event: { select: { id: true, name: true } },
+  vendorTags: {
+    select: {
+      id: true,
+      providerId: true,
+      bookingId: true,
+      provider: { select: { businessName: true, logoUrl: true } },
+    },
+  },
+  _count: { select: { likes: true, saves: true } },
+} as const;
+
+async function attachUserFlags(posts: any[], userId: string) {
+  if (posts.length === 0) return posts;
+  const postIds = posts.map((p: any) => p.id);
+  const [likes, saves] = await Promise.all([
+    prisma.portfolioLike.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }),
+    prisma.portfolioSave.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }),
+  ]);
+  const likedSet = new Set(likes.map((l: any) => l.postId));
+  const savedSet = new Set(saves.map((s: any) => s.postId));
+  return posts.map((p: any) => ({ ...p, likedByMe: likedSet.has(p.id), savedByMe: savedSet.has(p.id) }));
+}
+
+export const getFeed = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { page = 1, limit = 20 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [posts, total] = await Promise.all([
+    prisma.portfolioPost.findMany({
+      include: POST_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.portfolioPost.count(),
+  ]);
+
+  const result = await attachUserFlags(posts, userId);
+
+  res.json({
+    success: true,
+    data: {
+      posts: result,
+      pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / Number(limit)) },
+    },
+  });
+});
+
+export const getUserPosts = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { userId: targetUserId } = req.params;
+
+  const posts = await prisma.portfolioPost.findMany({
+    where: { authorId: targetUserId },
+    include: POST_INCLUDE,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const result = await attachUserFlags(posts, userId);
+
+  res.json({ success: true, data: { posts: result } });
+});
+
+export const createPost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
+
+  const validation = createPostSchema.safeParse(req.body);
+  if (!validation.success) throw new AppError(validation.error.errors[0].message, 400);
+
+  const { type, caption, imageUrls, packageId, addOnIds, eventId, vendorTags } = validation.data;
+
+  if (type === 'VENDOR_POST' && userRole !== 'PROVIDER') {
+    throw new ForbiddenError('Only vendors can create vendor posts');
+  }
+  if (type === 'PLANNER_POST' && userRole !== 'CLIENT') {
+    throw new ForbiddenError('Only planners can create planner posts');
+  }
+
+  // Verify vendor tags — each bookingId must belong to a booking where this planner is the client
+  if (vendorTags && vendorTags.length > 0) {
+    for (const tag of vendorTags) {
+      const booking = await prisma.booking.findFirst({
+        where: { id: tag.bookingId, clientId: userId, providerProfileId: tag.providerId },
+      });
+      if (!booking) {
+        throw new ForbiddenError(`Cannot tag vendor — no verified booking found for bookingId ${tag.bookingId}`);
+      }
+    }
+  }
+
+  const post = await prisma.$transaction(async (tx) => {
+    const created = await tx.portfolioPost.create({
+      data: {
+        authorId: userId,
+        type,
+        caption,
+        imageUrls,
+        packageId,
+        addOnIds: addOnIds ?? [],
+        eventId,
+      },
+    });
+
+    if (vendorTags && vendorTags.length > 0) {
+      await tx.portfolioVendorTag.createMany({
+        data: vendorTags.map((t) => ({ postId: created.id, providerId: t.providerId, bookingId: t.bookingId })),
+      });
+    }
+
+    return tx.portfolioPost.findUniqueOrThrow({ where: { id: created.id }, include: POST_INCLUDE });
+  });
+
+  res.status(201).json({ success: true, data: post });
+});
+
+export const deletePost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  const post = await prisma.portfolioPost.findUnique({ where: { id } });
+  if (!post) throw new NotFoundError('Post');
+  if (post.authorId !== userId) throw new ForbiddenError('You can only delete your own posts');
+
+  await prisma.portfolioPost.delete({ where: { id } });
+
+  res.json({ success: true, message: 'Post deleted' });
+});
+
+export const toggleLike = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { id: postId } = req.params;
+
+  const post = await prisma.portfolioPost.findUnique({ where: { id: postId }, select: { id: true } });
+  if (!post) throw new NotFoundError('Post');
+
+  const existing = await prisma.portfolioLike.findUnique({ where: { userId_postId: { userId, postId } } });
+
+  if (existing) {
+    await prisma.portfolioLike.delete({ where: { userId_postId: { userId, postId } } });
+  } else {
+    await prisma.portfolioLike.create({ data: { userId, postId } });
+  }
+
+  const likeCount = await prisma.portfolioLike.count({ where: { postId } });
+  res.json({ success: true, data: { liked: !existing, likeCount } });
+});
+
+export const toggleSave = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { id: postId } = req.params;
+
+  const post = await prisma.portfolioPost.findUnique({ where: { id: postId }, select: { id: true } });
+  if (!post) throw new NotFoundError('Post');
+
+  const existing = await prisma.portfolioSave.findUnique({ where: { userId_postId: { userId, postId } } });
+
+  if (existing) {
+    await prisma.portfolioSave.delete({ where: { userId_postId: { userId, postId } } });
+  } else {
+    await prisma.portfolioSave.create({ data: { userId, postId } });
+  }
+
+  const saveCount = await prisma.portfolioSave.count({ where: { postId } });
+  res.json({ success: true, data: { saved: !existing, saveCount } });
+});
+
+export const getSavedPosts = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+
+  const saves = await prisma.portfolioSave.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    include: { post: { include: POST_INCLUDE } },
+  });
+
+  const posts = saves.map((s) => s.post);
+  const result = await attachUserFlags(posts, userId);
+
+  res.json({ success: true, data: { posts: result } });
 });
