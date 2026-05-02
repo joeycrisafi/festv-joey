@@ -748,7 +748,7 @@ export default function ProviderProfile() {
             {!isOwner && (
               <button
                 onClick={() => isAuthenticated
-                  ? navigate('/create-request', { state: { providerId: id } })
+                  ? scrollTo('packages')
                   : navigate(`/login?redirect=/providers/${id}`)
                 }
                 className="border border-gold text-gold font-sans text-xs tracking-widest uppercase px-6 py-2 hover:bg-gold hover:text-dark transition-colors duration-200 focus:outline-none"
@@ -895,7 +895,7 @@ export default function ProviderProfile() {
             {!isOwner && (
               <button
                 onClick={() => isAuthenticated
-                  ? navigate('/create-request', { state: { providerId: id } })
+                  ? scrollTo('packages')
                   : navigate(`/login?redirect=/providers/${id}`)
                 }
                 className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-8 py-3 hover:bg-gold-dark transition-colors duration-200 focus:outline-none"

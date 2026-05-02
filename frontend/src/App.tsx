@@ -12,7 +12,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ClientDashboard from './pages/ClientDashboard';
 import ProviderDashboard from './pages/ProviderDashboard';
-import CreateEventRequest from './pages/CreateEventRequest';
 import BrowseProviders from './pages/BrowseProviders';
 import ProviderProfile from './pages/ProviderProfile';
 import EventRequestDetail from './pages/EventRequestDetail';
@@ -98,11 +97,6 @@ function App() {
         <Route path="dashboard" element={
           <ProtectedRoute allowedRoles={['CLIENT']}>
             <ClientDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="create-request" element={
-          <ProtectedRoute allowedRoles={['CLIENT']}>
-            <CreateEventRequest />
           </ProtectedRoute>
         } />
         <Route path="event-requests" element={

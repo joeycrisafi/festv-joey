@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "festv-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "/Users/josephcrisafi/Desktop/festv-joey/frontend",
+      "port": 3000
+    }
+  ]
+}
