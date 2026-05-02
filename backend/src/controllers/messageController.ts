@@ -218,17 +218,17 @@ export const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
     data: { lastMessageAt: new Date() },
   });
 
-  // Notify recipient
+  // Notify recipient — fire-and-forget so a DB error here never crashes the sent response
   if (recipientId) {
-    await prisma.notification.create({
+    prisma.notification.create({
       data: {
         userId: recipientId,
         type: 'NEW_MESSAGE',
         title: 'New Message',
-        message: `You have a new message from ${req.user!.firstName} ${req.user!.lastName}`,
+        message: 'You have a new message',
         data: { conversationId, messageId: message.id },
       },
-    });
+    }).catch(() => {});
   }
 
   res.status(201).json({ success: true, data: message });
