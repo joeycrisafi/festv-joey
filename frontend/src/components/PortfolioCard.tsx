@@ -586,34 +586,39 @@ export default function PortfolioCard({
           style={{ borderTop: '1px solid #F0EDE8', paddingTop: 8 }}
         >
           <div className="flex items-center gap-3">
-            <motion.button
-              whileTap={{ scale: 1.3 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              onClick={handleLike}
-              className="flex items-center gap-1 focus:outline-none"
-              aria-label="Like"
-            >
-              <HeartIcon filled={liked} />
-              <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>{likeCount}</span>
-            </motion.button>
+            {managementMode ? (
+              <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>
+                {likeCount} likes · {saveCount} saves
+              </span>
+            ) : (
+              <>
+                <motion.button
+                  whileTap={{ scale: 1.3 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                  onClick={handleLike}
+                  className="flex items-center gap-1 focus:outline-none"
+                  aria-label="Like"
+                >
+                  <HeartIcon filled={liked} />
+                  <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>{likeCount}</span>
+                </motion.button>
 
-            <motion.button
-              whileTap={{ scale: 1.3 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              onClick={handleSave}
-              className="flex items-center gap-1 focus:outline-none"
-              aria-label="Save"
-            >
-              <BookmarkIcon filled={saved} />
-              <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>{saveCount}</span>
-            </motion.button>
+                <motion.button
+                  whileTap={{ scale: 1.3 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                  onClick={handleSave}
+                  className="flex items-center gap-1 focus:outline-none"
+                  aria-label="Save"
+                >
+                  <BookmarkIcon filled={saved} />
+                  <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>{saveCount}</span>
+                </motion.button>
+              </>
+            )}
           </div>
 
           {managementMode ? (
             <div className="flex items-center gap-2">
-              <span className="font-sans" style={{ fontSize: 10, color: '#7A7068' }}>
-                {likeCount} likes · {saveCount} saves
-              </span>
               <button
                 onClick={handleToggleFeed}
                 className="font-sans uppercase tracking-widest transition-all"
