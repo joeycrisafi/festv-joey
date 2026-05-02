@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { authenticate, requireProvider } from '../middleware/auth.js';
-import { uploadLogo, uploadBanner, uploadPackageImage } from '../middleware/upload.js';
+import { uploadLogo, uploadBanner, uploadPackageImage, uploadPortfolioImage } from '../middleware/upload.js';
 import {
   uploadLogoHandler,
   uploadBannerHandler,
   uploadPackageImageHandler,
+  uploadPortfolioImageHandler,
 } from '../controllers/uploadController.js';
 
 const router = Router();
@@ -34,6 +35,14 @@ router.post(
   requireProvider,
   uploadPackageImage.single('image'),
   uploadPackageImageHandler,
+);
+
+// POST /upload/portfolio-image — Cloudinary upload for portfolio posts (CLIENT + PROVIDER)
+router.post(
+  '/portfolio-image',
+  authenticate,
+  uploadPortfolioImage.single('image'),
+  uploadPortfolioImageHandler,
 );
 
 export default router;

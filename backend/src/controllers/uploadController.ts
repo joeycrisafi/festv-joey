@@ -58,6 +58,21 @@ export async function uploadBannerHandler(req: AuthenticatedRequest, res: Respon
   }
 }
 
+// ─── Upload portfolio image ───────────────────────────────────────────────────
+// POST /upload/portfolio-image — no DB update, just Cloudinary upload. Returns imageUrl.
+export async function uploadPortfolioImageHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+    const imageUrl = (req.file as any).path; // Cloudinary URL
+    return res.json({ success: true, data: { imageUrl } });
+  } catch (err) {
+    console.error('uploadPortfolioImageHandler error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to upload image' });
+  }
+}
+
 // ─── Upload package image ─────────────────────────────────────────────────────
 // POST /upload/package-image  (requireProvider + uploadPackageImage middleware applied in routes)
 export async function uploadPackageImageHandler(req: AuthenticatedRequest, res: Response) {

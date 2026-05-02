@@ -49,3 +49,18 @@ export const uploadPackageImage = multer({
   storage: packageImageStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 });
+
+// ─── Portfolio image upload ───────────────────────────────────────────────────
+// natural dimensions (no crop/transform), max 8 MB, both CLIENT and PROVIDER
+const portfolioImageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'festv/portfolio',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+  } as any,
+});
+
+export const uploadPortfolioImage = multer({
+  storage: portfolioImageStorage,
+  limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
+});

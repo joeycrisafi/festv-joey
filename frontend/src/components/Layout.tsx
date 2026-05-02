@@ -18,6 +18,7 @@ import {
   Package,
   CalendarX2,
   MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canAccessPlanner } from '../pages/Planner';
@@ -97,6 +98,14 @@ export default function Layout() {
               >
                 <Search className="w-3.5 h-3.5" />
                 Browse Vendors
+              </Link>
+
+              <Link
+                to="/feed"
+                className="flex items-center gap-1.5 text-xs font-sans font-medium uppercase tracking-widest text-charcoal hover:text-gold transition-colors duration-200"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Feed
               </Link>
 
               {isAuthenticated ? (
@@ -387,6 +396,15 @@ export default function Layout() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Browse Vendors
+                </Link>
+
+                <Link
+                  to="/feed"
+                  className="px-4 py-3 rounded-lg text-sm font-sans text-charcoal hover:text-gold hover:bg-gold/5 transition-colors flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Feed
                 </Link>
 
                 {isAuthenticated ? (

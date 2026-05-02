@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import {
   Search,
@@ -141,6 +142,11 @@ export default function ClientDashboard() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
+  const [dashTab, setDashTab] = useState<'overview' | 'saved'>('overview');
+  const [savedPosts, setSavedPosts] = useState<PortfolioPostData[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savedLoaded, setSavedLoaded] = useState(false);
+
   const [events, setEvents]     = useState<EventItem[]>([]);
   const [requests, setRequests] = useState<EventRequestItem[]>([]);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
@@ -206,6 +212,31 @@ export default function ClientDashboard() {
 
     load();
   }, [token]);
+
+  // ── Saved posts ─────────────────────────────────────────────────────────────
+  const fetchSavedPosts = useCallback(async () => {
+    if (!token || savedLoaded) return;
+    setSavedLoading(true);
+    try {
+      const res = await fetch('/api/v1/portfolio/saved', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setSavedPosts(d?.data?.posts ?? []);
+        setSavedLoaded(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setSavedLoading(false);
+    }
+  }, [token, savedLoaded]);
+
+  const handleTabChange = (tab: 'overview' | 'saved') => {
+    setDashTab(tab);
+    if (tab === 'saved') fetchSavedPosts();
+  };
 
   // ── Accept quote ────────────────────────────────────────────────────────────
   const handleAccept = async (quoteId: string) => {
@@ -290,8 +321,74 @@ export default function ClientDashboard() {
         </Link>
       </div>
 
+      {/* Tab bar */}
+      <div className="flex items-center gap-6 mb-8 border-b border-border">
+        {(['overview', 'saved'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab)}
+            className="font-sans pb-3 transition-colors focus:outline-none"
+            style={{
+              fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: dashTab === tab ? '#1A1714' : '#7A7068',
+              borderBottom: dashTab === tab ? '2px solid #C4A06A' : '2px solid transparent',
+              marginBottom: -1,
+            }}
+          >
+            {tab === 'overview' ? 'Overview' : 'Saved Posts'}
+          </button>
+        ))}
+      </div>
+
+      {/* Saved posts tab */}
+      {dashTab === 'saved' && (
+        <div>
+          {savedLoading ? (
+            <div className="columns-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="break-inside-avoid mb-4 bg-white border border-border rounded-md overflow-hidden animate-pulse">
+                  <div style={{ height: 140, background: '#E8E0D4' }} />
+                  <div className="p-3.5 space-y-2">
+                    <div className="h-3 bg-bg rounded w-1/2" />
+                    <div className="h-3 bg-bg rounded w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : savedPosts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 18, fontStyle: 'italic', color: '#7A7068' }}>
+                Posts you save will appear here.
+              </p>
+              <Link
+                to="/feed"
+                className="font-sans text-xs text-gold hover:text-gold-dark font-semibold mt-4 transition-colors"
+              >
+                Browse the Feed →
+              </Link>
+            </div>
+          ) : (
+            <div className="columns-2 gap-4">
+              {savedPosts.map(post => (
+                <div key={post.id} className="break-inside-avoid mb-4">
+                  <PortfolioCard
+                    post={post}
+                    token={token}
+                    onSaveChange={(id, saved) => {
+                      if (!saved) setSavedPosts(prev => prev.filter(p => p.id !== id));
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Two-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {dashTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-10">
 
@@ -786,7 +883,7 @@ export default function ClientDashboard() {
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

@@ -32,6 +32,7 @@ import QuoteDetail from './pages/QuoteDetail';
 import CreateEvent from './pages/CreateEvent';
 import EventDetail from './pages/EventDetail';
 import Messages from './pages/Messages';
+import FeedPage from './pages/FeedPage';
 
 function ProtectedRoute({ children, allowedRoles }: { 
   children: React.ReactNode; 
@@ -90,6 +91,7 @@ function App() {
             ? <Navigate to={user?.role === 'PROVIDER' ? '/provider/dashboard' : '/dashboard'} replace />
             : <ResetPassword />
         } />
+        <Route path="feed" element={<FeedPage />} />
         <Route path="providers" element={<BrowseProviders />} />
         <Route path="providers/:id" element={<ProviderProfile />} />
 

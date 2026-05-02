@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
 import ImageUpload from '../components/ImageUpload';
 import { eventRequestsApi, favoritesApi } from '../utils/api';
+import PortfolioCard from '../components/PortfolioCard';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_URL
@@ -582,6 +583,8 @@ export default function ProviderProfile() {
   const [provider, setProvider]         = useState<Provider | null>(null);
   const [packageGroups, setPackageGroups] = useState<PackageGroup[]>([]);
   const [reviews, setReviews]           = useState<Review[]>([]);
+  const [portfolioPosts, setPortfolioPosts] = useState<any[]>([]);
+  const [portfolioLoaded, setPortfolioLoaded] = useState(false);
   const [isLoading, setIsLoading]       = useState(true);
   const [notFound, setNotFound]         = useState(false);
   const [showStickyNav, setShowStickyNav] = useState(false);
@@ -721,7 +724,7 @@ export default function ProviderProfile() {
       >
         <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            {['packages', 'about', 'reviews'].map(anchor => (
+            {['packages', 'about', 'reviews', 'portfolio'].map(anchor => (
               <button
                 key={anchor}
                 onClick={() => scrollTo(anchor)}
@@ -1061,6 +1064,41 @@ export default function ProviderProfile() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── SECTION: PORTFOLIO ────────────────────────────────────────────── */}
+      <section id="portfolio" className="py-12 px-6 md:px-12 pb-24">
+        <div className="max-w-5xl mx-auto">
+          <p className="font-sans text-xs font-bold tracking-widest uppercase text-charcoal mb-6">Portfolio</p>
+          {!portfolioLoaded ? (
+            <button
+              onClick={async () => {
+                if (!provider || portfolioLoaded) return;
+                try {
+                  const res = await fetch(`${API_BASE}/portfolio/users/${provider.userId}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  });
+                  const d = await res.json();
+                  setPortfolioPosts(d?.data?.posts ?? []);
+                } catch {}
+                setPortfolioLoaded(true);
+              }}
+              className="font-sans text-xs text-gold hover:text-gold-dark transition-colors"
+            >
+              Load portfolio posts →
+            </button>
+          ) : portfolioPosts.length === 0 ? (
+            <p className="font-sans text-sm text-muted">No portfolio posts yet.</p>
+          ) : (
+            <div className="columns-2 gap-4">
+              {portfolioPosts.map((post: any) => (
+                <div key={post.id} className="break-inside-avoid mb-4">
+                  <PortfolioCard post={post} token={token} />
+                </div>
+              ))}
             </div>
           )}
         </div>
