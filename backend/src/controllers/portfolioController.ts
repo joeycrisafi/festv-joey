@@ -414,6 +414,8 @@ const POST_INCLUDE = {
       id: true,
       providerId: true,
       bookingId: true,
+      vendorReply: true,
+      vendorRepliedAt: true,
       provider: { select: { businessName: true, logoUrl: true } },
     },
   },
