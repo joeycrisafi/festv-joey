@@ -16,7 +16,6 @@ const PROVIDER_SELECT = {
   totalReviews: true,
   bannerImageUrl: true,
   logoUrl: true,
-  city: true,
   serviceAreas: true,
   user: {
     select: {
