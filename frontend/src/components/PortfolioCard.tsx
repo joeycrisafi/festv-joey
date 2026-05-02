@@ -16,6 +16,7 @@ export interface PortfolioPostData {
     lastName: string;
     avatarUrl?: string | null;
     role: string;
+    providerProfile?: { businessName: string; logoUrl?: string | null } | null;
   };
   package?: { id: string; name: string } | null;
   event?: { id: string; name: string } | null;
@@ -56,15 +57,15 @@ function HeartIcon({ filled }: { filled: boolean }) {
 
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
-        stroke={filled ? '#C4A06A' : '#7A7068'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={filled ? 'rgba(196,160,106,0.15)' : 'none'}
-      />
+    <svg
+      width="13" height="13" viewBox="0 0 24 24"
+      fill={filled ? 'rgba(196,160,106,0.15)' : 'none'}
+      stroke={filled ? '#C4A06A' : '#7A7068'}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   );
 }
@@ -126,8 +127,14 @@ export default function PortfolioCard({ post, token, onRequireAuth, onSaveChange
     }
   };
 
-  const initials = `${post.author.firstName[0] ?? ''}${post.author.lastName[0] ?? ''}`.toUpperCase();
-  const authorName = `${post.author.firstName} ${post.author.lastName}`;
+  const isVendor = post.type === 'VENDOR_POST';
+  const businessName = post.author.providerProfile?.businessName;
+  const authorName = isVendor && businessName
+    ? businessName
+    : `${post.author.firstName} ${post.author.lastName}`;
+  const initials = isVendor && businessName
+    ? businessName[0].toUpperCase()
+    : `${post.author.firstName[0] ?? ''}${post.author.lastName[0] ?? ''}`.toUpperCase();
 
   return (
     <div className="bg-white border border-border rounded-md overflow-hidden">

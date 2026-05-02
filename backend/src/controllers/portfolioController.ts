@@ -406,7 +406,7 @@ const createPostSchema = z.object({
 });
 
 const POST_INCLUDE = {
-  author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true } },
+  author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true, providerProfile: { select: { businessName: true, logoUrl: true } } } },
   package: { select: { id: true, name: true } },
   event: { select: { id: true, name: true } },
   vendorTags: {
