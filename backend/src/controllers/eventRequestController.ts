@@ -147,6 +147,18 @@ export const createEventRequest = asyncHandler(async (req: AuthenticatedRequest,
     include: REQUEST_INCLUDE_FULL,
   });
 
+  // Auto-create a conversation between planner and vendor if one doesn't exist
+  const clientId = req.user!.id;
+  const vendorUserId = vendor.userId;
+  const existingConversation = await prisma.conversation.findFirst({
+    where: { participants: { hasEvery: [clientId, vendorUserId] } },
+  });
+  if (!existingConversation) {
+    await prisma.conversation.create({
+      data: { participants: [clientId, vendorUserId] },
+    });
+  }
+
   // Notify the vendor
   const clientName = `${req.user!.firstName} ${req.user!.lastName}`.trim();
   const dateLabel  = parsedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

@@ -17,6 +17,7 @@ import packageRoutes, { addonRouter, availabilityRouter } from './packageRoutes'
 import eventRoutes from './eventRoutes';
 import uploadRoutes from './uploadRoutes';
 import stripeRoutes from './stripeRoutes';
+import messageRoutes from './messageRoutes';
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use('/availability', availabilityRouter);
 router.use('/events', eventRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/stripe', stripeRoutes);
+router.use('/messages', messageRoutes);
 
 export default router;

@@ -32,6 +32,7 @@ import AccountVerify from './pages/AccountVerify';
 import QuoteDetail from './pages/QuoteDetail';
 import CreateEvent from './pages/CreateEvent';
 import EventDetail from './pages/EventDetail';
+import Messages from './pages/Messages';
 
 function ProtectedRoute({ children, allowedRoles }: { 
   children: React.ReactNode; 
@@ -152,6 +153,11 @@ function App() {
         <Route path="account/verify" element={
           <ProtectedRoute>
             <AccountVerify />
+          </ProtectedRoute>
+        } />
+        <Route path="messages" element={
+          <ProtectedRoute>
+            <Messages />
           </ProtectedRoute>
         } />
 

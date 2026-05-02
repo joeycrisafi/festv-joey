@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import JessWidget from './JessWidget';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Menu,
   X,
@@ -17,6 +17,7 @@ import {
   CheckCircle,
   Package,
   CalendarX2,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canAccessPlanner } from '../pages/Planner';
@@ -27,7 +28,31 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem('accessToken');
+
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/v1/messages/unread-count', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const d = await res.json();
+          setUnreadMessages(d?.data?.unreadCount ?? 0);
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -76,6 +101,17 @@ export default function Layout() {
 
               {isAuthenticated ? (
                 <>
+                  <Link
+                    to="/messages"
+                    className="relative flex items-center gap-1.5 text-xs font-sans font-medium uppercase tracking-widest text-charcoal hover:text-gold transition-colors duration-200"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Messages
+                    {unreadMessages > 0 && (
+                      <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-gold" />
+                    )}
+                  </Link>
+
                   {user?.role === 'CLIENT' && (
                     <Link
                       to="/create-request"
@@ -361,6 +397,18 @@ export default function Layout() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Dashboard
+                    </Link>
+
+                    <Link
+                      to="/messages"
+                      className="px-4 py-3 rounded-lg text-sm font-sans text-charcoal hover:text-gold hover:bg-gold/5 transition-colors flex items-center gap-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Messages
+                      {unreadMessages > 0 && (
+                        <span className="ml-auto w-2 h-2 rounded-full bg-gold" />
+                      )}
                     </Link>
 
                     {/* Provider mobile links */}
