@@ -439,12 +439,13 @@ export const getFeed = asyncHandler(async (req: AuthenticatedRequest, res: Respo
 
   const [posts, total] = await Promise.all([
     prisma.portfolioPost.findMany({
+      where: { sharedToFeed: true },
       include: POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
       take: Number(limit),
     }),
-    prisma.portfolioPost.count(),
+    prisma.portfolioPost.count({ where: { sharedToFeed: true } }),
   ]);
 
   const result = await attachUserFlags(posts, userId);
@@ -464,6 +465,20 @@ export const getUserPosts = asyncHandler(async (req: AuthenticatedRequest, res: 
 
   const posts = await prisma.portfolioPost.findMany({
     where: { authorId: targetUserId },
+    include: POST_INCLUDE,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const result = await attachUserFlags(posts, userId);
+
+  res.json({ success: true, data: { posts: result } });
+});
+
+export const getMyPosts = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+
+  const posts = await prisma.portfolioPost.findMany({
+    where: { authorId: userId },
     include: POST_INCLUDE,
     orderBy: { createdAt: 'desc' },
   });
@@ -508,6 +523,7 @@ export const createPost = asyncHandler(async (req: AuthenticatedRequest, res: Re
         type,
         caption,
         imageUrls,
+        sharedToFeed: false,
         packageId,
         addOnIds: addOnIds ?? [],
         eventId,
@@ -524,6 +540,46 @@ export const createPost = asyncHandler(async (req: AuthenticatedRequest, res: Re
   });
 
   res.status(201).json({ success: true, data: post });
+});
+
+const updatePostSchema = z.object({
+  caption: z.string().max(2000).optional(),
+  imageUrls: z.array(z.string().url()).optional(),
+  sharedToFeed: z.boolean().optional(),
+});
+
+export const updatePost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  const validation = updatePostSchema.safeParse(req.body);
+  if (!validation.success) throw new AppError(validation.error.errors[0].message, 400);
+
+  const { caption, imageUrls, sharedToFeed } = validation.data;
+
+  const post = await prisma.portfolioPost.findUnique({ where: { id } });
+  if (!post) throw new NotFoundError('Post');
+  if (post.authorId !== userId) throw new ForbiddenError('You can only edit your own posts');
+
+  // imageUrls can only append — merge with existing, max 10 total
+  let mergedImageUrls = post.imageUrls;
+  if (imageUrls) {
+    const combined = [...post.imageUrls, ...imageUrls.filter(u => !post.imageUrls.includes(u))];
+    if (combined.length > 10) throw new AppError('Maximum 10 images per post', 400);
+    mergedImageUrls = combined;
+  }
+
+  const updated = await prisma.portfolioPost.update({
+    where: { id },
+    data: {
+      ...(caption !== undefined && { caption }),
+      ...(imageUrls !== undefined && { imageUrls: mergedImageUrls }),
+      ...(sharedToFeed !== undefined && { sharedToFeed }),
+    },
+    include: POST_INCLUDE,
+  });
+
+  res.json({ success: true, data: updated });
 });
 
 export const deletePost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -590,4 +646,45 @@ export const getSavedPosts = asyncHandler(async (req: AuthenticatedRequest, res:
   const result = await attachUserFlags(posts, userId);
 
   res.json({ success: true, data: { posts: result } });
+});
+
+const replyToTagSchema = z.object({
+  reply: z.string().max(500),
+});
+
+export const replyToTag = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { postId, tagId } = req.params;
+
+  const validation = replyToTagSchema.safeParse(req.body);
+  if (!validation.success) throw new AppError(validation.error.errors[0].message, 400);
+
+  const { reply } = validation.data;
+
+  const tag = await prisma.portfolioVendorTag.findUnique({
+    where: { id: tagId },
+    include: { provider: { select: { userId: true } } },
+  });
+
+  if (!tag) throw new NotFoundError('Tag');
+  if (tag.postId !== postId) throw new AppError('Tag does not belong to this post', 400);
+  if (tag.provider.userId !== userId) throw new ForbiddenError('You can only reply on behalf of your own business');
+
+  if (tag.vendorReply) {
+    return res.status(409).json({ success: false, error: 'A reply already exists for this tag' });
+  }
+
+  if (tag.vendorRepliedAt) {
+    const hoursSince = (Date.now() - new Date(tag.vendorRepliedAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSince > 24) {
+      return res.status(403).json({ success: false, error: 'Reply window has closed (24 hours)' });
+    }
+  }
+
+  const updated = await prisma.portfolioVendorTag.update({
+    where: { id: tagId },
+    data: { vendorReply: reply, vendorRepliedAt: new Date() },
+  });
+
+  res.json({ success: true, data: updated });
 });

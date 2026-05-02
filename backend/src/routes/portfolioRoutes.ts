@@ -63,10 +63,13 @@ router.post('/reorder', authenticate, requireProvider, asyncHandler(portfolioCon
 // ── PortfolioPost feed routes (new social feed, separate from PortfolioItem) ──
 router.get('/feed', authenticate, asyncHandler(portfolioController.getFeed));
 router.get('/saved', authenticate, asyncHandler(portfolioController.getSavedPosts));
+router.get('/my-posts', authenticate, asyncHandler(portfolioController.getMyPosts));
 router.get('/users/:userId', authenticate, asyncHandler(portfolioController.getUserPosts));
 router.post('/posts', authenticate, asyncHandler(portfolioController.createPost));
+router.patch('/posts/:id', authenticate, asyncHandler(portfolioController.updatePost));
 router.delete('/posts/:id', authenticate, asyncHandler(portfolioController.deletePost));
 router.post('/posts/:id/like', authenticate, asyncHandler(portfolioController.toggleLike));
 router.post('/posts/:id/save', authenticate, asyncHandler(portfolioController.toggleSave));
+router.patch('/posts/:postId/tags/:tagId/reply', authenticate, asyncHandler(portfolioController.replyToTag));
 
 export default router;

@@ -943,13 +943,14 @@ model MenuItemPricingTier {
 // ============================================
 
 model PortfolioPost {
-  id         String   @id @default(uuid())
-  authorId   String
-  author     User     @relation("UserPortfolioPosts", fields: [authorId], references: [id], onDelete: Cascade)
-  type       PostType
-  caption    String?  @db.Text
-  imageUrls  String[]
-  createdAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  authorId     String
+  author       User     @relation("UserPortfolioPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  type         PostType
+  caption      String?  @db.Text
+  imageUrls    String[]
+  sharedToFeed Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   packageId  String?
   package    Package? @relation(fields: [packageId], references: [id])
@@ -968,12 +969,14 @@ model PortfolioPost {
 }
 
 model PortfolioVendorTag {
-  id         String          @id @default(uuid())
-  postId     String
-  post       PortfolioPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  providerId String
-  provider   ProviderProfile @relation(fields: [providerId], references: [id])
-  bookingId  String
+  id              String          @id @default(uuid())
+  postId          String
+  post            PortfolioPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  providerId      String
+  provider        ProviderProfile @relation(fields: [providerId], references: [id])
+  bookingId       String
+  vendorReply     String?         @db.Text
+  vendorRepliedAt DateTime?
 
   @@index([postId])
   @@index([providerId])
