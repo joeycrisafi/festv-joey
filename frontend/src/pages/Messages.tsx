@@ -142,6 +142,8 @@ export default function Messages() {
 
   const handleSend = async () => {
     if (!input.trim() || !activeId || sending) return;
+    const recipientId = activeConversation?.otherUser?.id;
+    if (!recipientId) return;
     setSending(true);
     const content = input.trim();
     setInput('');
@@ -152,7 +154,7 @@ export default function Messages() {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, recipientId }),
       });
       if (res.ok) {
         await fetchMessages(activeId);
