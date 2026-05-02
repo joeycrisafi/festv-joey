@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar, Inbox, Star, Package, Eye, Clock, ChevronRight, User,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
+import PostComposer from '../components/PostComposer';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -130,6 +132,8 @@ export default function ProviderDashboard() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
+  const [dashTab, setDashTab] = useState<'overview' | 'portfolio'>('overview');
+
   const [profile,  setProfile]  = useState<Profile | null>(null);
   const [requests, setRequests] = useState<EventRequest[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -138,6 +142,11 @@ export default function ProviderDashboard() {
   const [loading,  setLoading]  = useState(true);
   const [stripeStatus, setStripeStatus] = useState<'ACTIVE' | 'PENDING' | null>(null);
   const [stripeLoading, setStripeLoading] = useState(false);
+
+  const [portfolioPosts, setPortfolioPosts] = useState<PortfolioPostData[]>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioLoaded, setPortfolioLoaded] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   // ── Fetch all data on mount ────────────────────────────────────────────────
   useEffect(() => {
@@ -204,6 +213,30 @@ export default function ProviderDashboard() {
       setLoading(false);
     });
   }, [token, navigate]);
+
+  const fetchPortfolioPosts = useCallback(async () => {
+    if (!token || portfolioLoaded) return;
+    setPortfolioLoading(true);
+    try {
+      const res = await fetch('/api/v1/portfolio/my-posts', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setPortfolioPosts(d?.data?.posts ?? []);
+        setPortfolioLoaded(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, [token, portfolioLoaded]);
+
+  const handleTabChange = (tab: 'overview' | 'portfolio') => {
+    setDashTab(tab);
+    if (tab === 'portfolio') fetchPortfolioPosts();
+  };
 
   const connectStripe = async () => {
     if (!token || !profileId || stripeLoading) return;
@@ -335,8 +368,102 @@ export default function ProviderDashboard() {
           </div>
         </div>
 
+        {/* ── TAB BAR ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-6 mb-8 border-b border-border">
+          {([
+            { key: 'overview',  label: 'Overview' },
+            { key: 'portfolio', label: 'Portfolio' },
+          ] as { key: 'overview' | 'portfolio'; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handleTabChange(key)}
+              className="font-sans pb-3 transition-colors focus:outline-none"
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: dashTab === key ? '#1A1714' : '#7A7068',
+                borderBottom: dashTab === key ? '2px solid #C4A06A' : '2px solid transparent',
+                marginBottom: -1,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── PORTFOLIO TAB ───────────────────────────────────────────────── */}
+        {dashTab === 'portfolio' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div />
+              <button
+                onClick={() => setComposerOpen(true)}
+                className="font-sans rounded-md transition-opacity hover:opacity-80"
+                style={{ background: '#1A1714', color: '#F5F3EF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 16px' }}
+              >
+                + Add to Portfolio
+              </button>
+            </div>
+
+            {portfolioLoading ? (
+              <div className="columns-2 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="break-inside-avoid mb-4 bg-white border border-border rounded-md overflow-hidden animate-pulse">
+                    <div style={{ height: 140, background: '#E8E0D4' }} />
+                    <div className="p-3.5 space-y-2">
+                      <div className="h-3 bg-bg rounded w-1/2" />
+                      <div className="h-3 bg-bg rounded w-3/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : portfolioPosts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 18, fontStyle: 'italic', color: '#7A7068' }}>
+                  Your portfolio is empty. Add your first piece of work.
+                </p>
+              </div>
+            ) : (
+              <motion.div
+                className="columns-2 gap-4"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+              >
+                {portfolioPosts.map(post => (
+                  <motion.div
+                    key={post.id}
+                    className="break-inside-avoid mb-4"
+                    variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                  >
+                    <PortfolioCard
+                      post={post}
+                      token={token}
+                      managementMode
+                      onDelete={id => setPortfolioPosts(prev => prev.filter(p => p.id !== id))}
+                      onUpdate={updated => setPortfolioPosts(prev => prev.map(p => p.id === updated.id ? updated : p))}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+
+            {composerOpen && (
+              <PostComposer
+                forcedType="VENDOR_POST"
+                onClose={() => setComposerOpen(false)}
+                onPosted={post => {
+                  setPortfolioPosts(prev => [post, ...prev]);
+                  setPortfolioLoaded(true);
+                }}
+              />
+            )}
+          </div>
+        )}
+
         {/* ── TWO-COLUMN GRID ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {dashTab === 'overview' && <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
           {/* ── LEFT COLUMN (col-span-2) ───────────────────────────────────── */}
           <div className="md:col-span-2">
@@ -659,7 +786,7 @@ export default function ProviderDashboard() {
             </div>
 
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

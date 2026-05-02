@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
+import PostComposer from '../components/PostComposer';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import {
   Search,
@@ -142,10 +143,14 @@ export default function ClientDashboard() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
-  const [dashTab, setDashTab] = useState<'overview' | 'saved'>('overview');
+  const [dashTab, setDashTab] = useState<'overview' | 'saved' | 'portfolio'>('overview');
   const [savedPosts, setSavedPosts] = useState<PortfolioPostData[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedLoaded, setSavedLoaded] = useState(false);
+  const [portfolioPosts, setPortfolioPosts] = useState<PortfolioPostData[]>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioLoaded, setPortfolioLoaded] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const [events, setEvents]     = useState<EventItem[]>([]);
   const [requests, setRequests] = useState<EventRequestItem[]>([]);
@@ -233,9 +238,29 @@ export default function ClientDashboard() {
     }
   }, [token, savedLoaded]);
 
-  const handleTabChange = (tab: 'overview' | 'saved') => {
+  const fetchPortfolioPosts = useCallback(async () => {
+    if (!token || portfolioLoaded) return;
+    setPortfolioLoading(true);
+    try {
+      const res = await fetch('/api/v1/portfolio/my-posts', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setPortfolioPosts(d?.data?.posts ?? []);
+        setPortfolioLoaded(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, [token, portfolioLoaded]);
+
+  const handleTabChange = (tab: 'overview' | 'saved' | 'portfolio') => {
     setDashTab(tab);
     if (tab === 'saved') fetchSavedPosts();
+    if (tab === 'portfolio') fetchPortfolioPosts();
   };
 
   // ── Accept quote ────────────────────────────────────────────────────────────
@@ -323,21 +348,25 @@ export default function ClientDashboard() {
 
       {/* Tab bar */}
       <div className="flex items-center gap-6 mb-8 border-b border-border">
-        {(['overview', 'saved'] as const).map(tab => (
+        {([
+          { key: 'overview',   label: 'Overview' },
+          { key: 'saved',      label: 'Saved Posts' },
+          { key: 'portfolio',  label: 'My Portfolio' },
+        ] as { key: 'overview' | 'saved' | 'portfolio'; label: string }[]).map(({ key, label }) => (
           <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
+            key={key}
+            onClick={() => handleTabChange(key)}
             className="font-sans pb-3 transition-colors focus:outline-none"
             style={{
               fontSize: 10,
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              color: dashTab === tab ? '#1A1714' : '#7A7068',
-              borderBottom: dashTab === tab ? '2px solid #C4A06A' : '2px solid transparent',
+              color: dashTab === key ? '#1A1714' : '#7A7068',
+              borderBottom: dashTab === key ? '2px solid #C4A06A' : '2px solid transparent',
               marginBottom: -1,
             }}
           >
-            {tab === 'overview' ? 'Overview' : 'Saved Posts'}
+            {label}
           </button>
         ))}
       </div>
@@ -385,6 +414,77 @@ export default function ClientDashboard() {
             </div>
           )}
         </div>
+      )}
+
+      {/* My Portfolio tab */}
+      {dashTab === 'portfolio' && (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div />
+            <button
+              onClick={() => setComposerOpen(true)}
+              className="font-sans rounded-md transition-opacity hover:opacity-80"
+              style={{ background: '#1A1714', color: '#F5F3EF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 16px' }}
+            >
+              + Add to Portfolio
+            </button>
+          </div>
+
+          {portfolioLoading ? (
+            <div className="columns-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="break-inside-avoid mb-4 bg-white border border-border rounded-md overflow-hidden animate-pulse">
+                  <div style={{ height: 140, background: '#E8E0D4' }} />
+                  <div className="p-3.5 space-y-2">
+                    <div className="h-3 bg-bg rounded w-1/2" />
+                    <div className="h-3 bg-bg rounded w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : portfolioPosts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 18, fontStyle: 'italic', color: '#7A7068' }}>
+                Share your first event to start your portfolio.
+              </p>
+            </div>
+          ) : (
+            <motion.div
+              className="columns-2 gap-4"
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+            >
+              {portfolioPosts.map(post => (
+                <motion.div
+                  key={post.id}
+                  className="break-inside-avoid mb-4"
+                  variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                >
+                  <PortfolioCard
+                    post={post}
+                    token={token}
+                    managementMode
+                    onDelete={id => setPortfolioPosts(prev => prev.filter(p => p.id !== id))}
+                    onUpdate={updated => setPortfolioPosts(prev => prev.map(p => p.id === updated.id ? updated : p))}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* Post composer */}
+      {composerOpen && (
+        <PostComposer
+          forcedType="PLANNER_POST"
+          onClose={() => setComposerOpen(false)}
+          onPosted={post => {
+            setPortfolioPosts(prev => [post, ...prev]);
+            setPortfolioLoaded(true);
+          }}
+        />
       )}
 
       {/* Two-column grid */}

@@ -7,16 +7,21 @@ import { type PortfolioPostData } from './PortfolioCard';
 interface Props {
   onClose: () => void;
   onPosted: (post: PortfolioPostData) => void;
+  forcedType?: 'VENDOR_POST' | 'PLANNER_POST';
 }
 
 interface PackageOption { id: string; name: string; }
 interface EventOption { id: string; name: string; }
 interface BookingVendor { bookingId: string; providerId: string; businessName: string; }
 
-export default function PostComposer({ onClose, onPosted }: Props) {
+export default function PostComposer({ onClose, onPosted, forcedType }: Props) {
   const { user, token } = useAuth();
-  const isProvider = user?.role === 'PROVIDER';
-  const isClient = user?.role === 'CLIENT';
+
+  // Effective type — forcedType wins, otherwise derive from role
+  const effectiveType: 'VENDOR_POST' | 'PLANNER_POST' = forcedType
+    ?? (user?.role === 'PROVIDER' ? 'VENDOR_POST' : 'PLANNER_POST');
+  const isProvider = effectiveType === 'VENDOR_POST';
+  const isClient   = effectiveType === 'PLANNER_POST';
 
   const [caption, setCaption] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -128,7 +133,7 @@ export default function PostComposer({ onClose, onPosted }: Props) {
     });
 
     const body: Record<string, any> = {
-      type: isProvider ? 'VENDOR_POST' : 'PLANNER_POST',
+      type: effectiveType,
       caption: caption.trim() || undefined,
       imageUrls,
     };
@@ -175,7 +180,7 @@ export default function PostComposer({ onClose, onPosted }: Props) {
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <p className="font-sans font-semibold text-sm text-dark uppercase tracking-widest">
-              Share Work
+              Add to Portfolio
             </p>
             <button onClick={onClose} className="text-muted hover:text-charcoal transition-colors">
               <X size={16} />
@@ -323,7 +328,7 @@ export default function PostComposer({ onClose, onPosted }: Props) {
               className="w-full font-sans text-xs font-bold uppercase tracking-widest py-3 rounded-md transition-opacity disabled:opacity-40"
               style={{ background: '#1A1714', color: '#F5F3EF' }}
             >
-              {submitting ? 'Sharing…' : 'Share'}
+              {submitting ? 'Saving…' : 'Add to Portfolio'}
             </button>
           </div>
         </motion.div>

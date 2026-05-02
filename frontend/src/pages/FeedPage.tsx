@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
-import PostComposer from '../components/PostComposer';
 
 // ─── Filter config ─────────────────────────────────────────────────────────────
 
@@ -42,7 +41,6 @@ export default function FeedPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [composerOpen, setComposerOpen] = useState(false);
   const [authToast, setAuthToast] = useState(false);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -90,12 +88,6 @@ export default function FeedPage() {
     await fetchFeed(activeFilter, next, true);
   };
 
-  // ── New post prepended ─────────────────────────────────────────────────────
-
-  const handlePosted = (post: PortfolioPostData) => {
-    setPosts(prev => [post, ...prev]);
-  };
-
   // ── Auth toast ─────────────────────────────────────────────────────────────
 
   const showAuthToast = () => {
@@ -121,15 +113,6 @@ export default function FeedPage() {
           <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 32, fontWeight: 300, color: '#1A1714', margin: 0 }}>
             Inspiration Feed
           </h1>
-          {isAuthenticated && (
-            <button
-              onClick={() => setComposerOpen(true)}
-              className="font-sans rounded-sm transition-opacity hover:opacity-80"
-              style={{ background: '#1A1714', color: '#F5F3EF', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 16px' }}
-            >
-              + Share Work
-            </button>
-          )}
         </div>
 
         {/* Filter tabs */}
@@ -195,7 +178,7 @@ export default function FeedPage() {
               ) : posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                   <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 20, fontStyle: 'italic', color: '#7A7068' }}>
-                    {activeFilter === 'saved' ? 'Posts you save will appear here.' : 'No posts yet. Be the first to share.'}
+                    {activeFilter === 'saved' ? 'Posts you save will appear here.' : 'Nothing shared to the feed yet.'}
                   </p>
                 </div>
               ) : (
@@ -264,14 +247,6 @@ export default function FeedPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Post composer modal */}
-      {composerOpen && (
-        <PostComposer
-          onClose={() => setComposerOpen(false)}
-          onPosted={handlePosted}
-        />
-      )}
     </div>
   );
 }
