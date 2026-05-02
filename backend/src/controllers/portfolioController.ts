@@ -489,11 +489,16 @@ export const getMyPosts = asyncHandler(async (req: AuthenticatedRequest, res: Re
 });
 
 export const createPost = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  console.log('createPost called, body keys:', Object.keys(req.body));
   const userId = req.user!.id;
   const userRole = req.user!.role;
 
   const validation = createPostSchema.safeParse(req.body);
-  if (!validation.success) throw new AppError(validation.error.errors[0].message, 400);
+  if (!validation.success) {
+    console.log('createPost validation error:', JSON.stringify(validation.error.errors, null, 2));
+    console.log('createPost req.body:', JSON.stringify(req.body, null, 2));
+    throw new AppError(validation.error.errors[0].message, 400);
+  }
 
   const { type, caption, imageUrls, packageId, addOnIds, eventId, vendorTags } = validation.data;
 
