@@ -70,7 +70,9 @@ frontend/src/
 │   ├── Layout.tsx           ← Nav shell (FESTV branded, dark footer)
 │   ├── ProviderTypeBadge.tsx ← Vendor type badge (5 canonical types, FESTV colors)
 │   ├── ImageUpload.tsx      ← Reusable image uploader (full zone + compact pill mode; posts to /upload/logo|banner|package-image)
-│   └── JessWidget.tsx       ← Floating chat widget (bottom-right); tool-use powered booking assistant
+│   ├── JessWidget.tsx       ← Floating chat widget (bottom-right); tool-use powered booking assistant
+│   ├── PortfolioCard.tsx    ← Portfolio post card (like, save, vendor tags, vendor replies, managementMode prop for edit/delete)
+│   └── PostComposer.tsx     ← Modal for creating portfolio posts (image upload, caption, package/event link, vendor tagging)
 ├── pages/
 │   ├── Landing.tsx          ← ✅ Built — hero, why FESTV, how it works, vendor types + Framer Motion animations
 │   ├── BrowseProviders.tsx  ← ✅ Built — filter sidebar + vendor cards grid; reads ?eventId= param, shows context banner
@@ -107,6 +109,7 @@ frontend/src/
 /vendor/availability → VendorAvailability (PROVIDER role) ← calendar date-blocking
 /bookings/:id → BookingDetail
 /event-requests/:id → EventRequestDetail
+/feed → FeedPage (public portfolio/inspiration feed)
 ... (other routes scaffolded)
 ```
 
@@ -197,6 +200,8 @@ Event → vendor marks COMPLETED
 | `/upload` | `POST /upload/logo`, `/upload/banner`, `/upload/package-image` — Cloudinary uploads (requireProvider) |
 | `/favorites` | CLIENT favorites — add/remove/check/list saved providers |
 | `/messages` | conversations + messages (controller built, routes mounted — messaging backend complete) |
+| `/portfolio` | `GET /feed` (public, sharedToFeed=true posts), `GET /me` (auth, own posts), `POST /posts` (create), `PATCH /posts/:id` (edit caption/images), `DELETE /posts/:id`, `POST /posts/:id/like`, `POST /posts/:id/save`, `GET /saved` (CLIENT saved posts), `PATCH /posts/:postId/tags/:tagId/reply` (PROVIDER vendor reply) |
+| `/upload` (portfolio) | `POST /upload/portfolio-image` — Cloudinary upload for portfolio posts (requireAuth) |
 | `/stripe` | `POST /connect/onboard` (vendor Express account), `GET /connect/status`, `POST /checkout/deposit` (Checkout Session), `POST /webhook` (raw body, auto-confirms bookings) |
 | `/admin` | admin operations (verify/reject vendors) |
 | `/verification` | email verification codes |
@@ -397,6 +402,7 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - BookingDetail (`/bookings/:id`) — **polished confirmation experience**: spring-animated CheckCircle, "Your booking is confirmed!" serif headline, prominent deposit amount, "What Happens Next" 3-step timeline, Pay Deposit button wired to Stripe Checkout Session
 - EventRequestDetail (`/event-requests/:id`) — request summary card, vendor card with ProviderTypeBadge, quotes list, cancel button; CAD currency formatting
 - AdminProviderVerification (`/admin/providers`) — admin-gated, pending provider list, approve/reject with reason
+- FeedPage (`/feed`) — public portfolio/inspiration feed; masonry grid of shared posts; like, save, vendor tag chips, vendor replies; PostComposer modal to create posts; private-first model (posts default `sharedToFeed: false`, toggled via PATCH)
 
 ### ✅ Backend Working
 - Full package pricing engine with seasonal + DOW rules
@@ -415,6 +421,7 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 - **CORS fix** — scoped to `/api` only via `app.use('/api', corsMiddleware)`; static files served before CORS so JS/CSS assets never hit the CORS callback
 - **ProviderDashboard null-profile redirect** — if profile is null after loading (new vendor, or PENDING_VERIFICATION 403), dashboard redirects to `/vendor/setup` with `replace:true`. No flash loop.
 - **Admin write-guard** — `requireAdminEmail` in `adminRoutes.ts` now blocks non-`isRealAdmin` accounts from `POST`/`PATCH`/`DELETE`. Test accounts (`test-*@festv.app`) get GET-only DEV access; write operations require a real admin email from `ADMIN_EMAILS`.
+- **Portfolio/Feed** — `portfolioController.ts` + `portfolioRoutes.ts` fully built and mounted at `/portfolio`; `PortfolioPost` + `PortfolioVendorTag` models in schema; private-first (sharedToFeed toggle); VENDOR_POST and PLANNER_POST types; vendor can reply to their own tag (`vendorReply`, `vendorRepliedAt` on PortfolioVendorTag); `POST_INCLUDE` is a shared constant used by all feed queries (getFeed, getUserPosts, getMyPosts, createPost, updatePost, getSavedPosts) — any select change must be made once there; `portfolio-image` upload endpoint at `/upload/portfolio-image` (requireAuth, not requireProvider); Jess system prompt updated to describe portfolio/feed and messaging
 
 ### ❌ Not Started / Still To Do
 - End-to-end Stripe payment test (keys added to Render — verify flow)
@@ -476,6 +483,10 @@ FLORIST_DECOR: Design & Arrangements / Add-ons & Extras
 45. **Quote model uses `total`, not `totalAmount`** — the Prisma `Quote` schema has a field named `total` (Float). There is no `totalAmount` field. The `ProviderDashboard` "Awaiting Response" section and any other UI reading quotes must use `q.total`, not `q.totalAmount`.
 46. **`ProviderDashboard` null profile guard** — after `loading` is false, a null `profile` means the vendor has no ProviderProfile yet (new account) or the fetch was blocked (PENDING_VERIFICATION). The component immediately calls `navigate('/vendor/setup', { replace: true })` and returns `null`. Never render the dashboard shell with a null profile.
 47. **Test accounts for E2E testing** — use `test-*@festv.app` accounts (password `Test1234!`), not `festvtest123+*@gmail.com`. The `@gmail.com` accounts are created as `PENDING_VERIFICATION` with no way to verify without inbox access. The `@festv.app` accounts are pre-seeded as `ACTIVE` with full profiles. Available: `test-client`, `test-photographer`, `test-caterer`, `test-bartender`, `test-dj`.
+48. **`User.providerProfiles` is plural (one-to-many array)** — the relation field is `providerProfiles ProviderProfile[]`, NOT `providerProfile`. Prisma silently ignores unknown nested selects, so selecting `providerProfile` returns nothing without an error. Always use `providerProfiles: { select: { ... }, take: 1 }` and access `[0]` on the frontend.
+49. **`POST_INCLUDE` in portfolioController is the single source of truth** — all portfolio API responses (getFeed, getUserPosts, getMyPosts, createPost, updatePost, getSavedPosts) use this one constant. Any field you add to the schema that should be returned (e.g. `vendorReply`, `vendorRepliedAt`) must be added here or it will never appear in any response — even if correctly stored in the DB.
+50. **Portfolio posts are private by default** — `sharedToFeed` defaults to `false` on create. The public `/feed` endpoint only returns `sharedToFeed: true` posts. Toggle via `PATCH /portfolio/posts/:id` with `{ sharedToFeed: true }`. Management views (`/me`, `/saved`) return all posts regardless.
+51. **Vendor replies on portfolio tags are immutable** — once a vendor posts a reply (`PATCH /portfolio/posts/:postId/tags/:tagId/reply`), the endpoint returns 409 on any subsequent attempt. Replies are also immutable after 24 hours at the business logic level.
 
 ---
 

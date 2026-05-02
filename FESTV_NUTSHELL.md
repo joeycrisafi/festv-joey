@@ -63,6 +63,7 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - **Auto-quote generation** — standard requests instantly get a Quote (SENT, 7-day expiry), EventRequest moves to QUOTE_SENT, client emailed. Out-of-parameters stays PENDING for vendor.
 - **Stripe deposit payments** — Stripe Connect Express for vendor bank onboarding; Stripe Checkout Sessions for planner deposits; webhook auto-confirms bookings on payment; lazy init so server starts without keys. BookingDetail has "Pay Deposit" button wired to Checkout Session. ProviderDashboard shows Connect banner until account active.
 - **Favorites** — heart button on every vendor card (BrowseProviders + ProviderProfile hero/sticky nav); CLIENT only, optimistic toggle, toast for guests; Saved Vendors in ClientDashboard with real API, initials, city, unsave ×.
+- **Portfolio & Inspiration Feed** — `/feed` page with masonry grid of shared posts. Vendors post photos linked to packages. Planners post photos and tag confirmed-booking vendors. Private-first: posts default to private, owners toggle `sharedToFeed`. Like, save (bookmark), vendor tag chips with vendor reply quotes (Cormorant italic, gold left border). `PortfolioCard` + `PostComposer` components. Full backend: `portfolioController.ts` with `POST_INCLUDE` shared constant, `PortfolioPost` + `PortfolioVendorTag` models, portfolio-image Cloudinary upload. Jess knows about the feed and messaging (system prompt updated).
 - **API hardening** — reviews endpoint standardised to `{ data: [], meta: { stats, pagination } }`; EventRequest booking flattened onto all GET responses; pricingEngine UUID validation (400 before DB hit); CORS scoped to `/api` only (static assets served before CORS, fixes blank page).
 - Cloudinary image uploads (logo, banner, package images)
 - 6 transactional emails via Resend (vendor approved/rejected, new request, quote received, booking confirmed, deposit confirmed)
@@ -79,7 +80,7 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 1. **Stripe end-to-end test** — keys added to Render; verify real deposit payment planner → vendor
 2. **End-to-end flow test** — Jess → request → instant quote → accept → BookingDetail → Pay Deposit (verify on festv.org)
 3. Mobile responsiveness pass
-4. Messaging frontend (messageController + routes live; no UI yet)
+4. Messaging frontend (messageController + routes live; Jess knows about it; no UI yet)
 5. rejectionReason field in schema
 6. New production database before real launch (no test accounts)
 7. OAuth (Google/Facebook login)
@@ -107,6 +108,9 @@ On top of base price: seasonal rules (date ranges with price overrides or multip
 - **Stripe is lazy-initialized** — `getStripe()` not `stripe`. Server starts without `STRIPE_SECRET_KEY`; endpoints throw 500 if called without it.
 - **`favoritesApi` uses `providerId` in URL** — `DELETE /favorites/:providerId` not `/:favoriteId`.
 - **`getMyFavorites` response**: parse as `d?.data?.favorites` — not `d?.data` (which is the pagination wrapper object).
+- **`User.providerProfiles` is plural** — the relation is `providerProfiles ProviderProfile[]`. Use `take: 1` in Prisma nested select and `[0]` on the frontend. Selecting `providerProfile` (singular) silently returns nothing.
+- **`POST_INCLUDE` in portfolioController is the single source of truth** — all portfolio responses share this constant. Add fields here or they will never be returned, even if correctly stored in DB.
+- **Portfolio posts are private by default** — `sharedToFeed: false` on create. Public feed only returns `sharedToFeed: true` posts.
 
 ---
 

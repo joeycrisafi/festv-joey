@@ -36,7 +36,7 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[x] stripe integration — full deposit payment flow: Stripe Connect Express for vendors (onboard + status), Stripe Checkout Sessions for planners, webhook auto-confirms bookings (DEPOSIT_PAID + notifications to both parties); lazy init so server starts without STRIPE_SECRET_KEY; schema columns added via idempotent startup migrations
 	-[ ] step by step analyzing backend (Flow diagrams and TablePlus)
 	-[x] Cloudinary image uploads — logo, banner, package-image endpoints; ImageUpload React component (full zone + compact pill mode); integrated into VendorSetup Step 1 + ProviderProfile owner overlays
-	-[ ] wire vendor portfolio uploads to Cloudinary
+	-[x] wire vendor portfolio uploads to Cloudinary — portfolio-image upload endpoint at /upload/portfolio-image; PortfolioCard + PostComposer components built
 	-[ ] connect friends/guestlist page to API
 	-[x] transactional email notifications via Resend — sendVendorApproved, sendVendorRejected, sendNewRequest, sendQuoteReceived, sendBookingConfirmed, sendDepositConfirmed; all fire-and-forget; wired into adminRoutes + 3 controllers
 	-[x] VendorPackages page (/vendor/packages) — inline edit, active toggle, confirm delete, seasonal/DOW rule management, package ImageUpload, add-ons section
@@ -52,8 +52,10 @@ Build Vendors, get to the point where we can book an event completely via etrans
 	-[ ] build menu item isAvailable toggle in vendor dashboard
 	-[ ] make menu items selectable in planner request flow
 	-[ ] mobile responsiveness pass on all pages
-	-[ ] messaging frontend — messageController built + mounted at /messages; frontend not yet built
+	-[x] Jess system prompt updated — added MESSAGING section, PORTFOLIO & INSPIRATION FEED section; removed "in-app messaging not available" (it IS live); added "inspiration boards — not built yet" to not-available list
+	-[ ] messaging frontend — messageController built + mounted at /messages; Jess knows about it; frontend not yet built
 	-[ ] new production database before real launch (no test accounts mixed with real data)
+	-[x] Portfolio & Inspiration Feed — PortfolioPost + PortfolioVendorTag schema + migration; portfolioController (getFeed, getMyPosts, getUserPosts, createPost, updatePost, deletePost, likePost, savePost, getSavedPosts, vendorReply); portfolioRoutes mounted at /portfolio; FeedPage (/feed) with masonry grid, PostComposer modal, like/save/vendor-tag/vendor-reply; private-first model (sharedToFeed toggle); PortfolioCard managementMode (shows stats text, hides like/save buttons); POST_INCLUDE shared constant for all feed query responses; providerProfiles (plural, take:1) relation fix; vendorReply+vendorRepliedAt added to POST_INCLUDE so replies persist across page loads
 	-[x] flip vendor search to VERIFIED only before launch — searchProviders now filters verificationStatus=VERIFIED + requires active Package (commit 4c36388)
 	-[x] Framer Motion animations on Landing.tsx — hero animate-on-mount, all scroll sections whileInView, luxury feel (breathing not performing)
 	-[x] FESTV favicon — dark bg (#1A1714), gold serif "F" (#C4A06A), SVG at frontend/public/favicon.svg; cache-busted with ?v=2; deployed to production
