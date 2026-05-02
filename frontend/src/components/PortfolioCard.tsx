@@ -19,7 +19,7 @@ export interface PortfolioPostData {
     lastName: string;
     avatarUrl?: string | null;
     role: string;
-    providerProfile?: { businessName: string; logoUrl?: string | null } | null;
+    providerProfiles?: { businessName: string; logoUrl?: string | null }[];
   };
   package?: { id: string; name: string } | null;
   event?: { id: string; name: string } | null;
@@ -123,7 +123,7 @@ export default function PortfolioCard({
 
   // ── Author display ─────────────────────────────────────────────────────────
   const isVendor = post.type === 'VENDOR_POST';
-  const businessName = post.author.providerProfile?.businessName;
+  const businessName = post.author.providerProfiles?.[0]?.businessName;
   const authorName = isVendor && businessName
     ? businessName
     : `${post.author.firstName} ${post.author.lastName}`;
