@@ -491,12 +491,18 @@ export default function BookingJourney() {
         {tab === 'messages' && (
           <div className="bg-white border border-border rounded-md overflow-hidden">
             <MessageThread
-              otherUserId={
-                isClient
-                  ? (request.providerProfile.user?.id ?? '')
-                  : request.client.id
-              }
+              otherUserId={isClient ? (request.providerProfile.user?.id ?? '') : request.client.id}
               requestId={request.id}
+              otherName={
+                isClient
+                  ? request.providerProfile.businessName
+                  : `${request.client.firstName} ${request.client.lastName}`
+              }
+              otherInitials={
+                isClient
+                  ? request.providerProfile.businessName.slice(0, 2).toUpperCase()
+                  : `${request.client.firstName[0]}${request.client.lastName[0]}`.toUpperCase()
+              }
             />
           </div>
         )}
