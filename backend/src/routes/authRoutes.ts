@@ -5,6 +5,10 @@ import * as authController from '../controllers/authController';
 
 const router = Router();
 
+// Google OAuth — public, no auth middleware
+router.get('/google', asyncHandler(authController.googleAuthRedirect));
+router.get('/google/callback', asyncHandler(authController.googleAuthCallback));
+
 // Public routes
 router.post('/register', asyncHandler(authController.register));
 router.post('/login', asyncHandler(authController.login));

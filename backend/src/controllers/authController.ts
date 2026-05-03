@@ -699,6 +699,131 @@ export const getDevAccessHandler = asyncHandler(
   }
 );
 
+// Google OAuth — redirect to consent screen
+export const googleAuthRedirect = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const redirectUri = 'https://www.festv.org/api/v1/auth/google/callback';
+
+  const params = new URLSearchParams({
+    client_id: clientId!,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'email profile',
+    access_type: 'offline',
+    prompt: 'select_account',
+  });
+
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+});
+
+// Google OAuth — handle callback from Google
+export const googleAuthCallback = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { code } = req.query;
+  const frontendUrl = process.env.FRONTEND_URL ?? 'https://www.festv.org';
+
+  if (!code || typeof code !== 'string') {
+    res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    return;
+  }
+
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID!;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
+    const redirectUri = 'https://www.festv.org/api/v1/auth/google/callback';
+
+    // Exchange code for tokens
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokenData = await tokenRes.json() as { access_token?: string };
+    if (!tokenData.access_token) {
+      res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      return;
+    }
+
+    // Get user info from Google
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const googleUser = await userRes.json() as {
+      email?: string;
+      given_name?: string;
+      family_name?: string;
+      name?: string;
+      picture?: string;
+    };
+
+    if (!googleUser.email) {
+      res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      return;
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: googleUser.email,
+          firstName: googleUser.given_name ?? googleUser.name ?? 'User',
+          lastName: googleUser.family_name ?? '',
+          passwordHash: '',
+          role: 'CLIENT',
+          roles: ['CLIENT'],
+          status: 'ACTIVE',
+          emailVerified: true,
+          avatarUrl: googleUser.picture ?? null,
+        },
+      });
+    } else if (!user.emailVerified) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true, status: 'ACTIVE' },
+      });
+    }
+
+    const { accessToken, refreshToken } = generateTokens({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    await prisma.refreshToken.create({
+      data: { token: refreshToken, userId: user.id, expiresAt },
+    });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const successParams = new URLSearchParams({
+      accessToken,
+      refreshToken,
+      userId: user.id,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
+
+    res.redirect(`${frontendUrl}/auth/google/success?${successParams.toString()}`);
+  } catch (err) {
+    console.error('Google OAuth error:', err);
+    res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+  }
+});
+
 // Seed test accounts (dev only). Gated by ENABLE_TEST_ACCOUNTS=true.
 // Creates/refreshes the fixed set of test users and returns their credentials
 // so the frontend TestAccountsPicker can autofill the login form.

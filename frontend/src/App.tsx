@@ -33,6 +33,7 @@ import EventDetail from './pages/EventDetail';
 import Messages from './pages/Messages';
 import FeedPage from './pages/FeedPage';
 import VerifyEmail from './pages/VerifyEmail';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 
 const EventRequestRedirect = () => {
   const { id } = useParams();
@@ -97,6 +98,7 @@ function App() {
             : <ResetPassword />
         } />
         <Route path="verify-email" element={<VerifyEmail />} />
+        <Route path="auth/google/success" element={<GoogleAuthSuccess />} />
         <Route path="feed" element={<FeedPage />} />
         <Route path="providers" element={<BrowseProviders />} />
         <Route path="providers/:id" element={<ProviderProfile />} />
