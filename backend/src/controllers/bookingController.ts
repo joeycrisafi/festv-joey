@@ -21,7 +21,8 @@ import { Response } from 'express';
 import prisma from '../config/database.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
-import { sendDepositConfirmed } from '../services/emailService.js';
+import { sendDepositConfirmed, sendBookingConfirmationWithPdf } from '../services/emailService.js';
+import { generateBookingPdf } from '../utils/generateBookingPdf.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -205,6 +206,53 @@ export const markDepositPaid = asyncHandler(async (req: AuthenticatedRequest, re
     booking.eventType,
     booking.eventDate,
   ).catch(() => {});
+
+  // Fire-and-forget PDF confirmation to both parties (full re-fetch for PDF data)
+  (async () => {
+    try {
+      const full = await prisma.booking.findUnique({
+        where: { id: booking.id },
+        include: {
+          client: true,
+          providerProfile: { include: { user: true } },
+          package: true,
+          quote: true,
+        },
+      });
+      if (!full || !full.quote) return;
+      const bookingRef = full.id.slice(0, 8).toUpperCase();
+      const pdfBuffer = await generateBookingPdf({ booking: full as any });
+      const vendorEmail = (full.providerProfile as any).user?.email;
+      await Promise.all([
+        sendBookingConfirmationWithPdf(
+          full.client.email,
+          `${full.client.firstName} ${full.client.lastName}`.trim(),
+          (full.providerProfile as any).businessName,
+          full.eventType,
+          full.eventDate,
+          full.total,
+          full.depositAmount,
+          bookingRef,
+          pdfBuffer,
+        ),
+        vendorEmail
+          ? sendBookingConfirmationWithPdf(
+              vendorEmail,
+              (full.providerProfile as any).businessName,
+              `${full.client.firstName} ${full.client.lastName}`.trim(),
+              full.eventType,
+              full.eventDate,
+              full.total,
+              full.depositAmount,
+              bookingRef,
+              pdfBuffer,
+            )
+          : Promise.resolve(),
+      ]);
+    } catch (err) {
+      console.error('[markDepositPaid] PDF confirmation email failed:', err);
+    }
+  })();
 
   res.json({ success: true, data: booking });
 });
@@ -390,7 +438,41 @@ export const getUpcomingBookings = asyncHandler(async (req: AuthenticatedRequest
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 10. getBookingStats
+// 10. downloadBookingPdf
+// GET /bookings/:id/confirmation-pdf
+// Auth: authenticate (client or vendor who owns it)
+// ─────────────────────────────────────────────────────────────────────────────
+export const downloadBookingPdf = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: req.params.id },
+    include: {
+      client: true,
+      providerProfile: { include: { user: true } },
+      package: true,
+      quote: true,
+    },
+  });
+  if (!booking) throw new NotFoundError('Booking');
+  if (!booking.quote) throw new AppError('No quote found for this booking', 400);
+
+  const userId   = req.user!.id;
+  const isClient = booking.clientId === userId;
+  const isVendor = !!(await prisma.providerProfile.findFirst({
+    where: { id: booking.providerProfileId, userId },
+  }));
+
+  if (!isClient && !isVendor) throw new ForbiddenError('You do not have access to this booking');
+
+  const pdfBuffer = await generateBookingPdf({ booking: booking as any });
+  const bookingRef = booking.id.slice(0, 8).toUpperCase();
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="FESTV-Booking-${bookingRef}.pdf"`);
+  res.send(pdfBuffer);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. getBookingStats
 // GET /bookings/stats
 // Auth: requireProvider
 // ─────────────────────────────────────────────────────────────────────────────

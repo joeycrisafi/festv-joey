@@ -29,6 +29,7 @@ import {
   approveOutOfParametersBooking,
   getUpcomingBookings,
   getBookingStats,
+  downloadBookingPdf,
 } from '../controllers/bookingController.js';
 
 const router = Router();
@@ -40,7 +41,8 @@ router.get('/upcoming',   authenticate, requireProvider, getUpcomingBookings);
 router.get('/stats',      authenticate, requireProvider, getBookingStats);
 
 // ── Single resource ───────────────────────────────────────────────────────────
-router.get('/:id',              authenticate,             getBookingById);
+router.get('/:id',                    authenticate,             getBookingById);
+router.get('/:id/confirmation-pdf',   authenticate,             downloadBookingPdf);
 router.patch('/:id/deposit-paid', authenticate, requireProvider, markDepositPaid);
 router.patch('/:id/confirm',    authenticate, requireProvider, confirmBooking);
 router.patch('/:id/complete',   authenticate, requireProvider, completeBooking);

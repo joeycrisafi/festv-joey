@@ -326,6 +326,47 @@ export async function sendBookingConfirmed(
   }
 }
 
+// ─── 5b. Booking confirmation with PDF attachment (to both parties) ──────────
+
+export async function sendBookingConfirmationWithPdf(
+  to: string,
+  recipientName: string,
+  otherPartyName: string,
+  eventType: string,
+  eventDate: Date,
+  total: number,
+  depositAmount: number,
+  bookingRef: string,
+  pdfBuffer: Buffer,
+): Promise<void> {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Booking Confirmation #FESTV-${bookingRef} — FESTV`,
+      html: wrapper(
+        greenBadge('✓ Booking Confirmed') +
+        heading(`Booking confirmed — ${otherPartyName}`) +
+        para(`Hi ${recipientName}, your booking with <strong>${otherPartyName}</strong> is confirmed. Your PDF confirmation is attached.`) +
+        infoBox([
+          ['Booking ref',  `#FESTV-${bookingRef}`],
+          ['Event',        fmtEventType(eventType)],
+          ['Event date',   fmtDate(eventDate)],
+          ['Total',        usd(total)],
+          ['Deposit paid', usd(depositAmount)],
+          ['Balance due',  usd(total - depositAmount)],
+        ]) +
+        para('Your deposit has been received and your booking is fully secured. The balance is due on the day of the event.') +
+        small('Your booking confirmation PDF is attached. Log in to your FESTV dashboard to view booking details at any time.'),
+      ),
+      attachments: [{ filename: `FESTV-Booking-${bookingRef}.pdf`, content: pdfBuffer }],
+    });
+  } catch (err) {
+    console.error('[emailService] sendBookingConfirmationWithPdf failed:', err);
+  }
+}
+
 // ─── 6. Deposit confirmed (to client, when vendor marks deposit paid) ─────────
 
 export async function sendDepositConfirmed(

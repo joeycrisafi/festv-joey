@@ -5,6 +5,8 @@ import { config } from '../config/index.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { createNotification } from './notificationController.js';
+import { generateBookingPdf } from '../utils/generateBookingPdf.js';
+import { sendBookingConfirmationWithPdf } from '../services/emailService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Vendor onboarding — Connect Express
@@ -258,6 +260,53 @@ export const handleWebhook = async (req: Request, res: Response): Promise<void> 
             { bookingId },
           );
         }
+
+        // Fire-and-forget PDF confirmation emails to both parties
+        (async () => {
+          try {
+            const full = await prisma.booking.findUnique({
+              where: { id: bookingId },
+              include: {
+                client: true,
+                providerProfile: { include: { user: true } },
+                package: true,
+                quote: true,
+              },
+            });
+            if (!full || !full.quote) return;
+            const bookingRef = full.id.slice(0, 8).toUpperCase();
+            const pdfBuffer = await generateBookingPdf({ booking: full as any });
+            const vendorEmail = (full.providerProfile as any).user?.email;
+            await Promise.all([
+              sendBookingConfirmationWithPdf(
+                full.client.email,
+                `${full.client.firstName} ${full.client.lastName}`.trim(),
+                (full.providerProfile as any).businessName,
+                full.eventType,
+                full.eventDate,
+                full.total,
+                full.depositAmount,
+                bookingRef,
+                pdfBuffer,
+              ),
+              vendorEmail
+                ? sendBookingConfirmationWithPdf(
+                    vendorEmail,
+                    (full.providerProfile as any).businessName,
+                    `${full.client.firstName} ${full.client.lastName}`.trim(),
+                    full.eventType,
+                    full.eventDate,
+                    full.total,
+                    full.depositAmount,
+                    bookingRef,
+                    pdfBuffer,
+                  )
+                : Promise.resolve(),
+            ]);
+          } catch (err) {
+            console.error('[stripeWebhook] PDF confirmation email failed:', err);
+          }
+        })();
 
         console.log(`✅ Deposit paid for booking ${bookingId}`);
         break;
