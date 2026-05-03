@@ -123,7 +123,7 @@ export default function Layout() {
 
                   {user?.role === 'CLIENT' && (
                     <Link
-                      to="/create-request"
+                      to="/providers"
                       className="flex items-center gap-1.5 text-xs font-sans font-medium uppercase tracking-widest text-charcoal hover:text-gold transition-colors duration-200"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
@@ -471,7 +471,7 @@ export default function Layout() {
                     {user?.role === 'CLIENT' && (
                       <>
                         <Link
-                          to="/create-request"
+                          to="/providers"
                           className="px-4 py-3 rounded-lg text-sm font-sans text-charcoal hover:text-gold hover:bg-gold/5 transition-colors flex items-center gap-2"
                           onClick={() => setMobileMenuOpen(false)}
                         >
