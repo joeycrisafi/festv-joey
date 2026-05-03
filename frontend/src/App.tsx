@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 
@@ -14,7 +14,6 @@ import ClientDashboard from './pages/ClientDashboard';
 import ProviderDashboard from './pages/ProviderDashboard';
 import BrowseProviders from './pages/BrowseProviders';
 import ProviderProfile from './pages/ProviderProfile';
-import EventRequestDetail from './pages/EventRequestDetail';
 import BookingDetail from './pages/BookingDetail';
 import EventRequestsList from './pages/EventRequestsList';
 import BookingsList from './pages/BookingsList';
@@ -28,12 +27,16 @@ import Planner from './pages/Planner';
 import EventDashboard from './pages/EventDashboard';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AccountVerify from './pages/AccountVerify';
-import QuoteDetail from './pages/QuoteDetail';
 import BookingJourney from './pages/BookingJourney';
 import CreateEvent from './pages/CreateEvent';
 import EventDetail from './pages/EventDetail';
 import Messages from './pages/Messages';
 import FeedPage from './pages/FeedPage';
+
+const EventRequestRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/requests/${id}`} replace />;
+};
 
 function ProtectedRoute({ children, allowedRoles }: { 
   children: React.ReactNode; 
@@ -108,8 +111,8 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="event-requests/:id" element={
-          <ProtectedRoute allowedRoles={['CLIENT']}>
-            <EventRequestDetail />
+          <ProtectedRoute>
+            <EventRequestRedirect />
           </ProtectedRoute>
         } />
         <Route path="bookings" element={
@@ -134,7 +137,7 @@ function App() {
         } />
         <Route path="quotes/:id" element={
           <ProtectedRoute>
-            <QuoteDetail />
+            <Navigate to="/dashboard" replace />
           </ProtectedRoute>
         } />
         <Route path="requests/:id" element={
