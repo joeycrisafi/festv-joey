@@ -341,11 +341,11 @@ export default function Register() {
                   />
                   <span className="font-sans text-sm text-muted">
                     I agree to the{' '}
-                    <Link to="/terms" className="text-gold hover:text-gold-dark transition-colors">
+                    <Link to="/legal/terms" className="text-gold hover:text-gold-dark transition-colors">
                       Terms of Service
                     </Link>
                     {' '}and{' '}
-                    <Link to="/privacy" className="text-gold hover:text-gold-dark transition-colors">
+                    <Link to="/legal/privacy" className="text-gold hover:text-gold-dark transition-colors">
                       Privacy Policy
                     </Link>
                   </span>
@@ -366,6 +366,13 @@ export default function Register() {
                     'Create Account'
                   )}
                 </button>
+
+                <p className="text-[11px] text-[#7A7068] text-center mt-3">
+                  By creating an account you agree to our{' '}
+                  <a href="/legal/terms" target="_blank" className="text-[#C4A06A] hover:underline">Terms of Service</a>
+                  {' '}and{' '}
+                  <a href="/legal/privacy" target="_blank" className="text-[#C4A06A] hover:underline">Privacy Policy</a>.
+                </p>
               </form>
 
               {/* Divider */}

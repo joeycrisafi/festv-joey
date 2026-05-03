@@ -34,6 +34,7 @@ import Messages from './pages/Messages';
 import FeedPage from './pages/FeedPage';
 import VerifyEmail from './pages/VerifyEmail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import Legal from './pages/Legal';
 
 const EventRequestRedirect = () => {
   const { id } = useParams();
@@ -99,6 +100,8 @@ function App() {
         } />
         <Route path="verify-email" element={<VerifyEmail />} />
         <Route path="auth/google/success" element={<GoogleAuthSuccess />} />
+        <Route path="legal/:doc" element={<Legal />} />
+        <Route path="legal" element={<Navigate to="/legal/terms" replace />} />
         <Route path="feed" element={<FeedPage />} />
         <Route path="providers" element={<BrowseProviders />} />
         <Route path="providers/:id" element={<ProviderProfile />} />

@@ -725,9 +725,15 @@ export default function Layout() {
             )}
           </div>
 
-          <div className="mt-12 pt-8 text-center text-sm font-sans text-muted"
+          <div className="mt-12 pt-8 text-sm font-sans text-muted flex flex-col sm:flex-row items-center justify-between gap-4"
             style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             <p>© 2026 FESTV. All rights reserved.</p>
+            <div className="flex gap-6 flex-wrap justify-center">
+              <Link to="/legal/terms" className="text-[10px] uppercase tracking-widest text-[#7A7068] hover:text-[#C4A06A] transition-colors">Terms</Link>
+              <Link to="/legal/privacy" className="text-[10px] uppercase tracking-widest text-[#7A7068] hover:text-[#C4A06A] transition-colors">Privacy</Link>
+              <Link to="/legal/vendor-agreement" className="text-[10px] uppercase tracking-widest text-[#7A7068] hover:text-[#C4A06A] transition-colors">Vendor Agreement</Link>
+              <Link to="/legal/cancellation" className="text-[10px] uppercase tracking-widest text-[#7A7068] hover:text-[#C4A06A] transition-colors">Cancellation Policy</Link>
+            </div>
           </div>
         </div>
       </footer>
