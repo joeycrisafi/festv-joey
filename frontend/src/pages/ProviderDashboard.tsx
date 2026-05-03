@@ -23,14 +23,6 @@ function fmtDate(iso: string) {
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function dayMonth(iso: string): { day: string; month: string } {
-  const d = new Date(iso.split('T')[0] + 'T00:00:00');
-  return {
-    day:   d.toLocaleDateString('en-CA', { day: 'numeric' }),
-    month: d.toLocaleDateString('en-CA', { month: 'short' }).toUpperCase(),
-  };
-}
-
 function daysUntil(iso: string): number {
   const diff = new Date(iso).getTime() - Date.now();
   return Math.max(0, Math.round(diff / 86400000));
@@ -97,29 +89,35 @@ interface PendingQuote {
   total: number;
   expiresAt?: string | null;
   eventRequest?: {
+    id?: string | null;
     eventType?: string | null;
     client?: { firstName: string; lastName: string } | null;
   } | null;
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
+type DashboardItem =
+  | { kind: 'request'; data: EventRequest }
+  | { kind: 'booking'; data: Booking };
 
-const STATUS_BADGE: Record<string, string> = {
-  PENDING_DEPOSIT: 'bg-amber-50 text-amber-700 border border-amber-200',
-  DEPOSIT_PAID:    'bg-blue-50  text-blue-700  border border-blue-200',
-  CONFIRMED:       'bg-green/10 text-green     border border-green/30',
-  IN_PROGRESS:     'bg-gold/10  text-gold-dark border border-gold/30',
-  COMPLETED:       'bg-bg       text-muted     border border-border',
-  CANCELLED:       'bg-red/10   text-red       border border-red/30',
+// ── Status helpers ─────────────────────────────────────────────────────────────
+
+const bookingStatusLabel = (status: string): string => {
+  const map: Record<string, string> = {
+    PENDING_DEPOSIT: 'Awaiting Deposit',
+    DEPOSIT_PAID:    'Deposit Paid',
+    CONFIRMED:       'Confirmed',
+    IN_PROGRESS:     'In Progress',
+    COMPLETED:       'Completed',
+    CANCELLED:       'Cancelled',
+  };
+  return map[status] ?? status;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING_DEPOSIT: 'Deposit Pending',
-  DEPOSIT_PAID:    'Deposit Paid',
-  CONFIRMED:       'Confirmed',
-  IN_PROGRESS:     'In Progress',
-  COMPLETED:       'Completed',
-  CANCELLED:       'Cancelled',
+const bookingStatusStyle = (status: string): string => {
+  if (status === 'CONFIRMED' || status === 'DEPOSIT_PAID') return 'bg-[#E6F1FB] border-[rgba(24,95,165,0.2)] text-[#185FA5]';
+  if (status === 'PENDING_DEPOSIT') return 'bg-[#FBF7F0] border-[rgba(196,160,106,0.4)] text-[#9A7A4A]';
+  if (status === 'COMPLETED') return 'bg-[#F5F3EF] border-border text-[#7A7068]';
+  return 'bg-[#F5F3EF] border-border text-[#7A7068]';
 };
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -162,18 +160,17 @@ export default function ProviderDashboard() {
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.allSettled([
-      fetch(`${API_BASE}/providers/profile/me`,               { headers }).then(r => r.json()),
-      fetch(`${API_BASE}/event-requests/incoming?limit=5`,     { headers }).then(r => r.json()),
-      fetch(`${API_BASE}/bookings/upcoming`,                   { headers }).then(r => r.json()),
-      fetch(`${API_BASE}/bookings/stats`,                      { headers }).then(r => r.json()),
-      fetch(`${API_BASE}/quotes/me/vendor?status=SENT&limit=5`,{ headers }).then(r => r.json()),
+      fetch(`${API_BASE}/providers/profile/me`,                { headers }).then(r => r.json()),
+      fetch(`${API_BASE}/event-requests/incoming?limit=5`,      { headers }).then(r => r.json()),
+      fetch(`${API_BASE}/bookings/upcoming`,                    { headers }).then(r => r.json()),
+      fetch(`${API_BASE}/bookings/stats`,                       { headers }).then(r => r.json()),
+      fetch(`${API_BASE}/quotes/me/vendor?status=SENT&limit=5`, { headers }).then(r => r.json()),
     ]).then(([profileRes, reqRes, bookRes, statsRes, quotesRes]) => {
       // Profile
       if (profileRes.status === 'fulfilled' && profileRes.value?.success) {
         const p = profileRes.value.data?.providerProfile ?? profileRes.value.data;
         if (p) {
           setProfile(p);
-          // Fetch Stripe status after profile is known
           fetch(`${API_BASE}/stripe/connect/status?profileId=${p.id}`, { headers })
             .then(r => r.json())
             .then(d => {
@@ -183,25 +180,19 @@ export default function ProviderDashboard() {
             })
             .catch(() => {});
         } else {
-          // New vendor — no profile created yet. Send to the setup wizard.
           navigate('/vendor/setup', { replace: true });
           return;
         }
       }
-      // If the profile fetch returned non-success (e.g. 403 from PENDING_VERIFICATION),
-      // render the dashboard in empty state rather than navigating away — the user IS authenticated.
 
-      // Requests
       if (reqRes.status === 'fulfilled' && reqRes.value?.success) {
         setRequests(reqRes.value.data ?? []);
       }
 
-      // Bookings
       if (bookRes.status === 'fulfilled' && bookRes.value?.success) {
         setBookings(bookRes.value.data ?? []);
       }
 
-      // Stats
       if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
         const s = statsRes.value.data;
         if (s) setStats({
@@ -212,7 +203,6 @@ export default function ProviderDashboard() {
         });
       }
 
-      // Pending quotes
       if (quotesRes.status === 'fulfilled' && quotesRes.value?.success) {
         setQuotes(quotesRes.value.data ?? []);
       }
@@ -269,6 +259,7 @@ export default function ProviderDashboard() {
   };
 
   const handleApproveQuote = async (quoteId: string) => {
+    if (!quoteId) return;
     setApprovingId(quoteId);
     try {
       await apiFetch(`/quotes/${quoteId}/vendor-approve`, { method: 'POST', token: token ?? undefined });
@@ -330,6 +321,15 @@ export default function ProviderDashboard() {
 
   const isVerified = profile.verificationStatus === 'VERIFIED';
   const profileId  = profile.id;
+
+  const allItems: DashboardItem[] = [
+    ...requests.map(r => ({ kind: 'request' as const, data: r })),
+    ...bookings.map(b => ({ kind: 'booking' as const, data: b })),
+  ].sort((a, b) => {
+    const dateA = new Date(a.data.eventDate ?? 0).getTime();
+    const dateB = new Date(b.data.eventDate ?? 0).getTime();
+    return dateA - dateB;
+  });
 
   return (
     <div className="bg-bg min-h-screen">
@@ -509,15 +509,18 @@ export default function ProviderDashboard() {
           {/* ── LEFT COLUMN (col-span-2) ───────────────────────────────────── */}
           <div className="md:col-span-2">
 
-            {/* ── SECTION 1: INCOMING REQUESTS ─────────────────────────────── */}
-            <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mb-4">
-              Incoming Requests
-            </p>
+            {/* ── REQUESTS & BOOKINGS ──────────────────────────────────────── */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[10px] uppercase tracking-widest text-[#7A7068]">Requests & Bookings</h2>
+              {requests.length > 0 && (
+                <span className="text-[10px] text-[#C4A06A]">{requests.length} pending approval</span>
+              )}
+            </div>
 
-            {requests.length === 0 ? (
+            {allItems.length === 0 ? (
               <div className="bg-white border border-border rounded-md p-8 text-center mb-4">
                 <Inbox size={32} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
-                <p className="font-serif text-lg text-muted">No new requests yet</p>
+                <p className="font-serif text-lg text-muted">No requests yet</p>
                 <p className="font-sans text-xs text-muted mt-2">
                   Share your profile to start receiving bookings
                 </p>
@@ -532,231 +535,152 @@ export default function ProviderDashboard() {
               </div>
             ) : (
               <>
-                {requests.map((req, reqIdx) => {
-                  const clientName = req.client
-                    ? `${req.client.firstName} ${req.client.lastName}`
-                    : 'Anonymous';
-                  const estimated = req.budget
-                    ? fmt(req.budget)
-                    : req.guestCount
-                      ? `~${fmt(req.guestCount * 100)}` // rough estimate placeholder
-                      : null;
+                {allItems.map((item, idx) => {
+                  if (item.kind === 'request') {
+                    const req = item.data;
+                    const pendingQuote = req.quotes?.find(q => q.status === 'PENDING_VENDOR_APPROVAL');
+                    const clientName = req.client
+                      ? `${req.client.firstName} ${req.client.lastName}`
+                      : 'Anonymous';
+
+                    return (
+                      <motion.div
+                        key={`req-${req.id}`}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: Math.min(idx, 4) * 0.07, duration: 0.4 }}
+                      >
+                        <div className="bg-white border border-border rounded-md p-4 mb-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="font-serif text-[16px] text-[#1A1714]">{clientName}</p>
+                              <p className="text-[11px] text-[#7A7068] mt-0.5">
+                                {req.package?.name && `${req.package.name} · `}
+                                {req.eventDate ? fmtDate(req.eventDate) : '—'}
+                                {req.guestCount != null && ` · ${req.guestCount} guests`}
+                              </p>
+                            </div>
+                            <span className="text-[9px] uppercase tracking-widest px-2 py-1 rounded-sm border bg-[#FBF7F0] border-[rgba(196,160,106,0.4)] text-[#9A7A4A]">
+                              Pending Approval
+                            </span>
+                          </div>
+
+                          {pendingQuote && (
+                            <div className="flex gap-2 mt-3">
+                              <motion.button
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => handleApproveQuote(pendingQuote.id)}
+                                disabled={approvingId === pendingQuote.id}
+                                className="flex-1 bg-[#1A1714] text-[#F5F3EF] text-[10px] uppercase tracking-widest py-2 rounded-sm hover:bg-[#3A3530] transition-colors disabled:opacity-50"
+                              >
+                                {approvingId === pendingQuote.id ? 'Accepting…' : 'Accept'}
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => { setDecliningRequestId(req.id); setDeclineReason(''); }}
+                                disabled={approvingId === pendingQuote.id}
+                                className="flex-1 border border-border text-[10px] uppercase tracking-widest py-2 rounded-sm text-[#7A7068] hover:border-[#C4A06A] transition-colors disabled:opacity-50"
+                              >
+                                Decline
+                              </motion.button>
+                            </div>
+                          )}
+
+                          <AnimatePresence>
+                            {decliningRequestId === req.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="mt-3 overflow-hidden"
+                              >
+                                <textarea
+                                  value={declineReason}
+                                  onChange={e => setDeclineReason(e.target.value)}
+                                  placeholder="Let the planner know why you're declining (optional)"
+                                  maxLength={500}
+                                  rows={2}
+                                  className="w-full bg-[#F5F3EF] border border-border rounded-md px-3 py-2 text-[13px] font-sans focus:border-[#C4A06A] outline-none resize-none"
+                                />
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => handleDeclineRequest(req.id)}
+                                    className="text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-sm text-[#F5F3EF]"
+                                    style={{ background: '#B84040' }}
+                                  >
+                                    Confirm Decline
+                                  </button>
+                                  <button
+                                    onClick={() => { setDecliningRequestId(null); setDeclineReason(''); }}
+                                    className="text-[10px] uppercase tracking-widest text-[#7A7068] px-4 py-1.5"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          <Link
+                            to={`/requests/${req.id}`}
+                            className="text-[10px] uppercase tracking-widest text-[#7A7068] mt-2 block hover:text-[#3A3530]"
+                          >
+                            View Details →
+                          </Link>
+                        </div>
+                      </motion.div>
+                    );
+                  }
+
+                  // kind === 'booking'
+                  const bk = item.data;
+                  const clientName = bk.client
+                    ? `${bk.client.firstName} ${bk.client.lastName}`
+                    : bk.quote?.client
+                      ? `${bk.quote.client.firstName} ${bk.quote.client.lastName}`
+                      : 'Client';
 
                   return (
                     <motion.div
-                      key={req.id}
+                      key={`bk-${bk.id}`}
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(reqIdx, 4) * 0.07, duration: 0.4 }}
-                      className="bg-white border border-border rounded-md p-5 mb-3 hover:border-gold transition-colors duration-150"
+                      transition={{ delay: Math.min(idx, 4) * 0.07, duration: 0.4 }}
                     >
-                      {/* Top meta row */}
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="font-sans text-xs uppercase bg-gold/10 text-gold-dark px-2 py-0.5 rounded-full">
-                          {req.eventType?.replace(/_/g, ' ') ?? 'Event'}
-                        </span>
-                        {req.eventDate && (
-                          <span className="font-sans text-xs text-muted">
-                            {fmtDate(req.eventDate)}
-                          </span>
-                        )}
-                        {req.isOutOfParameters && (
-                          <span className="font-sans text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-                            Custom request
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Client */}
-                      <p className="font-sans text-sm font-semibold text-dark">{clientName}</p>
-
-                      {/* Package */}
-                      {req.package?.name && (
-                        <p className="font-sans text-xs text-muted mt-0.5">
-                          Package: {req.package.name}
-                        </p>
-                      )}
-
-                      {/* Guests + estimated value */}
-                      {(req.guestCount != null || estimated) && (
-                        <p className="font-serif text-lg text-dark mt-1">
-                          {req.guestCount != null && <span>{req.guestCount} guests</span>}
-                          {req.guestCount != null && estimated && <span className="text-muted font-sans text-sm"> · </span>}
-                          {estimated && <span>Est. {estimated}</span>}
-                        </p>
-                      )}
-
-                      {/* Special requests preview */}
-                      {req.specialRequests && (
-                        <p className="font-sans text-xs text-muted italic mt-1 truncate">
-                          "{req.specialRequests}"
-                        </p>
-                      )}
-
-                      {/* Actions */}
-                      {(() => {
-                        const pendingQuote = req.quotes?.find(q => q.status === 'PENDING_VENDOR_APPROVAL');
-                        if (pendingQuote) {
-                          return (
-                            <div className="mt-4">
-                              <div className="flex gap-2">
-                                <motion.button
-                                  whileTap={{ scale: 0.97 }}
-                                  onClick={() => handleApproveQuote(pendingQuote.id)}
-                                  disabled={approvingId === pendingQuote.id}
-                                  className="flex-1 bg-[#1A1714] text-[#F5F3EF] text-[10px] uppercase tracking-widest py-2.5 rounded-sm hover:bg-[#3A3530] transition-colors disabled:opacity-50"
-                                >
-                                  {approvingId === pendingQuote.id ? 'Accepting…' : 'Accept Request'}
-                                </motion.button>
-                                <motion.button
-                                  whileTap={{ scale: 0.97 }}
-                                  onClick={() => { setDecliningRequestId(req.id); setDeclineReason(''); }}
-                                  disabled={approvingId === pendingQuote.id}
-                                  className="flex-1 border border-border text-[10px] uppercase tracking-widest py-2.5 rounded-sm text-[#7A7068] hover:border-[#C4A06A] hover:text-[#C4A06A] transition-colors disabled:opacity-50"
-                                >
-                                  Decline
-                                </motion.button>
-                              </div>
-                              <AnimatePresence>
-                                {decliningRequestId === req.id && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="mt-3 overflow-hidden"
-                                  >
-                                    <textarea
-                                      value={declineReason}
-                                      onChange={e => setDeclineReason(e.target.value)}
-                                      placeholder="Let the planner know why you're declining (optional)"
-                                      maxLength={500}
-                                      rows={2}
-                                      className="w-full bg-[#F5F3EF] border border-border rounded-md px-3 py-2 text-[13px] font-sans focus:border-[#C4A06A] outline-none resize-none"
-                                    />
-                                    <div className="flex gap-2 mt-2">
-                                      <button
-                                        onClick={() => handleDeclineRequest(req.id)}
-                                        className="text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-sm text-[#F5F3EF]"
-                                        style={{ background: '#B84040' }}
-                                      >
-                                        Confirm Decline
-                                      </button>
-                                      <button
-                                        onClick={() => { setDecliningRequestId(null); setDeclineReason(''); }}
-                                        className="text-[10px] uppercase tracking-widest text-[#7A7068] px-4 py-1.5"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div className="flex items-center gap-3 mt-4">
-                            <Link
-                              to={`/requests/${req.id}`}
-                              className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-5 py-2 hover:bg-gold-dark transition-colors focus:outline-none rounded-md"
-                            >
-                              {req.isOutOfParameters ? 'Create Custom Quote' : 'View Request'}
-                            </Link>
+                      <div className="bg-white border border-border rounded-md p-4 mb-3">
+                        <div className="flex items-start justify-between mb-1">
+                          <div>
+                            <p className="font-serif text-[16px] text-[#1A1714]">{clientName}</p>
+                            <p className="text-[11px] text-[#7A7068] mt-0.5">
+                              {bk.package?.name && `${bk.package.name} · `}
+                              {bk.eventDate ? fmtDate(bk.eventDate) : '—'}
+                              {bk.guestCount != null && ` · ${bk.guestCount} guests`}
+                            </p>
                           </div>
-                        );
-                      })()}
+                          <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded-sm border ${bookingStatusStyle(bk.status)}`}>
+                            {bookingStatusLabel(bk.status)}
+                          </span>
+                        </div>
+                        <p className="font-serif text-[15px] text-[#1A1714] mt-1">
+                          {fmt(bk.totalAmount)}
+                        </p>
+                        <Link
+                          to={`/requests/${bk.id}`}
+                          className="text-[10px] uppercase tracking-widest text-[#7A7068] mt-2 block hover:text-[#3A3530]"
+                        >
+                          View →
+                        </Link>
+                      </div>
                     </motion.div>
                   );
                 })}
+
                 <Link
                   to="/event-requests"
                   className="flex items-center gap-1 font-sans text-xs text-gold hover:text-gold-dark transition-colors mt-1 mb-2"
                 >
                   View all requests <ChevronRight size={12} />
-                </Link>
-              </>
-            )}
-
-            {/* ── SECTION 2: UPCOMING BOOKINGS ─────────────────────────────── */}
-            <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mt-10 mb-4">
-              Upcoming Bookings
-            </p>
-
-            {bookings.length === 0 ? (
-              <div className="bg-white border border-border rounded-md p-8 text-center">
-                <Calendar size={32} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
-                <p className="font-serif text-lg text-muted">No upcoming bookings</p>
-                <p className="font-sans text-xs text-muted mt-2">
-                  Confirmed bookings will appear here
-                </p>
-              </div>
-            ) : (
-              <>
-                {bookings.map((booking, bkIdx) => {
-                  const dm = booking.eventDate ? dayMonth(booking.eventDate) : null;
-                  const clientName = booking.client
-                    ? `${booking.client.firstName} ${booking.client.lastName}`
-                    : booking.quote?.client
-                      ? `${booking.quote.client.firstName} ${booking.quote.client.lastName}`
-                      : 'Client';
-                  return (
-                    <motion.div
-                      key={booking.id}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(bkIdx, 4) * 0.07, duration: 0.4 }}
-                    >
-                    <Link
-                      to={`/bookings/${booking.id}`}
-                      className="bg-white border border-border rounded-md p-5 mb-3 flex items-start gap-4 hover:border-gold transition-colors duration-150 block"
-                    >
-                      {/* Date block */}
-                      {dm ? (
-                        <div className="bg-gold/10 rounded-md p-3 text-center w-14 flex-shrink-0">
-                          <p className="font-serif text-2xl text-gold-dark font-semibold leading-none">
-                            {dm.day}
-                          </p>
-                          <p className="font-sans text-xs text-muted uppercase mt-1">{dm.month}</p>
-                        </div>
-                      ) : (
-                        <div className="bg-border rounded-md p-3 text-center w-14 flex-shrink-0">
-                          <Calendar size={20} strokeWidth={1.5} className="text-muted mx-auto" />
-                        </div>
-                      )}
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-sans text-sm font-semibold text-dark">
-                          {booking.eventType?.replace(/_/g, ' ') ?? 'Event'}
-                          {booking.package?.name && (
-                            <span className="font-normal text-muted"> · {booking.package.name}</span>
-                          )}
-                        </p>
-                        <p className="font-sans text-xs text-muted mt-0.5">
-                          {clientName}
-                          {booking.guestCount != null && ` · ${booking.guestCount} guests`}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className={`font-sans text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[booking.status] ?? 'bg-bg text-muted border border-border'}`}>
-                            {STATUS_LABEL[booking.status] ?? booking.status}
-                          </span>
-                          <span className="font-serif text-base text-dark">
-                            {fmt(booking.totalAmount)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <ChevronRight size={16} className="text-muted flex-shrink-0 mt-1" />
-                    </Link>
-                    </motion.div>
-                  );
-                })}
-                <Link
-                  to="/provider/bookings"
-                  className="flex items-center gap-1 font-sans text-xs text-gold hover:text-gold-dark transition-colors mt-1"
-                >
-                  View all bookings <ChevronRight size={12} />
                 </Link>
               </>
             )}
@@ -805,7 +729,7 @@ export default function ProviderDashboard() {
               )}
             </div>
 
-            {/* ── PENDING QUOTES ───────────────────────────────────────────── */}
+            {/* ── AWAITING RESPONSE (quotes sidebar) ───────────────────────── */}
             <div className="bg-white border border-border rounded-md p-6 mb-6">
               <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mb-4">
                 Awaiting Response
@@ -821,6 +745,7 @@ export default function ProviderDashboard() {
                       : 'Client';
                     const eventType = q.eventRequest?.eventType?.replace(/_/g, ' ') ?? 'Event';
                     const daysLeft  = q.expiresAt ? daysUntil(q.expiresAt) : null;
+                    const requestId = q.eventRequest?.id;
 
                     return (
                       <div
@@ -834,12 +759,16 @@ export default function ProviderDashboard() {
                             </p>
                             <p className="font-sans text-xs text-muted mt-0.5">{eventType}</p>
                           </div>
-                          <Link
-                            to={`/bookings/${q.id}`}
-                            className="font-sans text-xs text-gold hover:text-gold-dark transition-colors flex-shrink-0"
-                          >
-                            View
-                          </Link>
+                          {requestId ? (
+                            <Link
+                              to={`/requests/${requestId}`}
+                              className="font-sans text-xs text-gold hover:text-gold-dark transition-colors flex-shrink-0"
+                            >
+                              View
+                            </Link>
+                          ) : (
+                            <span className="font-sans text-xs text-muted flex-shrink-0">—</span>
+                          )}
                         </div>
                         <p className="font-serif text-lg text-gold-dark mt-1">{fmt(q.total)}</p>
                         {daysLeft !== null && (
@@ -863,11 +792,11 @@ export default function ProviderDashboard() {
               </p>
               <div className="space-y-0">
                 {[
-                  { Icon: Package,  label: 'Manage Packages',     to: '/vendor/packages'             },
-                  { Icon: Calendar, label: 'Update Availability',  to: '/vendor/availability'         },
-                  { Icon: User,     label: 'Edit Profile',         to: '/vendor/setup'                },
-                  { Icon: Eye,      label: 'Preview My Profile',   to: profileId ? `/providers/${profileId}` : '#' },
-                  { Icon: Star,     label: 'View Reviews',         to: profileId ? `/providers/${profileId}#reviews` : '#' },
+                  { Icon: Package,  label: 'Manage Packages',    to: '/vendor/packages'                                   },
+                  { Icon: Calendar, label: 'Update Availability', to: '/vendor/availability'                               },
+                  { Icon: User,     label: 'Edit Profile',        to: '/vendor/setup'                                      },
+                  { Icon: Eye,      label: 'Preview My Profile',  to: profileId ? `/providers/${profileId}` : '#'          },
+                  { Icon: Star,     label: 'View Reviews',        to: profileId ? `/providers/${profileId}#reviews` : '#'  },
                 ].map(({ Icon, label, to }) => (
                   <Link
                     key={label}

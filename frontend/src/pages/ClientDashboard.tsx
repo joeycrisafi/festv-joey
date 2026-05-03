@@ -1,27 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
 import PostComposer from '../components/PostComposer';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   Search,
-  Calendar,
-  BookOpen,
-  CheckCircle,
-  Inbox,
   Heart,
   ChevronRight,
   CalendarPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { eventRequestsApi, quotesApi, bookingsApi, apiFetch, eventsApi, favoritesApi } from '../utils/api';
-import { ProviderTypeBadge } from '../components/ProviderTypeBadge';
+import { eventRequestsApi, bookingsApi, apiFetch, eventsApi, favoritesApi } from '../utils/api';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 
 function greeting() {
   const h = new Date().getHours();
@@ -58,20 +50,6 @@ interface EventRequestItem {
   quotes?: { id: string; status: string }[];
 }
 
-interface QuoteItem {
-  id: string;
-  eventType: string;
-  eventDate: string;
-  guestCount: number;
-  total: number;
-  depositAmount: number;
-  expiresAt?: string;
-  status: string;
-  providerProfile?: ProviderInfo;
-  package?: PackageInfo;
-  booking?: { id: string };
-}
-
 interface BookingItem {
   id: string;
   eventType: string;
@@ -100,26 +78,6 @@ interface EventItem {
   requests: { status: string }[];
 }
 
-// ─── Status badge configs ─────────────────────────────────────────────────────
-
-const REQUEST_STATUS: Record<string, { label: string; cls: string }> = {
-  PENDING:    { label: 'Pending',     cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
-  QUOTE_SENT: { label: 'Quote Sent',  cls: 'bg-green/10 text-green border border-green/30' },
-  ACCEPTED:   { label: 'Accepted',    cls: 'bg-charcoal/10 text-charcoal border border-charcoal/20' },
-  DECLINED:   { label: 'Declined',    cls: 'bg-red/10 text-red border border-red/30' },
-  EXPIRED:    { label: 'Expired',     cls: 'bg-muted/10 text-muted border border-muted/20' },
-};
-
-const BOOKING_STATUS: Record<string, { label: string; cls: string }> = {
-  PENDING_DEPOSIT: { label: 'Deposit Pending', cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
-  DEPOSIT_PAID:    { label: 'Deposit Paid',    cls: 'bg-charcoal/10 text-charcoal border border-charcoal/20' },
-  CONFIRMED:       { label: 'Confirmed',       cls: 'bg-green/10 text-green border border-green/30' },
-  IN_PROGRESS:     { label: 'In Progress',     cls: 'bg-green/10 text-green border border-green/30' },
-  COMPLETED:       { label: 'Completed',       cls: 'bg-charcoal/10 text-charcoal border border-charcoal/20' },
-  CANCELLED:       { label: 'Cancelled',       cls: 'bg-red/10 text-red border border-red/30' },
-  PENDING_REVIEW:  { label: 'Pending Review',  cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
-};
-
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
@@ -141,7 +99,6 @@ function SkeletonCard() {
 
 export default function ClientDashboard() {
   const { user, token } = useAuth();
-  const navigate = useNavigate();
 
   const [dashTab, setDashTab] = useState<'overview' | 'saved' | 'portfolio'>('overview');
   const [savedPosts, setSavedPosts] = useState<PortfolioPostData[]>([]);
@@ -154,26 +111,20 @@ export default function ClientDashboard() {
 
   const [events, setEvents]     = useState<EventItem[]>([]);
   const [requests, setRequests] = useState<EventRequestItem[]>([]);
-  const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [acceptingIds, setAcceptingIds] = useState<Set<string>>(new Set());
-  const [decliningIds, setDecliningIds] = useState<Set<string>>(new Set());
 
-  const quotesRef = useRef<HTMLDivElement>(null);
-  const requestsRef = useRef<HTMLDivElement>(null);
-  const bookingsRef = useRef<HTMLDivElement>(null);
+  const [requestFilter, setRequestFilter] = useState<'All' | 'Action Required' | 'Confirmed'>('All');
 
   useEffect(() => {
     if (!token) return;
 
     const load = async () => {
-      const [evtRes, reqRes, bkRes, qtRes, favRes] = await Promise.allSettled([
+      const [evtRes, reqRes, bkRes, favRes] = await Promise.allSettled([
         eventsApi.getMyEvents(token),
         eventRequestsApi.getMyRequestsAsClient(token),
         bookingsApi.getMyBookingsAsClient(token),
-        quotesApi.getMyQuotesAsClient(token),
         apiFetch('/favorites', { token }),
       ]);
 
@@ -193,17 +144,6 @@ export default function ClientDashboard() {
         const d = bkRes.value as any;
         const arr = d?.data ?? d?.bookings ?? [];
         setBookings(Array.isArray(arr) ? arr : []);
-      }
-
-      if (qtRes.status === 'fulfilled') {
-        const d = qtRes.value as any;
-        const arr: QuoteItem[] = d?.data ?? d?.quotes ?? [];
-        // Only show quotes awaiting response
-        setQuotes(
-          (Array.isArray(arr) ? arr : []).filter(
-            (q) => q.status === 'SENT' || q.status === 'PENDING'
-          )
-        );
       }
 
       if (favRes.status === 'fulfilled') {
@@ -263,52 +203,102 @@ export default function ClientDashboard() {
     if (tab === 'portfolio') fetchPortfolioPosts();
   };
 
-  // ── Accept quote ────────────────────────────────────────────────────────────
-  const handleAccept = async (quoteId: string) => {
-    if (!token) return;
-    setAcceptingIds((s) => new Set(s).add(quoteId));
-    try {
-      const res = await quotesApi.accept(quoteId, token);
-      const data = res as any;
-      const bookingId = data?.data?.id ?? data?.booking?.id ?? data?.id;
-      setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
-      if (bookingId) navigate(`/bookings/${bookingId}`);
-    } catch {
-      // silently fail — quote stays in list
-    } finally {
-      setAcceptingIds((s) => {
-        const next = new Set(s);
-        next.delete(quoteId);
-        return next;
-      });
+  // ── Request status helpers ───────────────────────────────────────────────────
+
+  const statusLabel = (req: EventRequestItem): string => {
+    if (req.status === 'DECLINED') return 'Declined';
+    if (req.status === 'EXPIRED') return 'Expired';
+    const quote = req.quotes?.[0];
+    if (!quote) return 'Pending';
+    if (quote.status === 'PENDING_VENDOR_APPROVAL') return 'Awaiting Vendor';
+    if (quote.status === 'SENT' || quote.status === 'VIEWED') return 'Quote Ready';
+    if (quote.status === 'ACCEPTED') {
+      const booking = bookings.find(
+        b =>
+          b.providerProfile?.id === req.providerProfile?.id &&
+          new Date(b.eventDate).toDateString() === new Date(req.eventDate).toDateString(),
+      );
+      if (!booking) return 'Confirmed';
+      if (booking.status === 'PENDING_DEPOSIT') return 'Deposit Due';
+      if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') return 'Confirmed';
+      return 'Confirmed';
     }
+    if (quote.status === 'REJECTED') return 'Declined';
+    return 'Pending';
   };
 
-  // ── Decline quote ───────────────────────────────────────────────────────────
-  const handleDecline = async (quoteId: string) => {
-    if (!token) return;
-    setDecliningIds((s) => new Set(s).add(quoteId));
-    try {
-      await quotesApi.reject(quoteId, token);
-      setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
-    } catch {
-      // silently fail
-    } finally {
-      setDecliningIds((s) => {
-        const next = new Set(s);
-        next.delete(quoteId);
-        return next;
-      });
+  const statusStyle = (req: EventRequestItem): string => {
+    const label = statusLabel(req);
+    const styles: Record<string, string> = {
+      'Deposit Due':     'bg-[#FBF7F0] border-[rgba(196,160,106,0.4)] text-[#9A7A4A]',
+      'Quote Ready':     'bg-[#EAF3DE] border-[rgba(59,109,17,0.2)] text-[#3B6D11]',
+      'Confirmed':       'bg-[#E6F1FB] border-[rgba(24,95,165,0.2)] text-[#185FA5]',
+      'Awaiting Vendor': 'bg-[#F5F3EF] border-border text-[#7A7068]',
+      'Pending':         'bg-[#F5F3EF] border-border text-[#7A7068]',
+      'Declined':        'bg-[#FCEBEB] border-[rgba(163,45,45,0.2)] text-[#A32D2D]',
+      'Expired':         'bg-[#F5F3EF] border-border text-[#7A7068]',
+    };
+    return styles[label] ?? styles['Pending'];
+  };
+
+  const getActionButton = (req: EventRequestItem) => {
+    const label = statusLabel(req);
+    if (label === 'Quote Ready') {
+      return (
+        <Link
+          to={`/requests/${req.id}`}
+          className="text-[10px] uppercase tracking-widest text-[#C4A06A] hover:text-[#9A7A4A]"
+        >
+          View Quote →
+        </Link>
+      );
     }
+    if (label === 'Deposit Due') {
+      return (
+        <Link
+          to={`/requests/${req.id}`}
+          className="text-[10px] uppercase tracking-widest text-[#C4A06A] hover:text-[#9A7A4A]"
+        >
+          Pay Deposit →
+        </Link>
+      );
+    }
+    return (
+      <Link
+        to={`/requests/${req.id}`}
+        className="text-[10px] uppercase tracking-widest text-[#7A7068] hover:text-[#3A3530]"
+      >
+        View →
+      </Link>
+    );
   };
 
-  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  // ── Derived values ───────────────────────────────────────────────────────────
 
-  const upcomingBookings = bookings.filter((b) =>
-    ['PENDING_DEPOSIT', 'DEPOSIT_PAID', 'CONFIRMED', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(b.status)
-  );
+  const actionRequiredCount = requests.filter(r => {
+    const label = statusLabel(r);
+    return label === 'Quote Ready' || label === 'Deposit Due';
+  }).length;
+
+  const filteredRequests = requests
+    .filter(r => {
+      if (requestFilter === 'Action Required') {
+        const label = statusLabel(r);
+        return label === 'Quote Ready' || label === 'Deposit Due';
+      }
+      if (requestFilter === 'Confirmed') {
+        return statusLabel(r) === 'Confirmed';
+      }
+      return r.status !== 'EXPIRED' && r.status !== 'DECLINED';
+    })
+    .sort((a, b) => {
+      const aLabel = statusLabel(a);
+      const bLabel = statusLabel(b);
+      const actionA = aLabel === 'Quote Ready' || aLabel === 'Deposit Due' ? 0 : 1;
+      const actionB = bLabel === 'Quote Ready' || bLabel === 'Deposit Due' ? 0 : 1;
+      if (actionA !== actionB) return actionA - actionB;
+      return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+    });
 
   const handleUnsave = async (providerId: string) => {
     if (!token) return;
@@ -316,7 +306,6 @@ export default function ClientDashboard() {
     try {
       await favoritesApi.removeFavorite(providerId, token);
     } catch {
-      // Revert on error
       apiFetch<any>('/favorites', { token }).then((res: any) => {
         const arr = res?.data?.favorites ?? res?.data ?? res?.favorites ?? [];
         if (Array.isArray(arr)) setFavorites(arr);
@@ -349,9 +338,9 @@ export default function ClientDashboard() {
       {/* Tab bar */}
       <div className="flex items-center gap-6 mb-8 border-b border-border">
         {([
-          { key: 'overview',   label: 'Overview' },
-          { key: 'saved',      label: 'Saved Posts' },
-          { key: 'portfolio',  label: 'My Portfolio' },
+          { key: 'overview',  label: 'Overview' },
+          { key: 'saved',     label: 'Saved Posts' },
+          { key: 'portfolio', label: 'My Portfolio' },
         ] as { key: 'overview' | 'saved' | 'portfolio'; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -489,6 +478,7 @@ export default function ClientDashboard() {
 
       {/* Two-column grid */}
       {dashTab === 'overview' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
         {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-10">
 
@@ -539,149 +529,64 @@ export default function ClientDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
                   >
-                  <div className="bg-white border border-gold/20 rounded-md p-5 mb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-serif text-xl text-dark truncate">{evt.name}</p>
-                        <p className="font-sans text-xs text-muted mt-0.5">
-                          {eventTypeLabel}
-                          {evt.eventDate ? ` · ${format(parseISO(evt.eventDate), 'MMM d, yyyy')}` : ''}
-                          {` · ${evt.guestCount} guests`}
-                        </p>
-                        {totalVendors > 0 && (
-                          <p className="font-sans text-xs text-muted mt-1">
-                            {bookedCount} of {totalVendors} vendor{totalVendors !== 1 ? 's' : ''} booked
+                    <div className="bg-white border border-gold/20 rounded-md p-5 mb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-serif text-xl text-dark truncate">{evt.name}</p>
+                          <p className="font-sans text-xs text-muted mt-0.5">
+                            {eventTypeLabel}
+                            {evt.eventDate ? ` · ${format(parseISO(evt.eventDate), 'MMM d, yyyy')}` : ''}
+                            {` · ${evt.guestCount} guests`}
                           </p>
-                        )}
-                      </div>
-                      <Link
-                        to={`/events/${evt.id}`}
-                        className="font-sans text-xs text-gold hover:text-gold-dark font-semibold transition-colors flex-shrink-0 flex items-center gap-1"
-                      >
-                        View Event <ChevronRight size={12} />
-                      </Link>
-                    </div>
-                  </div>
-                  </motion.div>
-                );
-              })
-            )}
-          </div>
-
-          {/* SECTION 1 — QUOTES AWAITING RESPONSE */}
-          <div ref={quotesRef}>
-            <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mb-4">
-              Quotes Awaiting Response
-            </p>
-
-            {loading ? (
-              <>
-                <SkeletonCard />
-                <SkeletonCard />
-              </>
-            ) : quotes.length === 0 ? (
-              <div className="bg-white border border-border rounded-md p-8 flex flex-col items-center gap-3 text-center">
-                <CheckCircle size={32} strokeWidth={1} className="text-muted" />
-                <p className="font-serif text-lg text-muted">You're all caught up</p>
-                <p className="font-sans text-xs text-muted">No quotes waiting for a response.</p>
-              </div>
-            ) : (
-              quotes.map((quote, i) => {
-                const daysLeft = quote.expiresAt
-                  ? differenceInDays(parseISO(quote.expiresAt), new Date())
-                  : null;
-                const isAccepting = acceptingIds.has(quote.id);
-                const isDeclining = decliningIds.has(quote.id);
-                const busy = isAccepting || isDeclining;
-
-                return (
-                  <motion.div
-                    key={quote.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
-                  >
-                  <div
-                    className="bg-white border border-gold/30 rounded-md p-5 mb-3"
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-sans text-sm font-semibold text-dark">
-                            {quote.providerProfile?.businessName ?? 'Vendor'}
-                          </span>
-                          {quote.providerProfile?.primaryType && (
-                            <ProviderTypeBadge type={quote.providerProfile.primaryType} size="sm" />
+                          {totalVendors > 0 && (
+                            <p className="font-sans text-xs text-muted mt-1">
+                              {bookedCount} of {totalVendors} vendor{totalVendors !== 1 ? 's' : ''} booked
+                            </p>
                           )}
                         </div>
-                        <p className="font-sans text-xs text-muted">
-                          {quote.eventType?.replace(/_/g, ' ')} ·{' '}
-                          {quote.eventDate
-                            ? format(parseISO(quote.eventDate), 'MMM d, yyyy')
-                            : '—'}
-                        </p>
-                        {quote.package?.name && (
-                          <p className="font-sans text-xs text-muted mt-0.5">
-                            {quote.package.name}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-serif text-2xl text-dark">{fmt(quote.total)}</p>
-                        <p className="font-sans text-xs text-muted">
-                          Deposit: {fmt(quote.depositAmount)}
-                        </p>
+                        <Link
+                          to={`/events/${evt.id}`}
+                          className="font-sans text-xs text-gold hover:text-gold-dark font-semibold transition-colors flex-shrink-0 flex items-center gap-1"
+                        >
+                          View Event <ChevronRight size={12} />
+                        </Link>
                       </div>
                     </div>
-
-                    {daysLeft !== null && (
-                      <p
-                        className={`font-sans text-xs mb-4 ${
-                          daysLeft < 3 ? 'text-red font-semibold' : 'text-muted'
-                        }`}
-                      >
-                        {daysLeft <= 0
-                          ? 'Expired'
-                          : `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`}
-                      </p>
-                    )}
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleAccept(quote.id)}
-                        disabled={busy}
-                        className="bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-5 py-2 rounded-md hover:bg-gold-dark transition-colors disabled:opacity-50"
-                      >
-                        {isAccepting ? 'Accepting…' : 'Accept & Pay Deposit'}
-                      </button>
-                      <button
-                        onClick={() => handleDecline(quote.id)}
-                        disabled={busy}
-                        className="font-sans text-xs text-muted hover:text-charcoal transition-colors disabled:opacity-50"
-                      >
-                        {isDeclining ? 'Declining…' : 'Decline'}
-                      </button>
-                    </div>
-                  </div>
                   </motion.div>
                 );
               })
             )}
           </div>
 
-          {/* SECTION 2 — MY REQUESTS */}
-          <div ref={requestsRef}>
+          {/* SECTION 1 — MY REQUESTS (unified) */}
+          <div>
             <div className="flex items-center justify-between mb-4">
-              <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal">
-                My Requests
-              </p>
-              <Link
-                to="/providers"
-                className="font-sans text-xs text-gold hover:text-gold-dark transition-colors font-semibold"
-              >
-                + New Request
-              </Link>
+              <h2 className="text-[10px] uppercase tracking-widest text-[#7A7068]">My Requests</h2>
+              {actionRequiredCount > 0 && (
+                <span className="text-[10px] text-[#C4A06A]">{actionRequiredCount} need your attention</span>
+              )}
+            </div>
+
+            {/* Filter pills */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(['All', 'Action Required', 'Confirmed'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setRequestFilter(f)}
+                  className={`text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-sm border transition-colors ${
+                    requestFilter === f
+                      ? 'bg-[#1A1714] text-[#F5F3EF] border-[#1A1714]'
+                      : 'bg-white text-[#7A7068] border-border hover:border-[#C4A06A]'
+                  }`}
+                >
+                  {f}
+                  {f === 'Action Required' && actionRequiredCount > 0 && (
+                    <span className="ml-1.5 bg-[#C4A06A] text-[#1A1714] rounded-full px-1.5 text-[9px]">
+                      {actionRequiredCount}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
 
             {loading ? (
@@ -690,181 +595,46 @@ export default function ClientDashboard() {
                 <SkeletonCard />
                 <SkeletonCard />
               </>
-            ) : requests.length === 0 ? (
-              <div className="bg-white border border-border rounded-md p-8 flex flex-col items-center gap-3 text-center">
-                <Inbox size={32} strokeWidth={1} className="text-muted" />
-                <p className="font-serif text-lg text-muted">No requests yet</p>
-                <p className="font-sans text-xs text-muted mb-2">
-                  Browse vendors and send your first request.
-                </p>
-                <Link
-                  to="/providers"
-                  className="bg-gold text-dark font-sans text-xs font-bold uppercase tracking-widest px-5 py-2 rounded-md hover:bg-gold-dark transition-colors"
-                >
-                  Browse Vendors
+            ) : filteredRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="font-serif italic text-[15px] text-[#7A7068]">No requests yet.</p>
+                <Link to="/providers" className="text-[10px] uppercase tracking-widest text-[#C4A06A] mt-2 block">
+                  Browse Vendors →
                 </Link>
               </div>
             ) : (
-              requests.map((req, i) => {
-                const badge = REQUEST_STATUS[req.status] ?? {
-                  label: req.status,
-                  cls: 'bg-muted/10 text-muted border border-muted/20',
-                };
-                return (
-                  <motion.div
-                    key={req.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
-                  >
-                  <div
-                    className="bg-white border border-border rounded-md p-5 mb-3"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span
-                            className={`font-sans text-xs px-2.5 py-0.5 rounded-md ${badge.cls}`}
-                          >
-                            {badge.label}
-                          </span>
-                          <span className="font-sans text-xs text-muted">
-                            {req.eventType?.replace(/_/g, ' ')}
-                          </span>
-                          {req.eventDate && (
-                            <span className="font-sans text-xs text-muted">
-                              · {format(parseISO(req.eventDate), 'MMM d, yyyy')}
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="font-sans text-sm text-charcoal">
-                          {req.providerProfile?.businessName ?? 'Vendor TBD'}
-                          {req.package?.name ? ` — ${req.package.name}` : ''}
+              filteredRequests.map((req, i) => (
+                <motion.div
+                  key={req.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
+                >
+                  <div className="bg-white border border-border rounded-md p-4 mb-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-serif text-[16px] text-[#1A1714]">
+                          {req.providerProfile?.businessName ?? 'Unknown Vendor'}
                         </p>
-
-                        <p className="font-sans text-xs text-muted mt-0.5">
-                          {req.guestCount} guests
+                        <p className="text-[11px] text-[#7A7068] mt-0.5">
+                          {req.package?.name && `${req.package.name} · `}
+                          {req.eventDate
+                            ? format(parseISO(req.eventDate), 'MMM d, yyyy')
+                            : '—'}
+                          {` · ${req.guestCount} guests`}
                         </p>
-
-                        {req.calculatedEstimate != null && (
-                          <p className="font-serif text-lg text-dark mt-1">
-                            {fmt(req.calculatedEstimate)}
-                          </p>
-                        )}
                       </div>
-
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        {req.status === 'PENDING' && req.quotes?.[0]?.status === 'PENDING_VENDOR_APPROVAL' ? (
-                          <span className="text-[10px] uppercase tracking-widest bg-[#F5F3EF] border border-border rounded-sm px-2 py-0.5 text-[#7A7068]">
-                            Awaiting Vendor Approval
-                          </span>
-                        ) : (
-                          req.status === 'QUOTE_SENT' && (req.quotes?.length ?? 0) > 0 && (
-                            <Link
-                              to={`/requests/${req.id}`}
-                              className="font-sans text-xs text-gold hover:text-gold-dark font-semibold flex items-center gap-1"
-                            >
-                              View Quote <ChevronRight size={12} />
-                            </Link>
-                          )
-                        )}
-                        <Link
-                          to={`/requests/${req.id}`}
-                          className="font-sans text-xs text-muted hover:text-charcoal transition-colors"
-                        >
-                          Details →
-                        </Link>
-                      </div>
+                      <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded-sm border ${statusStyle(req)}`}>
+                        {statusLabel(req)}
+                      </span>
                     </div>
+                    {getActionButton(req)}
                   </div>
-                  </motion.div>
-                );
-              })
+                </motion.div>
+              ))
             )}
           </div>
 
-          {/* SECTION 3 — UPCOMING BOOKINGS */}
-          <div ref={bookingsRef}>
-            <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal mb-4">
-              Upcoming Bookings
-            </p>
-
-            {loading ? (
-              <>
-                <SkeletonCard />
-                <SkeletonCard />
-              </>
-            ) : upcomingBookings.length === 0 ? (
-              <div className="bg-white border border-border rounded-md p-8 flex flex-col items-center gap-3 text-center">
-                <BookOpen size={32} strokeWidth={1} className="text-muted" />
-                <p className="font-serif text-lg text-muted">No upcoming bookings</p>
-                <p className="font-sans text-xs text-muted">
-                  Accept a quote to create your first booking.
-                </p>
-              </div>
-            ) : (
-              upcomingBookings.map((booking, i) => {
-                const badge = BOOKING_STATUS[booking.status] ?? {
-                  label: booking.status.replace(/_/g, ' '),
-                  cls: 'bg-muted/10 text-muted border border-muted/20',
-                };
-                const date = booking.eventDate ? parseISO(booking.eventDate) : null;
-
-                return (
-                  <motion.div
-                    key={booking.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i, 4) * 0.07, duration: 0.4 }}
-                  >
-                  <Link
-                    to={`/bookings/${booking.id}`}
-                    className="bg-white border border-border rounded-md p-5 mb-3 flex items-start gap-4 hover:border-gold/30 transition-colors group"
-                  >
-                    {/* Date block */}
-                    {date && (
-                      <div className="bg-gold/10 rounded-md p-3 w-14 flex-shrink-0 text-center">
-                        <p className="font-serif text-2xl text-gold-dark leading-none">
-                          {format(date, 'd')}
-                        </p>
-                        <p className="font-sans text-xs uppercase text-gold-dark tracking-widest mt-0.5">
-                          {format(date, 'MMM')}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-sans text-sm font-semibold text-dark group-hover:text-gold-dark transition-colors">
-                          {booking.providerProfile?.businessName ?? 'Vendor'}
-                        </span>
-                        {booking.providerProfile?.primaryType && (
-                          <ProviderTypeBadge type={booking.providerProfile.primaryType} size="sm" />
-                        )}
-                      </div>
-                      <p className="font-sans text-xs text-muted">
-                        {booking.eventType?.replace(/_/g, ' ')}
-                        {booking.package?.name ? ` · ${booking.package.name}` : ''}
-                        {` · ${booking.guestCount} guests`}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className={`font-sans text-xs px-2.5 py-0.5 rounded-md ${badge.cls}`}>
-                          {badge.label}
-                        </span>
-                        <span className="font-serif text-lg text-dark">
-                          {fmt(booking.total)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <ChevronRight size={16} className="text-muted flex-shrink-0 mt-1 group-hover:text-gold-dark transition-colors" />
-                  </Link>
-                  </motion.div>
-                );
-              })
-            )}
-          </div>
         </div>
 
         {/* ── RIGHT COLUMN ─────────────────────────────────────────────────── */}
@@ -896,26 +666,6 @@ export default function ClientDashboard() {
                 </span>
                 <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
-              <button
-                onClick={() => scrollTo(requestsRef)}
-                className="w-full flex items-center justify-between py-3 text-white/60 hover:text-gold-light font-sans text-sm transition-colors group"
-              >
-                <span className="flex items-center gap-2">
-                  <Inbox size={14} strokeWidth={1.5} />
-                  My Requests
-                </span>
-                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-              <button
-                onClick={() => scrollTo(bookingsRef)}
-                className="w-full flex items-center justify-between py-3 text-white/60 hover:text-gold-light font-sans text-sm transition-colors group"
-              >
-                <span className="flex items-center gap-2">
-                  <Calendar size={14} strokeWidth={1.5} />
-                  My Bookings
-                </span>
-                <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
             </div>
           </div>
 
