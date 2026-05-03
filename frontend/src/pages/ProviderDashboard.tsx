@@ -658,7 +658,7 @@ export default function ProviderDashboard() {
                         return (
                           <div className="flex items-center gap-3 mt-4">
                             <Link
-                              to={`/event-requests/${req.id}`}
+                              to={`/requests/${req.id}`}
                               className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-5 py-2 hover:bg-gold-dark transition-colors focus:outline-none rounded-md"
                             >
                               {req.isOutOfParameters ? 'Create Custom Quote' : 'View Request'}

@@ -29,6 +29,7 @@ import EventDashboard from './pages/EventDashboard';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AccountVerify from './pages/AccountVerify';
 import QuoteDetail from './pages/QuoteDetail';
+import BookingJourney from './pages/BookingJourney';
 import CreateEvent from './pages/CreateEvent';
 import EventDetail from './pages/EventDetail';
 import Messages from './pages/Messages';
@@ -134,6 +135,11 @@ function App() {
         <Route path="quotes/:id" element={
           <ProtectedRoute>
             <QuoteDetail />
+          </ProtectedRoute>
+        } />
+        <Route path="requests/:id" element={
+          <ProtectedRoute>
+            <BookingJourney />
           </ProtectedRoute>
         } />
         <Route path="become-provider" element={

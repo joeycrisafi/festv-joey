@@ -762,7 +762,7 @@ export default function ClientDashboard() {
                         ) : (
                           req.status === 'QUOTE_SENT' && (req.quotes?.length ?? 0) > 0 && (
                             <Link
-                              to={`/event-requests/${req.id}`}
+                              to={`/requests/${req.id}`}
                               className="font-sans text-xs text-gold hover:text-gold-dark font-semibold flex items-center gap-1"
                             >
                               View Quote <ChevronRight size={12} />
@@ -770,7 +770,7 @@ export default function ClientDashboard() {
                           )
                         )}
                         <Link
-                          to={`/event-requests/${req.id}`}
+                          to={`/requests/${req.id}`}
                           className="font-sans text-xs text-muted hover:text-charcoal transition-colors"
                         >
                           Details →
