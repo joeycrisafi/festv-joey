@@ -223,8 +223,12 @@ export const quotesApi = {
   accept: (id: string, token: string) =>
     apiFetch(`/quotes/${id}/accept`, { method: 'POST', token }),
 
-  reject: (id: string, token: string) =>
-    apiFetch(`/quotes/${id}/reject`, { method: 'POST', token }),
+  reject: (id: string, token: string, rejectionReason?: string) =>
+    apiFetch(`/quotes/${id}/reject`, {
+      method: 'POST',
+      token,
+      body: rejectionReason ? JSON.stringify({ rejectionReason }) : undefined,
+    }),
 
   revise: (id: string, data: Record<string, unknown>, token: string) =>
     apiFetch(`/quotes/${id}/revise`, { method: 'POST', token, body: JSON.stringify(data) }),

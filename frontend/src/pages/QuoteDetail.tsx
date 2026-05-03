@@ -53,6 +53,7 @@ interface QuoteData {
   depositAmount: number;
   isOutOfParameters: boolean;
   vendorMessage?: string | null;
+  rejectionReason?: string | null;
   expiresAt?: string | null;
   providerProfile: {
     id: string;
@@ -161,6 +162,8 @@ export default function QuoteDetail() {
   const [accepted, setAccepted] = useState(false);
   const [acceptedBookingId, setAcceptedBookingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showDeclineForm, setShowDeclineForm] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const isClient = user?.role === 'CLIENT';
 
@@ -209,15 +212,14 @@ export default function QuoteDetail() {
 
   const handleDecline = async () => {
     if (!id || !token) return;
-    const confirmed = window.confirm('Are you sure you want to decline this quote?');
-    if (!confirmed) return;
     setDeclining(true);
     setActionError(null);
     try {
-      const res = await quotesApi.reject(id, token);
+      const res = await quotesApi.reject(id, token, rejectionReason.trim() || undefined);
       const data = res as { success: boolean; message?: string };
       if (data.success) {
         setStatus('REJECTED');
+        setShowDeclineForm(false);
       } else {
         setActionError(data.message ?? 'Failed to decline quote. Please try again.');
       }
@@ -488,13 +490,47 @@ export default function QuoteDetail() {
               >
                 {accepting ? 'Confirming…' : 'Accept & Confirm Booking'}
               </button>
-              <button
-                onClick={handleDecline}
-                disabled={accepting || declining}
-                className="w-full mt-3 font-sans text-xs text-center text-muted hover:text-red transition-colors disabled:opacity-50"
-              >
-                {declining ? 'Declining…' : 'Decline Quote'}
-              </button>
+              {!showDeclineForm ? (
+                <button
+                  onClick={() => setShowDeclineForm(true)}
+                  disabled={accepting || declining}
+                  className="w-full mt-3 font-sans text-xs text-center text-muted hover:text-red transition-colors disabled:opacity-50"
+                >
+                  Decline Quote
+                </button>
+              ) : (
+                <div className="mt-4 border border-border rounded-md p-4 space-y-3">
+                  <p className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal">
+                    Reason for declining <span className="font-normal normal-case text-muted">(optional)</span>
+                  </p>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={e => setRejectionReason(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    placeholder="Let the vendor know why you're declining…"
+                    className="w-full border border-border rounded-md px-3 py-2 font-sans text-sm text-charcoal placeholder:text-muted focus:outline-none focus:border-gold resize-none"
+                    style={{ background: '#F5F3EF' }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleDecline}
+                      disabled={declining}
+                      className="flex-1 font-sans text-xs font-bold uppercase tracking-widest py-2.5 rounded-md transition-colors disabled:opacity-50"
+                      style={{ background: '#B84040', color: '#fff' }}
+                    >
+                      {declining ? 'Declining…' : 'Confirm Decline'}
+                    </button>
+                    <button
+                      onClick={() => { setShowDeclineForm(false); setRejectionReason(''); }}
+                      disabled={declining}
+                      className="font-sans text-xs text-muted hover:text-charcoal transition-colors px-3 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

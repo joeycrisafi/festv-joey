@@ -15,6 +15,7 @@ interface Quote {
   total: number;
   depositAmount: number;
   expiresAt?: string;
+  rejectionReason?: string | null;
 }
 
 interface EventRequest {
@@ -296,6 +297,25 @@ export default function EventRequestDetail() {
                         View Quote →
                       </Link>
                     </div>
+                    {quote.status === 'REJECTED' && quote.rejectionReason && (
+                      <div
+                        className="mt-4 px-3 py-2 rounded-sm"
+                        style={{ background: '#FBF7F0', borderLeft: '2px solid #C4A06A' }}
+                      >
+                        <p
+                          className="font-sans font-bold uppercase tracking-widest mb-1"
+                          style={{ fontSize: 9, color: '#C4A06A' }}
+                        >
+                          Your note
+                        </p>
+                        <p
+                          className="font-serif italic leading-snug"
+                          style={{ fontSize: 14, color: '#3A3530' }}
+                        >
+                          {quote.rejectionReason}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })}

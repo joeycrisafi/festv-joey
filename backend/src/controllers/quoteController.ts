@@ -530,9 +530,15 @@ export const rejectQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
     throw new AppError(`Cannot reject a quote with status ${quote.status}`, 400);
   }
 
+  const rawReason = req.body.rejectionReason;
+  const rejectionReason: string | undefined =
+    typeof rawReason === 'string' && rawReason.trim().length > 0
+      ? rawReason.trim().slice(0, 500)
+      : undefined;
+
   const updatedQuote = await prisma.quote.update({
     where: { id: quote.id },
-    data:  { status: 'REJECTED' },
+    data:  { status: 'REJECTED', ...(rejectionReason ? { rejectionReason } : {}) },
   });
 
   await prisma.eventRequest.update({
