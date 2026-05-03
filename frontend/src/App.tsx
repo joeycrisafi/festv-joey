@@ -32,6 +32,7 @@ import CreateEvent from './pages/CreateEvent';
 import EventDetail from './pages/EventDetail';
 import Messages from './pages/Messages';
 import FeedPage from './pages/FeedPage';
+import VerifyEmail from './pages/VerifyEmail';
 
 const EventRequestRedirect = () => {
   const { id } = useParams();
@@ -95,6 +96,7 @@ function App() {
             ? <Navigate to={user?.role === 'PROVIDER' ? '/provider/dashboard' : '/dashboard'} replace />
             : <ResetPassword />
         } />
+        <Route path="verify-email" element={<VerifyEmail />} />
         <Route path="feed" element={<FeedPage />} />
         <Route path="providers" element={<BrowseProviders />} />
         <Route path="providers/:id" element={<ProviderProfile />} />

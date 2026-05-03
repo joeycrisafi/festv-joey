@@ -21,6 +21,18 @@ export default function Login() {
     }
   }, [isAuthenticated, user, navigate]);
 
+  const handleResendFromLogin = async () => {
+    try {
+      await fetch('/api/v1/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // silent
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -64,6 +76,14 @@ export default function Login() {
           {error && (
             <div className="mt-6 bg-red/10 border border-red/30 text-red text-sm font-sans rounded-md px-4 py-3">
               {error}
+              {error.toLowerCase().includes('verify') && (
+                <button
+                  onClick={handleResendFromLogin}
+                  className="block mx-auto mt-2 text-[11px] uppercase tracking-widest text-[#C4A06A] hover:text-[#9A7A4A] transition-colors"
+                >
+                  Resend verification email
+                </button>
+              )}
             </div>
           )}
 
