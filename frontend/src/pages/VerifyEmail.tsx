@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'already_verified'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -17,6 +17,10 @@ export default function VerifyEmail() {
     fetch(`/api/v1/auth/verify-email?token=${token}`)
       .then(res => res.json())
       .then(data => {
+        if (data.success && data.alreadyVerified) {
+          setStatus('already_verified');
+          return;
+        }
         if (data.success) {
           localStorage.setItem('accessToken', data.data.accessToken);
           localStorage.setItem('refreshToken', data.data.refreshToken);
@@ -58,6 +62,26 @@ export default function VerifyEmail() {
             </div>
             <h2 className="font-serif text-[24px] font-light text-[#1A1714] mb-2">Email verified</h2>
             <p className="text-[13px] text-[#7A7068]">Your account is active. Taking you to your dashboard…</p>
+          </>
+        )}
+
+        {status === 'already_verified' && (
+          <>
+            <div className="w-12 h-12 rounded-full bg-[#FBF7F0] border border-[rgba(196,160,106,0.3)] flex items-center justify-center mx-auto mb-4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C4A06A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h2 className="font-serif text-[24px] font-light text-[#1A1714] mb-2">Already verified</h2>
+            <p className="text-[13px] text-[#7A7068] mb-6">
+              Your email has already been verified. Sign in to continue.
+            </p>
+            <a
+              href="/login"
+              className="inline-block bg-[#1A1714] text-[#F5F3EF] text-[10px] uppercase tracking-widest px-8 py-3 rounded-sm hover:bg-[#3A3530] transition-colors"
+            >
+              Sign In
+            </a>
           </>
         )}
 

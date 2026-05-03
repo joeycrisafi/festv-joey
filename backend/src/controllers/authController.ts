@@ -481,21 +481,31 @@ export const verifyEmail = asyncHandler(async (req: AuthenticatedRequest, res: R
   }
 
   const user = await prisma.user.findFirst({
-    where: {
-      passwordResetToken: token,
-      passwordResetExpires: { gt: new Date() },
-    },
+    where: { passwordResetToken: token },
   });
 
-  if (!user) throw new AppError('Verification link is invalid or has expired', 400);
+  if (!user) throw new AppError('Verification link is invalid', 400);
 
+  // Already verified — let the frontend redirect to login
+  if (user.emailVerified) {
+    return res.json({
+      success: true,
+      alreadyVerified: true,
+      message: 'Your email is already verified. Please sign in.',
+    });
+  }
+
+  // Token expired
+  if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+    throw new AppError('Verification link has expired. Please request a new one.', 400);
+  }
+
+  // Valid — activate account, keep token so repeat clicks still resolve
   await prisma.user.update({
     where: { id: user.id },
     data: {
       emailVerified: true,
       status: 'ACTIVE',
-      passwordResetToken: null,
-      passwordResetExpires: null,
     },
   });
 
