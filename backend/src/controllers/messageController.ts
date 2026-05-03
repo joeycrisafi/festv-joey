@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types/index.js';
 import prisma from '../config/database.js';
 import { AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
 import { sendMessageSchema } from '../utils/validators.js';
+import { sendNewMessage } from '../services/emailService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -228,6 +229,16 @@ export const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
         message: 'You have a new message',
         data: { conversationId, messageId: message.id },
       },
+    }).catch(() => {});
+
+    prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { email: true, firstName: true },
+    }).then(recipient => {
+      if (!recipient) return;
+      const senderName = `${message.sender.firstName} ${message.sender.lastName}`;
+      const conversationUrl = `${process.env.FRONTEND_URL ?? 'https://www.festv.org'}/messages`;
+      sendNewMessage(recipient.email, recipient.firstName, senderName, content, conversationUrl).catch(() => {});
     }).catch(() => {});
   }
 

@@ -133,6 +133,38 @@ export async function sendVerificationEmail(
   }
 }
 
+// ─── 0b. New message notification (to recipient) ─────────────────────────────
+
+export async function sendNewMessage(
+  to: string,
+  recipientName: string,
+  senderName: string,
+  messagePreview: string,
+  conversationUrl: string,
+): Promise<void> {
+  try {
+    const resend = getResend();
+    const preview = messagePreview.length > 120 ? messagePreview.slice(0, 120) + '…' : messagePreview;
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `New message from ${senderName} — FESTV`,
+      html: wrapper(
+        goldBadge('New Message') +
+        heading(`Hi ${recipientName},`) +
+        para(`You have a new message from <strong>${senderName}</strong>:`) +
+        para(`<em style="color:#1A1714;">"${preview}"</em>`) +
+        `<div style="text-align:center;margin:32px 0;">` +
+        `<a href="${conversationUrl}" style="display:inline-block;background:#C4A06A;color:#1A1714;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:14px 32px;border-radius:4px;">View Message</a>` +
+        `</div>` +
+        small('You are receiving this because someone sent you a message on FESTV.'),
+      ),
+    });
+  } catch (err) {
+    console.error('[emailService] sendNewMessage failed:', err);
+  }
+}
+
 // ─── 1. Vendor approved ───────────────────────────────────────────────────────
 
 export async function sendVendorApproved(to: string, vendorName: string): Promise<void> {
