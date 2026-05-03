@@ -367,6 +367,25 @@ export default function BookingJourney() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!request?.booking || !token) return;
+    try {
+      const res = await fetch(`${API_BASE}/bookings/${request.booking.id}/confirmation-pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to download');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FESTV-Booking-${request.booking.id.slice(0, 8).toUpperCase()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast('Failed to download PDF. Please try again.');
+    }
+  };
+
   const handleMarkDepositPaid = async () => {
     if (!request?.booking) return;
     setActionLoading(true);
@@ -976,7 +995,10 @@ export default function BookingJourney() {
                       },
                     ]}
                   />
-                  <button className="w-full border border-border text-[10px] uppercase tracking-widest py-2.5 rounded-sm text-[#7A7068] mt-4 hover:border-[#C4A06A] hover:text-[#C4A06A] transition-colors">
+                  <button
+                    onClick={handleDownloadPdf}
+                    className="w-full border border-border text-[10px] uppercase tracking-widest py-2.5 rounded-sm text-[#7A7068] mt-4 hover:border-[#C4A06A] hover:text-[#C4A06A] transition-colors"
+                  >
                     Download Confirmation PDF
                   </button>
                 </div>

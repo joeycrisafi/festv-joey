@@ -253,6 +253,25 @@ export default function BookingDetail() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!booking || !token) return;
+    try {
+      const res = await fetch(`/api/v1/bookings/${booking.id}/confirmation-pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to download');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FESTV-Booking-${booking.id.slice(0, 8).toUpperCase()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToastMessage('Failed to download PDF. Please try again.');
+    }
+  };
+
   // ── States ───────────────────────────────────────────────────────────────────
 
   if (loading) return <Skeleton />;
@@ -442,6 +461,12 @@ export default function BookingDetail() {
               className="mt-6 border border-gold text-gold-dark font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-gold/5 transition-colors"
             >
               Add to Calendar
+            </button>
+            <button
+              onClick={handleDownloadPdf}
+              className="mt-3 border border-border text-muted font-sans text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:border-gold hover:text-gold-dark transition-colors"
+            >
+              Download Confirmation PDF
             </button>
           </div>
         )}
