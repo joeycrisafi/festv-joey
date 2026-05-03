@@ -11,6 +11,7 @@ import {
   searchMessages,
   archiveConversation,
   getConversationByEventRequest,
+  getConversationByParticipants,
 } from '../controllers/messageController.js';
 
 const router = Router();
@@ -22,6 +23,7 @@ router.use(authenticate);
 router.get('/conversations', getMyConversations);
 router.post('/conversations', getOrCreateConversation);
 router.get('/conversations/by-provider/:providerId', getConversationByEventRequest);
+router.get('/conversations/by-participants', getConversationByParticipants);
 router.get('/conversations/:conversationId/messages', getConversationMessages);
 router.post('/conversations/:conversationId/messages', sendMessage);
 router.post('/conversations/:conversationId/read', markMessagesAsRead);

@@ -46,7 +46,7 @@ const REQUEST_INCLUDE_FULL = {
       logoUrl: true,
       averageRating: true,
       verificationStatus: true,
-      user: { select: { city: true, state: true } },
+      user: { select: { id: true, city: true, state: true } },
     },
   },
   client: {

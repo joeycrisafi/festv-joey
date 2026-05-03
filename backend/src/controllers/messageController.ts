@@ -360,6 +360,32 @@ export const archiveConversation = async (req: AuthenticatedRequest, res: Respon
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Get conversation by participants — returns null (not 404) if not found
+// Query: { otherUserId }
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getConversationByParticipants = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { otherUserId } = req.query;
+
+  if (!otherUserId || typeof otherUserId !== 'string') {
+    throw new AppError('otherUserId is required', 400);
+  }
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { participants: { hasEvery: [userId, otherUserId] } },
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        include: { sender: { select: SENDER_SELECT } },
+      },
+    },
+  });
+
+  res.json({ success: true, data: conversation ?? null });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Get conversation by event request — eventRequestId not on schema, find by participants
 // ─────────────────────────────────────────────────────────────────────────────
 
