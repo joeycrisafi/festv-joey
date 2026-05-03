@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { eventRequestsApi, apiFetch } from '../utils/api';
+import MessageThread from '../components/MessageThread';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ interface EventRequestData {
     businessName: string;
     primaryType: string;
     logoUrl?: string | null;
-    user?: { city?: string | null; state?: string | null } | null;
+    user?: { id: string; city?: string | null; state?: string | null } | null;
   };
   client: {
     id: string;
@@ -488,13 +489,15 @@ export default function BookingJourney() {
 
         {/* ── Messages tab ──────────────────────────────────────────────────── */}
         {tab === 'messages' && (
-          <div className="bg-white border border-border rounded-md p-8 text-center">
-            <p className="font-serif italic text-[16px] text-[#7A7068]">
-              Messaging coming soon
-            </p>
-            <p className="font-sans text-[11px] text-[#B0A89E] mt-2">
-              Direct messaging between planners and vendors will appear here.
-            </p>
+          <div className="bg-white border border-border rounded-md overflow-hidden">
+            <MessageThread
+              otherUserId={
+                isClient
+                  ? (request.providerProfile.user?.id ?? '')
+                  : request.client.id
+              }
+              requestId={request.id}
+            />
           </div>
         )}
 
