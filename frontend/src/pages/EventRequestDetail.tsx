@@ -63,7 +63,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 const QUOTE_STATUS: Record<string, { label: string; className: string }> = {
   PENDING:                  { label: 'Pending',            className: 'bg-gold/10 text-gold-dark' },
-  PENDING_VENDOR_APPROVAL:  { label: 'Pending Approval',   className: 'bg-gold/10 text-gold-dark' },
+  PENDING_VENDOR_APPROVAL:  { label: 'Awaiting Vendor Approval', className: 'bg-[#FBF7F0] text-[#9A7A4A] border border-[rgba(196,160,106,0.3)]' },
   ACCEPTED:                 { label: 'Accepted',           className: 'bg-green/10 text-green' },
   REJECTED:                 { label: 'Declined',           className: 'bg-red/10 text-red' },
   EXPIRED:                  { label: 'Expired',            className: 'bg-muted/10 text-muted' },
