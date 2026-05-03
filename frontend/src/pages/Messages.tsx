@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,6 +38,19 @@ interface Message {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const isSameDay = (a: string, b: string) =>
+  new Date(a).toDateString() === new Date(b).toDateString();
+
+const formatDateLabel = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return format(d, 'EEEE, MMMM d');
+};
 
 function getInitials(user: ConversationUser | null) {
   if (!user) return '?';
@@ -233,8 +246,8 @@ export default function Messages() {
                     <button
                       key={conv.id}
                       onClick={() => openConversation(conv.id)}
-                      className={`w-full text-left px-4 py-4 flex items-start gap-3 border-b border-border transition-colors hover:bg-bg ${
-                        isActive ? 'border-l-2 border-l-gold bg-bg' : 'border-l-2 border-l-transparent'
+                      className={`w-full text-left px-4 py-4 flex items-start gap-3 border-b border-border transition-colors hover:bg-white ${
+                        isActive ? 'border-l-2 border-l-gold bg-white' : 'border-l-2 border-l-transparent'
                       }`}
                     >
                       {/* Avatar */}
@@ -267,9 +280,7 @@ export default function Messages() {
                               : 'No messages yet'}
                           </p>
                           {conv.unreadCount > 0 && (
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gold text-dark text-xs font-sans font-bold flex items-center justify-center">
-                              {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-                            </span>
+                            <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#C4A06A]" />
                           )}
                         </div>
                       </div>
@@ -316,64 +327,112 @@ export default function Messages() {
                     </div>
 
                     {/* Messages area */}
-                    <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+                    <div
+                      className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3"
+                      style={{
+                        backgroundColor: '#F5F3EF',
+                        backgroundImage: 'radial-gradient(#E2DDD6 1px, transparent 1px)',
+                        backgroundSize: '20px 20px',
+                      }}
+                    >
                       {loadingMsgs && messages.length === 0 ? (
                         <div className="flex items-center justify-center py-8">
                           <div className="animate-spin rounded-full h-6 w-6 border-4 border-gold border-t-transparent" />
                         </div>
                       ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <p className="font-sans text-sm text-muted">
+                          <p className="font-serif italic text-[14px] text-[#7A7068]">
                             No messages yet. Say hello!
                           </p>
                         </div>
                       ) : (
-                        messages.map(msg => {
+                        messages.map((msg, i) => {
+                          const showDate = i === 0 || !isSameDay(messages[i - 1].createdAt, msg.createdAt);
                           const isOwn = msg.senderId === user?.id;
                           return (
-                            <div
-                              key={msg.id}
-                              className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div
-                                className={`max-w-[70%] px-4 py-2.5 rounded-md ${
-                                  isOwn
-                                    ? 'bg-gold/10'
-                                    : 'bg-white border border-border'
-                                }`}
-                              >
-                                <p className="font-sans text-sm text-charcoal leading-relaxed">
-                                  {msg.content}
-                                </p>
-                                <p className="font-sans text-xs text-muted mt-1">
-                                  {format(new Date(msg.createdAt), 'h:mm a')}
-                                </p>
-                              </div>
-                            </div>
+                            <Fragment key={msg.id}>
+                              {showDate && (
+                                <div className="flex items-center gap-3 my-1">
+                                  <div className="flex-1 h-px bg-[#E2DDD6]" />
+                                  <span className="text-[10px] uppercase tracking-widest text-[#B0A89E]">
+                                    {formatDateLabel(msg.createdAt)}
+                                  </span>
+                                  <div className="flex-1 h-px bg-[#E2DDD6]" />
+                                </div>
+                              )}
+                              {isOwn ? (
+                                <div className="flex gap-2 items-end justify-end flex-row-reverse">
+                                  <div
+                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-medium flex-shrink-0"
+                                    style={{ background: 'rgba(196,160,106,0.15)', color: '#9A7A4A', border: '0.5px solid rgba(196,160,106,0.3)' }}
+                                  >
+                                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                                  </div>
+                                  <div className="flex flex-col items-end max-w-[65%]">
+                                    <div
+                                      className="px-4 py-2.5 rounded-xl rounded-tr-none text-[13px] leading-relaxed"
+                                      style={{ background: '#F0EAE0', color: '#1A1714', border: '0.5px solid #E2D5C3' }}
+                                    >
+                                      {msg.content}
+                                    </div>
+                                    <span className="text-[10px] text-[#B0A89E] mt-1">
+                                      {format(new Date(msg.createdAt), 'h:mm a')}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-2 items-end justify-start">
+                                  <div className="w-6 h-6 rounded-full bg-[#F5F3EF] border border-border flex items-center justify-center text-[9px] font-medium text-[#7A7068] flex-shrink-0">
+                                    {activeConversation?.otherUser?.firstName?.[0]}{activeConversation?.otherUser?.lastName?.[0]}
+                                  </div>
+                                  <div className="flex flex-col max-w-[65%]">
+                                    <div
+                                      className="px-4 py-2.5 rounded-xl rounded-tl-none bg-white text-[#3A3530] text-[13px] leading-relaxed"
+                                      style={{ borderLeft: '2px solid rgba(196,160,106,0.4)', borderTop: '0.5px solid #E2DDD6', borderRight: '0.5px solid #E2DDD6', borderBottom: '0.5px solid #E2DDD6' }}
+                                    >
+                                      {msg.content}
+                                    </div>
+                                    <span className="text-[10px] text-[#B0A89E] mt-1">
+                                      {format(new Date(msg.createdAt), 'h:mm a')}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </Fragment>
                           );
                         })
                       )}
                       <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input area */}
-                    <div className="px-5 py-4 border-t border-border flex items-center gap-3">
+                    {/* Compose bar */}
+                    <div className="px-4 py-3 border-t border-border bg-white flex gap-3 items-center">
                       <input
                         type="text"
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Type a message…"
-                        className="flex-1 border border-border rounded-md px-4 py-2.5 font-sans text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
+                        placeholder="Write a message…"
+                        className="flex-1 bg-[#F5F3EF] border border-border rounded-md px-4 py-2.5 font-sans text-[13px] text-[#3A3530] focus:outline-none focus:border-[#C4A06A]"
                       />
                       <button
                         onClick={handleSend}
                         disabled={!input.trim() || sending}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-md font-sans text-sm font-medium transition-opacity disabled:opacity-40"
-                        style={{ backgroundColor: '#C4A06A', color: '#1A1714' }}
+                        className="w-9 h-9 bg-[#1A1714] rounded-md flex items-center justify-center flex-shrink-0 hover:bg-[#C4A06A] transition-colors disabled:opacity-40 group"
                       >
-                        <Send className="w-4 h-4" />
-                        Send
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="stroke-[#F5F3EF] group-hover:stroke-[#1A1714] transition-colors"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="22" y1="2" x2="11" y2="13" />
+                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
                       </button>
                     </div>
                   </>
