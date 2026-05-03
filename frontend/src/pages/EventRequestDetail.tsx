@@ -62,10 +62,11 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 const QUOTE_STATUS: Record<string, { label: string; className: string }> = {
-  PENDING:  { label: 'Pending',  className: 'bg-gold/10 text-gold-dark' },
-  ACCEPTED: { label: 'Accepted', className: 'bg-green/10 text-green' },
-  REJECTED: { label: 'Declined', className: 'bg-red/10 text-red' },
-  EXPIRED:  { label: 'Expired',  className: 'bg-muted/10 text-muted' },
+  PENDING:                  { label: 'Pending',            className: 'bg-gold/10 text-gold-dark' },
+  PENDING_VENDOR_APPROVAL:  { label: 'Pending Approval',   className: 'bg-gold/10 text-gold-dark' },
+  ACCEPTED:                 { label: 'Accepted',           className: 'bg-green/10 text-green' },
+  REJECTED:                 { label: 'Declined',           className: 'bg-red/10 text-red' },
+  EXPIRED:                  { label: 'Expired',            className: 'bg-muted/10 text-muted' },
 };
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -264,6 +265,24 @@ export default function EventRequestDetail() {
           {request.quotes.length > 0 ? (
             <div className="space-y-3">
               {request.quotes.map(quote => {
+                // Vendor hasn't approved yet — show waiting state instead of price details
+                if (quote.status === 'PENDING_VENDOR_APPROVAL') {
+                  return (
+                    <div
+                      key={quote.id}
+                      className="rounded-md px-4 py-3"
+                      style={{ background: '#FBF7F0', border: '1px solid rgba(196,160,106,0.3)' }}
+                    >
+                      <p className="font-sans text-[10px] uppercase tracking-widest mb-1" style={{ color: '#C4A06A' }}>
+                        Pending Approval
+                      </p>
+                      <p className="font-serif text-[15px]" style={{ color: '#3A3530' }}>
+                        Your request has been received. The vendor is reviewing it and will respond shortly.
+                      </p>
+                    </div>
+                  );
+                }
+
                 const qStatus = QUOTE_STATUS[quote.status] ?? QUOTE_STATUS.PENDING;
                 return (
                   <div key={quote.id} className="bg-white border border-border rounded-md p-6">

@@ -32,7 +32,7 @@ interface Adjustment {
   amount: number;
 }
 
-type QuoteStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+type QuoteStatus = 'DRAFT' | 'PENDING_VENDOR_APPROVAL' | 'SENT' | 'VIEWED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
 
 interface QuoteData {
   id: string;
@@ -79,12 +79,13 @@ interface QuoteData {
 // ── Status badge config ───────────────────────────────────────────────────────
 
 const STATUS_BADGE: Record<QuoteStatus, { label: string; cls: string }> = {
-  DRAFT:    { label: 'Draft',    cls: 'bg-muted/10 text-muted border border-muted/20' },
-  SENT:     { label: 'Sent',     cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
-  VIEWED:   { label: 'Viewed',   cls: 'bg-charcoal/10 text-charcoal border border-charcoal/20' },
-  ACCEPTED: { label: 'Accepted', cls: 'bg-green/10 text-green border border-green/30' },
-  REJECTED: { label: 'Declined', cls: 'bg-red/10 text-red border border-red/30' },
-  EXPIRED:  { label: 'Expired',  cls: 'bg-muted/10 text-muted border border-muted/20' },
+  DRAFT:                   { label: 'Draft',            cls: 'bg-muted/10 text-muted border border-muted/20' },
+  PENDING_VENDOR_APPROVAL: { label: 'Pending Approval', cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
+  SENT:                    { label: 'Sent',             cls: 'bg-gold/10 text-gold-dark border border-gold/30' },
+  VIEWED:                  { label: 'Viewed',           cls: 'bg-charcoal/10 text-charcoal border border-charcoal/20' },
+  ACCEPTED:                { label: 'Accepted',         cls: 'bg-green/10 text-green border border-green/30' },
+  REJECTED:                { label: 'Declined',         cls: 'bg-red/10 text-red border border-red/30' },
+  EXPIRED:                 { label: 'Expired',          cls: 'bg-muted/10 text-muted border border-muted/20' },
 };
 
 const PRICING_MODEL_LABEL: Record<string, string> = {
@@ -253,7 +254,8 @@ export default function QuoteDetail() {
 
   const currentStatus = status ?? quote.status;
   const badge = STATUS_BADGE[currentStatus] ?? STATUS_BADGE.DRAFT;
-  const canAct = isClient && (currentStatus === 'SENT' || currentStatus === 'VIEWED');
+  const canAct = isClient &&
+    (currentStatus === 'SENT' || currentStatus === 'VIEWED');
 
   const vendor = quote.providerProfile;
   const city = vendor.user?.city;
@@ -531,6 +533,18 @@ export default function QuoteDetail() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Awaiting vendor approval — client view */}
+          {currentStatus === 'PENDING_VENDOR_APPROVAL' && isClient && !accepted && (
+            <div className="mt-6 border border-border rounded-md p-4 text-center">
+              <p className="font-serif italic text-[16px] text-[#7A7068]">
+                Awaiting vendor approval
+              </p>
+              <p className="font-sans text-[11px] text-[#B0A89E] mt-1">
+                You'll be notified as soon as the vendor responds.
+              </p>
             </div>
           )}
 

@@ -55,7 +55,7 @@ interface EventRequestItem {
   calculatedEstimate?: number;
   providerProfile?: ProviderInfo;
   package?: PackageInfo;
-  quotes?: { id: string }[];
+  quotes?: { id: string; status: string }[];
 }
 
 interface QuoteItem {
@@ -755,13 +755,19 @@ export default function ClientDashboard() {
                       </div>
 
                       <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        {req.status === 'QUOTE_SENT' && (req.quotes?.length ?? 0) > 0 && (
-                          <Link
-                            to={`/event-requests/${req.id}`}
-                            className="font-sans text-xs text-gold hover:text-gold-dark font-semibold flex items-center gap-1"
-                          >
-                            View Quote <ChevronRight size={12} />
-                          </Link>
+                        {req.status === 'PENDING' && req.quotes?.[0]?.status === 'PENDING_VENDOR_APPROVAL' ? (
+                          <span className="text-[10px] uppercase tracking-widest bg-[#F5F3EF] border border-border rounded-sm px-2 py-0.5 text-[#7A7068]">
+                            Awaiting Vendor Approval
+                          </span>
+                        ) : (
+                          req.status === 'QUOTE_SENT' && (req.quotes?.length ?? 0) > 0 && (
+                            <Link
+                              to={`/event-requests/${req.id}`}
+                              className="font-sans text-xs text-gold hover:text-gold-dark font-semibold flex items-center gap-1"
+                            >
+                              View Quote <ChevronRight size={12} />
+                            </Link>
+                          )
                         )}
                         <Link
                           to={`/event-requests/${req.id}`}

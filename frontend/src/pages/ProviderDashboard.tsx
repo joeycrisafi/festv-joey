@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar, Inbox, Star, Package, Eye, Clock, ChevronRight, User,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../utils/api';
 import PortfolioCard, { type PortfolioPostData } from '../components/PortfolioCard';
 import PostComposer from '../components/PostComposer';
 
@@ -68,6 +69,7 @@ interface EventRequest {
   packageId?: string | null;
   package?: { name: string } | null;
   client?: { firstName: string; lastName: string } | null;
+  quotes?: { id: string; status: string }[];
   createdAt: string;
 }
 
@@ -147,6 +149,11 @@ export default function ProviderDashboard() {
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [portfolioLoaded, setPortfolioLoaded] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+
+  const [approvingId,        setApprovingId]        = useState<string | null>(null);
+  const [decliningRequestId, setDecliningRequestId] = useState<string | null>(null);
+  const [declineReason,      setDeclineReason]      = useState('');
+  const [toast,              setToast]              = useState<{ msg: string; ok: boolean } | null>(null);
 
   // ── Fetch all data on mount ────────────────────────────────────────────────
   useEffect(() => {
@@ -253,6 +260,40 @@ export default function ProviderDashboard() {
       }
     } catch {
       setStripeLoading(false);
+    }
+  };
+
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleApproveQuote = async (quoteId: string) => {
+    setApprovingId(quoteId);
+    try {
+      await apiFetch(`/quotes/${quoteId}/vendor-approve`, { method: 'POST', token: token ?? undefined });
+      setRequests(prev => prev.filter(r => r.quotes?.[0]?.id !== quoteId));
+      showToast('Request accepted — planner has been notified', true);
+    } catch {
+      showToast('Failed to approve request', false);
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleDeclineRequest = async (requestId: string) => {
+    try {
+      await apiFetch(`/quotes/requests/${requestId}/vendor-decline`, {
+        method: 'POST',
+        token: token ?? undefined,
+        body: JSON.stringify({ rejectionReason: declineReason.trim() || undefined }),
+      });
+      setRequests(prev => prev.filter(r => r.id !== requestId));
+      setDecliningRequestId(null);
+      setDeclineReason('');
+      showToast('Request declined — planner has been notified', true);
+    } catch {
+      showToast('Failed to decline request', false);
     }
   };
 
@@ -553,22 +594,78 @@ export default function ProviderDashboard() {
                       )}
 
                       {/* Actions */}
-                      <div className="flex items-center gap-3 mt-4">
-                        <Link
-                          to={`/event-requests/${req.id}`}
-                          className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-5 py-2 hover:bg-gold-dark transition-colors focus:outline-none rounded-md"
-                        >
-                          {req.isOutOfParameters ? 'Create Custom Quote' : 'Auto-Generate Quote'}
-                        </Link>
-                        <button
-                          className="font-sans text-xs text-muted hover:text-red transition-colors focus:outline-none"
-                          onClick={() => {/* decline — navigate to detail */
-                            navigate(`/event-requests/${req.id}`);
-                          }}
-                        >
-                          Decline
-                        </button>
-                      </div>
+                      {(() => {
+                        const pendingQuote = req.quotes?.find(q => q.status === 'PENDING_VENDOR_APPROVAL');
+                        if (pendingQuote) {
+                          return (
+                            <div className="mt-4">
+                              <div className="flex gap-2">
+                                <motion.button
+                                  whileTap={{ scale: 0.97 }}
+                                  onClick={() => handleApproveQuote(pendingQuote.id)}
+                                  disabled={approvingId === pendingQuote.id}
+                                  className="flex-1 bg-[#1A1714] text-[#F5F3EF] text-[10px] uppercase tracking-widest py-2.5 rounded-sm hover:bg-[#3A3530] transition-colors disabled:opacity-50"
+                                >
+                                  {approvingId === pendingQuote.id ? 'Accepting…' : 'Accept Request'}
+                                </motion.button>
+                                <motion.button
+                                  whileTap={{ scale: 0.97 }}
+                                  onClick={() => { setDecliningRequestId(req.id); setDeclineReason(''); }}
+                                  disabled={approvingId === pendingQuote.id}
+                                  className="flex-1 border border-border text-[10px] uppercase tracking-widest py-2.5 rounded-sm text-[#7A7068] hover:border-[#C4A06A] hover:text-[#C4A06A] transition-colors disabled:opacity-50"
+                                >
+                                  Decline
+                                </motion.button>
+                              </div>
+                              <AnimatePresence>
+                                {decliningRequestId === req.id && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="mt-3 overflow-hidden"
+                                  >
+                                    <textarea
+                                      value={declineReason}
+                                      onChange={e => setDeclineReason(e.target.value)}
+                                      placeholder="Let the planner know why you're declining (optional)"
+                                      maxLength={500}
+                                      rows={2}
+                                      className="w-full bg-[#F5F3EF] border border-border rounded-md px-3 py-2 text-[13px] font-sans focus:border-[#C4A06A] outline-none resize-none"
+                                    />
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={() => handleDeclineRequest(req.id)}
+                                        className="text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-sm text-[#F5F3EF]"
+                                        style={{ background: '#B84040' }}
+                                      >
+                                        Confirm Decline
+                                      </button>
+                                      <button
+                                        onClick={() => { setDecliningRequestId(null); setDeclineReason(''); }}
+                                        className="text-[10px] uppercase tracking-widest text-[#7A7068] px-4 py-1.5"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="flex items-center gap-3 mt-4">
+                            <Link
+                              to={`/event-requests/${req.id}`}
+                              className="bg-gold text-dark font-sans text-xs font-bold tracking-widest uppercase px-5 py-2 hover:bg-gold-dark transition-colors focus:outline-none rounded-md"
+                            >
+                              {req.isOutOfParameters ? 'Create Custom Quote' : 'View Request'}
+                            </Link>
+                          </div>
+                        );
+                      })()}
                     </motion.div>
                   );
                 })}
@@ -788,6 +885,22 @@ export default function ProviderDashboard() {
           </div>
         </div>}
       </div>
+
+      {/* ── TOAST ──────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 font-sans text-xs px-4 py-2.5 rounded-md shadow-sm z-50"
+            style={{ background: toast.ok ? '#1A1714' : '#B84040', color: '#F5F3EF', whiteSpace: 'nowrap' }}
+          >
+            {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
