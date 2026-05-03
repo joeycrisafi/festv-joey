@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -239,6 +239,7 @@ export default function BookingJourney() {
   const [actionLoading, setActionLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
 
   const isClient = user?.role === 'CLIENT';
   const isProvider = user?.role === 'PROVIDER';
@@ -257,6 +258,15 @@ export default function BookingJourney() {
       }
     })();
   }, [id, token]);
+
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (payment === 'success') {
+      setToastMsg('Deposit paid successfully — your booking is confirmed!');
+    } else if (payment === 'cancelled') {
+      setToastMsg('Payment cancelled. Your booking is still pending deposit.');
+    }
+  }, []);
 
   const toast = (msg: string) => setToastMsg(msg);
 

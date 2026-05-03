@@ -123,13 +123,18 @@ export const createDepositCheckout = asyncHandler(async (req: AuthenticatedReque
       providerProfile: {
         select: { id: true, businessName: true } as any,
       },
-      quote: { select: { id: true } },
+      quote: { select: { id: true, eventRequestId: true } as any },
     },
   });
   if (!booking) throw new NotFoundError('Booking not found');
   if (booking.status !== 'PENDING_DEPOSIT') {
     throw new AppError('Deposit already paid or booking not in PENDING_DEPOSIT state', 400);
   }
+
+  const eventRequestId = (booking.quote as any)?.eventRequestId as string | undefined;
+  const returnPath = eventRequestId
+    ? `/requests/${eventRequestId}`
+    : `/bookings/${bookingId}`;
 
   // Get provider's Stripe account
   const rows = await prisma.$queryRaw<{ stripeAccountId: string | null }[]>`
@@ -163,8 +168,8 @@ export const createDepositCheckout = asyncHandler(async (req: AuthenticatedReque
         destination: providerStripeAccountId,
       },
     },
-    success_url: `${config.frontendUrl}/bookings/${bookingId}?payment=success`,
-    cancel_url: `${config.frontendUrl}/bookings/${bookingId}?payment=cancelled`,
+    success_url: `${config.frontendUrl}${returnPath}?payment=success`,
+    cancel_url:  `${config.frontendUrl}${returnPath}?payment=cancelled`,
     metadata: {
       bookingId,
       clientId,
