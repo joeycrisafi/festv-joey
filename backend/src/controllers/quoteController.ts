@@ -16,6 +16,7 @@
  */
 
 import { Response } from 'express';
+import { z } from 'zod';
 import prisma from '../config/database.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler, AppError, NotFoundError, ForbiddenError } from '../middleware/errorHandler.js';
@@ -442,6 +443,9 @@ export const getMyQuotesAsClient = asyncHandler(async (req: AuthenticatedRequest
 export const acceptQuote = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const quote = await requireQuoteClientOwnership(req.params.id, req.user!.id);
 
+  if (quote.status === 'PENDING_VENDOR_APPROVAL') {
+    throw new AppError('This quote is awaiting vendor approval', 400);
+  }
   if (!['SENT', 'VIEWED'].includes(quote.status)) {
     throw new AppError(`Cannot accept a quote with status ${quote.status}`, 400);
   }
@@ -657,4 +661,132 @@ export const reviseQuote = asyncHandler(async (req: AuthenticatedRequest, res: R
     .catch(() => {});
 
   res.status(201).json({ success: true, data: newQuote });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. vendorApproveQuote
+// POST /quotes/:id/vendor-approve
+// Auth: requireProvider
+// Moves a PENDING_VENDOR_APPROVAL quote → SENT and notifies the client.
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorApproveQuote = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const userId  = req.user!.id;
+
+  const quote = await prisma.quote.findUnique({
+    where:   { id },
+    include: {
+      eventRequest: {
+        include: {
+          client:         { select: { id: true, email: true, firstName: true, lastName: true } },
+          providerProfile: { select: { businessName: true, userId: true } },
+        },
+      },
+    },
+  });
+
+  if (!quote) throw new NotFoundError('Quote');
+  if (quote.status !== 'PENDING_VENDOR_APPROVAL') {
+    throw new AppError('Quote is not pending approval', 400);
+  }
+  if (quote.eventRequest.providerProfile.userId !== userId) {
+    throw new ForbiddenError('Not your quote');
+  }
+
+  const expiresAt = new Date(Date.now() + SEVEN_DAYS_MS);
+
+  await prisma.$transaction([
+    prisma.quote.update({
+      where: { id },
+      data:  { status: 'SENT', expiresAt },
+    }),
+    prisma.eventRequest.update({
+      where: { id: quote.eventRequestId },
+      data:  { status: 'QUOTE_SENT' },
+    }),
+    prisma.notification.create({
+      data: {
+        userId:  quote.eventRequest.client.id,
+        type:    'NEW_QUOTE',
+        title:   'Your quote is ready',
+        message: `${quote.eventRequest.providerProfile.businessName} has approved your request. Your quote is ready to review.`,
+        data:    { quoteId: id, eventRequestId: quote.eventRequestId },
+      },
+    }),
+  ]);
+
+  // Fire-and-forget email to client
+  const clientName = `${quote.eventRequest.client.firstName} ${quote.eventRequest.client.lastName}`.trim();
+  sendQuoteReceived(
+    quote.eventRequest.client.email,
+    clientName,
+    quote.eventRequest.providerProfile.businessName,
+    quote.eventRequest.eventType,
+    quote.total,
+    expiresAt,
+  ).catch(() => {});
+
+  res.json({ success: true, message: 'Quote approved and sent to client' });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. vendorDeclineRequest
+// POST /quotes/requests/:id/vendor-decline
+// Auth: requireProvider
+// Vendor declines an EventRequest (and rejects any PENDING_VENDOR_APPROVAL quote on it).
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorDeclineRequest = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params; // eventRequestId
+  const userId  = req.user!.id;
+
+  const validation = z.object({
+    rejectionReason: z.string().max(500).optional(),
+  }).safeParse(req.body);
+
+  if (!validation.success) {
+    throw new AppError(validation.error.errors[0].message, 400);
+  }
+
+  const eventRequest = await prisma.eventRequest.findUnique({
+    where:   { id },
+    include: {
+      client:         { select: { id: true, email: true, firstName: true } },
+      providerProfile: { select: { businessName: true, userId: true } },
+      quotes:         { where: { status: 'PENDING_VENDOR_APPROVAL' }, take: 1 },
+    },
+  });
+
+  if (!eventRequest) throw new NotFoundError('Event request');
+  if (eventRequest.providerProfile.userId !== userId) throw new ForbiddenError('Not your request');
+  if (!['PENDING', 'QUOTE_SENT'].includes(eventRequest.status)) {
+    throw new AppError('This request cannot be declined', 400);
+  }
+
+  const pendingQuote = eventRequest.quotes[0];
+  const { rejectionReason } = validation.data;
+
+  await prisma.$transaction([
+    prisma.eventRequest.update({
+      where: { id },
+      data:  { status: 'DECLINED' },
+    }),
+    // Reject any pending-approval quote attached to this request
+    ...(pendingQuote ? [
+      prisma.quote.update({
+        where: { id: pendingQuote.id },
+        data:  { status: 'REJECTED', ...(rejectionReason ? { rejectionReason } : {}) },
+      }),
+    ] : []),
+    prisma.notification.create({
+      data: {
+        userId:  eventRequest.client.id,
+        type:    'NEW_QUOTE',
+        title:   'Request declined',
+        message: `${eventRequest.providerProfile.businessName} has declined your request.${rejectionReason ? ' See their note for details.' : ''}`,
+        data:    { eventRequestId: id },
+      },
+    }),
+  ]);
+
+  res.json({ success: true, message: 'Request declined' });
 });

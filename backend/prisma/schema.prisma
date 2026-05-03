@@ -618,6 +618,7 @@ model EventRequest {
 
 enum QuoteStatus {
   DRAFT
+  PENDING_VENDOR_APPROVAL
   SENT
   VIEWED
   ACCEPTED
