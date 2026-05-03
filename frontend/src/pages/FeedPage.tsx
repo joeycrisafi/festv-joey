@@ -33,9 +33,10 @@ const cardVariants = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function FeedPage() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, user } = useAuth();
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [providerProfileId, setProviderProfileId] = useState<string | null>(null);
   const [posts, setPosts] = useState<PortfolioPostData[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -81,6 +82,14 @@ export default function FeedPage() {
     setPage(1);
     fetchFeed(activeFilter, 1, false);
   }, [activeFilter, fetchFeed]);
+
+  useEffect(() => {
+    if (!token || user?.role !== 'PROVIDER') return;
+    fetch('/api/v1/providers/profile/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setProviderProfileId(d?.data?.providerProfile?.id ?? d?.data?.id ?? null))
+      .catch(() => {});
+  }, [token, user?.role]);
 
   const handleLoadMore = async () => {
     const next = page + 1;
@@ -203,6 +212,7 @@ export default function FeedPage() {
                             post={post}
                             token={token}
                             onRequireAuth={showAuthToast}
+                            currentProviderProfileId={providerProfileId}
                             onSaveChange={(id, saved) => {
                               if (activeFilter === 'saved' && !saved) {
                                 setPosts(prev => prev.filter(p => p.id !== id));

@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { Upload, Loader2, Pencil } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +43,7 @@ interface Props {
   managementMode?: boolean;
   onDelete?: (id: string) => void;
   onUpdate?: (post: PortfolioPostData) => void;
+  currentProviderProfileId?: string | null;
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -88,8 +88,8 @@ export default function PortfolioCard({
   managementMode = false,
   onDelete,
   onUpdate,
+  currentProviderProfileId,
 }: Props) {
-  const { user } = useAuth();
 
   // ── Like / save state ──────────────────────────────────────────────────────
   const [liked, setLiked] = useState(post.likedByMe ?? false);
@@ -532,7 +532,7 @@ export default function PortfolioCard({
                       {tag.vendorRepliedAt && ` · ${formatDistanceToNow(new Date(tag.vendorRepliedAt), { addSuffix: true })}`}
                     </p>
                   </motion.div>
-                ) : !managementMode && user?.role === 'PROVIDER' ? (
+                ) : !managementMode && !!currentProviderProfileId && currentProviderProfileId === tag.providerId ? (
                   <div className="mt-1">
                     {replyingToTagId === tag.id ? (
                       <div>
