@@ -11,6 +11,8 @@ router.post('/login', asyncHandler(authController.login));
 router.post('/refresh-token', asyncHandler(authController.refreshToken));
 router.post('/forgot-password', asyncHandler(authController.forgotPassword));
 router.post('/reset-password', asyncHandler(authController.resetPassword));
+router.get('/verify-email', asyncHandler(authController.verifyEmail));
+router.post('/resend-verification', asyncHandler(authController.resendVerification));
 
 // Dev-only: gated by ENABLE_TEST_ACCOUNTS=true on the backend.
 // 404s when disabled so it looks non-existent in prod.

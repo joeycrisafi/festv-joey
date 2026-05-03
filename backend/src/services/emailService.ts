@@ -102,6 +102,37 @@ function fmtEventType(t: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// ─── 0. Email verification (new account) ─────────────────────────────────────
+
+export async function sendVerificationEmail(
+  to: string,
+  firstName: string,
+  verificationUrl: string,
+): Promise<void> {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: 'Verify your email address',
+      html: wrapper(`
+        ${heading(`Welcome to FESTV, ${firstName}!`)}
+        ${para('Please verify your email address to activate your account and get started.')}
+        <div style="text-align:center;margin:32px 0;">
+          <a href="${verificationUrl}"
+            style="display:inline-block;background:#C4A06A;color:#1A1714;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:14px 32px;border-radius:4px;">
+            Verify Email Address
+          </a>
+        </div>
+        ${small('This link expires in 24 hours. If you didn\'t create an account, you can safely ignore this email.')}
+        ${small('Or copy this link: <a href="${verificationUrl}" style="color:#C4A06A;">${verificationUrl}</a>')}
+      `),
+    });
+  } catch (err) {
+    console.error('[emailService] sendVerificationEmail failed:', err);
+  }
+}
+
 // ─── 1. Vendor approved ───────────────────────────────────────────────────────
 
 export async function sendVendorApproved(to: string, vendorName: string): Promise<void> {

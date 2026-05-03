@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +9,7 @@ import { AuthenticatedRequest, TokenPayload, AuthTokens } from '../types/index.j
 import { registerSchema, loginSchema, refreshTokenSchema } from '../utils/validators.js';
 import { asyncHandler, AppError, ConflictError, UnauthorizedError, NotFoundError } from '../middleware/errorHandler.js';
 import { sendPasswordResetEmail } from '../services/verification.js';
+import { sendVerificationEmail } from '../services/emailService.js';
 import { seedTestAccounts, TEST_ACCOUNTS } from '../seedTestAccounts.js';
 import { isDevAccess, isRealAdmin } from '../routes/adminRoutes.js';
 
@@ -70,38 +72,23 @@ export const register = asyncHandler(async (req: AuthenticatedRequest, res: Resp
     },
   });
   
-  // Generate tokens
-  const tokens = generateTokens({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  });
-  
-  // Store refresh token
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30);
-  
-  await prisma.refreshToken.create({
-    data: {
-      token: tokens.refreshToken,
-      userId: user.id,
-      expiresAt,
-    },
-  });
-  
-  // Update last login
+  // Generate email verification token (reuses passwordResetToken field — no migration needed)
+  const verificationToken = crypto.randomBytes(32).toString('hex');
   await prisma.user.update({
     where: { id: user.id },
-    data: { lastLoginAt: new Date() },
+    data: {
+      passwordResetToken: verificationToken,
+      passwordResetExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    },
   });
-  
+
+  const frontendUrl = process.env.FRONTEND_URL ?? 'https://www.festv.org';
+  const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+  sendVerificationEmail(user.email, user.firstName, verificationUrl).catch(() => {});
+
   res.status(201).json({
     success: true,
-    data: {
-      user,
-      ...tokens,
-    },
-    message: 'Registration successful',
+    message: 'Account created. Please check your email to verify your account.',
   });
 });
 
@@ -153,7 +140,11 @@ export const login = asyncHandler(async (req: AuthenticatedRequest, res: Respons
   if (user.status === 'INACTIVE') {
     throw new UnauthorizedError('Account is inactive');
   }
-  
+
+  if (user.status === 'PENDING_VERIFICATION') {
+    throw new AppError('Please verify your email address before logging in. Check your inbox for the verification link.', 403);
+  }
+
   // Generate tokens
   const tokens = generateTokens({
     id: user.id,
@@ -479,6 +470,94 @@ export const switchRole = asyncHandler(async (req: AuthenticatedRequest, res: Re
     },
     message: `Switched to ${role} mode`,
   });
+});
+
+// Verify email address via token from registration email
+export const verifyEmail = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== 'string') {
+    throw new AppError('Invalid verification token', 400);
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetToken: token,
+      passwordResetExpires: { gt: new Date() },
+    },
+  });
+
+  if (!user) throw new AppError('Verification link is invalid or has expired', 400);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+      status: 'ACTIVE',
+      passwordResetToken: null,
+      passwordResetExpires: null,
+    },
+  });
+
+  // Issue auth tokens so the user is logged in immediately after verification
+  const tokens = generateTokens({ id: user.id, email: user.email, role: user.role });
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+  await prisma.refreshToken.create({
+    data: { token: tokens.refreshToken, userId: user.id, expiresAt },
+  });
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  res.json({
+    success: true,
+    message: 'Email verified successfully',
+    data: {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        roles: user.roles,
+      },
+    },
+  });
+});
+
+// Resend verification email
+export const resendVerification = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) throw new AppError('Email is required', 400);
+
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+
+  // Always return success to prevent email enumeration
+  if (!user || user.emailVerified) {
+    res.json({ success: true, message: 'If that email exists and is unverified, a new link has been sent.' });
+    return;
+  }
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetToken: verificationToken,
+      passwordResetExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL ?? 'https://www.festv.org';
+  const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+  sendVerificationEmail(user.email, user.firstName, verificationUrl).catch(() => {});
+
+  res.json({ success: true, message: 'If that email exists and is unverified, a new link has been sent.' });
 });
 
 // Forgot password - generate reset token
